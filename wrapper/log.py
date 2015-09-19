@@ -22,6 +22,7 @@ class WrapperLog(object):
         udp模式：带上HOST，PORT参数，否则使用127.0.0.1:9527
         file模式：带上file参数，否则使用当前目录下data.log文件，带上maxbytes，否则1M，带上backupcount，否则5个
         stream模式：标准输出
+        日志level：level参数表示logger日志级别，缺省WARNING，各handle级别小于logger级别无效
         不支持自定义输出格式
         :param args: [udp, file, stream, ...]
         :param kwargs: {'host': '127.0.0.1', 'port': 9527, 'file': 'xxx.log', 'level': logging.DEBUG,
@@ -30,9 +31,10 @@ class WrapperLog(object):
         """
 
         args = list(set(args))  #去重
-        self.level = kwargs.get('level', logging.DEBUG)
+        self.level = kwargs.get('level', logging.WARNING)
 
         self.log = logging.getLogger(__name__)
+        self.log.setLevel(self.level)
         handles = []
         d = {'udp': self._init_udp_handle, 'stream': self._init_stream_handle, 'file': self._init_file_handle}
         for handle in args:
@@ -91,7 +93,7 @@ class WrapperLog(object):
         self.log.critical(msg, *args, **kwargs)
 
 if '__main__' == __name__:
-    wrapper_log = WrapperLog('stream', streamlevel=logging.DEBUG)
-    # wrapper_log.debug("This is debug message")
-    # wrapper_log.info("This is info message")
-    # wrapper_log.warning("This is warning message")
+    wrapper_log = WrapperLog('stream', level=logging.DEBUG, streamlevel=logging.DEBUG)
+    wrapper_log.debug("This is debug message")
+    wrapper_log.info("This is info message")
+    wrapper_log.warning("This is warning message")
