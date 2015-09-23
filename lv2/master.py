@@ -4,6 +4,8 @@ __author__ = 'tracedeng'
 import struct
 import socket
 
+__all__ = ['Master']
+
 class Master():
 
     def __init__(self):
@@ -12,13 +14,3 @@ class Master():
     def entrance(self, *args):
         pass
 
-
-def enter(*args, **kwargs):
-    """
-
-    :param args:
-    :param kwargs:
-    :return:
-    """
-    # 解析
-    pass

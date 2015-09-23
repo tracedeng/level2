@@ -186,9 +186,12 @@ class Server():
             return -1
 
         try:
-            m = __import__(self.master[2])
-            g_log.debug(dir(m))
-            getattr(m, self.master[3])
+            # import test.lv2.master
+            master_module = __import__(self.master[2])
+            # import imp
+            # master_module = imp.load_module(self.master[2])
+            g_log.debug("%s", dir(master_module))
+            getattr(master_module, self.master[3])
         except ImportError as e:
             g_log.critical("%s", e)
             # sys.exit(-1)
