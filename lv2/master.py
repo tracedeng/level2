@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
-import struct
 import socket
+import protobuf
 
 __all__ = ['Master']
 
@@ -11,6 +11,7 @@ class Master():
     def __init__(self):
         pass
 
-    def entrance(self, *args):
+    def enter(self, *args):
+        print("i am here")
         pass
 

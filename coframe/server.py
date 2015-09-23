@@ -8,6 +8,7 @@ import sys
 import struct
 from gevent.core import loop
 
+
 import test.wrapper.log as log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能，将这行代码放在import自定义模块最前面
 
@@ -177,27 +178,37 @@ class Server():
         # 收包
         sock = self.master_sock
         data, addr = sock.recvfrom(65536)
+
+        # 包有效性检查
         if len(data) < 8:   # 4Byte长度 ＋ {{ + PB + }}
             g_log("illegal package, not enough length" )
             return -1
-        slen, stx = struct.unpack('!I2s', data[0:6])
+        (packlen, stx) = struct.unpack('!I2s', data[0:6])
         if stx != "{{":
-            g_log("illegal package, illegal stx")
+            g_log("illegal package, illegal stx(%s)", stx)
             return -1
 
+        if len(data) != (packlen + 4):
+            g_log("illegal package, illegal length")
+            return -1
+
+        etx = data[-2:]
+        if etx != "}}":
+            g_log("illegal package, illegal etx(%s)", etx)
+
+        # 调用业务处理逻辑
         try:
-            # import test.lv2.master
-            master_module = __import__(self.master[2])
-            # import imp
-            # master_module = imp.load_module(self.master[2])
-            g_log.debug("%s", dir(master_module))
-            getattr(master_module, self.master[3])
-        except ImportError as e:
-            g_log.critical("%s", e)
-            # sys.exit(-1)
-        # except Exception as e:
+            master_module = __import__(self.master[2], fromlist=[self.master[2]])
+            # g_log.debug("%s", dir(master_module))
+            master_class = getattr(master_module, self.master[3])
+            master_obj = master_class()
+            master_obj.enter(data)
+        # except ImportError as e:
         #     g_log.critical("%s", e)
         #     sys.exit(-1)
+        except Exception as e:
+            g_log.critical("%s", e)
+            sys.exit(-1)
 
         pass
 
@@ -205,6 +216,7 @@ class Server():
         pass
 
 if __name__ == "__main__":
+    # print sys.path
     server = Server()
     g_log.debug(dir(server))
     server.run()
