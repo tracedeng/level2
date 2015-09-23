@@ -5,6 +5,13 @@ __author__ = 'tracedeng'
 import logging
 import logging.handlers
 
+NOTSET = logging.NOTSET
+DEBUG = logging.DEBUG
+INFO = logging.INFO
+WARN = logging.WARN
+WARNING = WARN
+ERROR = logging.ERROR
+CRITICAL = logging.CRITICAL
 
 class WrapperLog(object):
     """
@@ -30,11 +37,14 @@ class WrapperLog(object):
         :return:WrapperLog
         """
 
-        args = list(set(args))  #去重
+        args = list(set(args))  # 去重
         self.level = kwargs.get('level', logging.WARNING)
 
-        self.log = logging.getLogger(__name__)
+        name = kwargs.get('name', 'unknow')
+        # self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(name)
         self.log.setLevel(self.level)
+        self.log.propagate = False  # 不传递
         handles = []
         d = {'udp': self._init_udp_handle, 'stream': self._init_stream_handle, 'file': self._init_file_handle}
         for handle in args:
@@ -52,7 +62,7 @@ class WrapperLog(object):
         backup_count = kwargs.get('backupcount', self.__class__.BACKUPCOUNT)
 
         handle = logging.handlers.RotatingFileHandler(file_name, max_bytes, backup_count)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(message)s')
         handle.setFormatter(formatter)
         handle.setLevel(kwargs.get('filelevel', self.level))
         return handle
@@ -61,22 +71,23 @@ class WrapperLog(object):
         host = kwargs.get('host', self.__class__.HOST)
         port = kwargs.get('port', self.__class__.PORT)
         handle = logging.handlers.DatagramHandler(host, port)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(message)s')
         handle.setFormatter(formatter)
-        handle.setLevel(kwargs.get('udplevel',self.level))
+        handle.setLevel(kwargs.get('udplevel', self.level))
         return handle
 
     def _init_stream_handle(self, **kwargs):
         handle = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(message)s')
         handle.setFormatter(formatter)
-        handle.setLevel(kwargs.get('streamlevel',self.level))
+        handle.setLevel(kwargs.get('streamlevel', self.level))
         return handle
 
     def _init_null_handle(self, **kwargs):
         handle = logging.NullHandler()
         return handle
 
+    # 封装logging，没法获取行号，勿用
     def debug(self, msg, *args, **kwargs):
         self.log.debug(msg, *args, **kwargs)
 
@@ -93,7 +104,7 @@ class WrapperLog(object):
         self.log.critical(msg, *args, **kwargs)
 
 if '__main__' == __name__:
-    wrapper_log = WrapperLog('stream', level=logging.DEBUG, streamlevel=logging.DEBUG)
+    wrapper_log = WrapperLog('stream', 'udp', level=logging.DEBUG, streamlevel=logging.DEBUG)
     wrapper_log.debug("This is debug message")
     wrapper_log.info("This is info message")
     wrapper_log.warning("This is warning message")
