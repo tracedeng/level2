@@ -9,7 +9,7 @@ import struct
 from gevent.core import loop
 
 
-import test.wrapper.log as log
+import calculus.wrapper.log as log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能，将这行代码放在import自定义模块最前面
 
 
@@ -17,9 +17,9 @@ class Server():
     # IP = "0.0.0.0"
     IP = "127.0.0.1"
     PORT = 9526
-    MMODULE = "test.lv2.master"
+    MMODULE = "calculus.lv2.master"
     MCLASS = "Master"
-    BMODULE = "test.lv2.branchbase"
+    BMODULE = "calculus.lv2.branchbase"
     BCLASS = "BranchBase"
 
     def __init__(self, conf_path="loop.conf"):
@@ -173,6 +173,8 @@ class Server():
     def master_watch(self):
         """
         处理收包，调用具体协议的业务逻辑
+        加载配置中设置的模块和类
+        调用类中的enter()函数
         :return:
         """
         # 收包
@@ -185,16 +187,16 @@ class Server():
             return -1
         (packlen, stx) = struct.unpack('!I2s', data[0:6])
         if stx != "{{":
-            g_log("illegal package, illegal stx(%s)", stx)
+            g_log.warning("illegal package, illegal stx(%s)", stx)
             return -1
 
         if len(data) != (packlen + 4):
-            g_log("illegal package, illegal length")
+            g_log.warning("illegal package, illegal length")
             return -1
 
         etx = data[-2:]
         if etx != "}}":
-            g_log("illegal package, illegal etx(%s)", etx)
+            g_log.warning("illegal package, illegal etx(%s)", etx)
 
         # 调用业务处理逻辑
         try:
@@ -203,9 +205,6 @@ class Server():
             master_class = getattr(master_module, self.master[3])
             master_obj = master_class()
             master_obj.enter(data)
-        # except ImportError as e:
-        #     g_log.critical("%s", e)
-        #     sys.exit(-1)
         except Exception as e:
             g_log.critical("%s", e)
             sys.exit(-1)

@@ -3,6 +3,7 @@ __author__ = 'tracedeng'
 # from __future__ import print_function
 import sys
 from gevent import socket
+import google.protobuf
 
 address = ('182.254.159.219', 9527)
 address = ('127.0.0.1', 9527)
@@ -17,7 +18,7 @@ address = ('127.0.0.1', 9527)
 #message = "860719120000034,7,117.131.3.2197,26762"
 import struct
 
-message = struct.pack("!I12s", 12, "{{abcdefg}}")
+message = struct.pack("!I12s", 12, "{{abcdefgh}}")
 
 sock = socket.socket(type=socket.SOCK_DGRAM)
 sock.connect(address)
