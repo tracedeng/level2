@@ -26,11 +26,11 @@ print('Sending %s bytes to %s:%s' % ((len(message), ) + address))
 print('%s' % message)
 
 sock.send(message.encode())
-#data, address = sock.recvfrom(8192)
+data, address = sock.recvfrom(8192)
 #data = sock.recvfrom(1024)
 #print('recv %s bytes' % len(data))
-#print('recv %s bytes from %s:%s' % ((len(data), ) + address))
-#print('%s' % data)
+print('recv %s bytes from %s:%s' % ((len(data), ) + address))
+print('%s' % data)
 
 
 #data, address = sock.recvfrom(8192)

@@ -6,6 +6,7 @@ import ConfigParser
 import socket
 import sys
 import struct
+import gevent
 from gevent.core import loop
 
 
@@ -178,6 +179,7 @@ class Server():
         :return:
         """
         # 收包
+        # g_log.debug("%s: begin service logic ...", gevent.getcurrent())
         sock = self.master_sock
         data, addr = sock.recvfrom(65536)
 
@@ -204,11 +206,12 @@ class Server():
             # g_log.debug("%s", dir(master_module))
             master_class = getattr(master_module, self.master[3])
             master_obj = master_class()
-            master_obj.enter(data)
+            output = master_obj.enter(data)
+            sock.sendto(output, addr)
         except Exception as e:
             g_log.critical("%s", e)
             sys.exit(-1)
-
+        # g_log.debug("%s: end service logic ...", gevent.getcurrent())
         pass
 
     def branch_watch(self):
