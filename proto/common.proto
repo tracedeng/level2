@@ -1,0 +1,30 @@
+//package calculus.proto;
+syntax = "proto3";
+
+import "register.proto";
+
+message Request {
+    RequestHead head = 1;
+
+    // 具体业务包体
+    RegisterRequest register = 2;
+}
+
+message Response {
+    ResponseHead head = 1;
+}
+
+message RequestHead {
+	uint32 cmd = 1;
+	uint64 seq = 2;
+
+	string phone_number = 3;
+}
+
+message ResponseHead {
+	uint32 cmd = 1;
+	uint64 seq = 2;
+
+	int32 retcode = 3;
+	string message = 4;
+}
