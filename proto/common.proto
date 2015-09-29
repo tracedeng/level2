@@ -12,6 +12,8 @@ message Request {
 
 message Response {
     ResponseHead head = 1;
+
+    RegisterResponse body = 2
 }
 
 message RequestHead {

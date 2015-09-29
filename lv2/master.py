@@ -83,6 +83,7 @@ class Master():
             f = "!I%ss" % length
             message = struct.pack(f, length, "{{%s}}" % response_serial)
             g_log.debug("%s: end service logic ...", gevent.getcurrent())
+            # timeout.cancel()
             return message
         except Timeout as e:
             # 超时，关闭定时器
