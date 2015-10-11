@@ -2,18 +2,25 @@
 syntax = "proto3";
 
 import "register.proto";
+import "vip.proto";
 
 message Request {
     RequestHead head = 1;
 
     // 具体业务包体
     RegisterRequest register = 2;
+
+    // 旁路
+    VipRequest vip = 10000;
 }
 
 message Response {
     ResponseHead head = 1;
 
-    RegisterResponse body = 2
+    RegisterResponse body = 2;
+
+    // 旁路
+    VipResponse vip = 10000;
 }
 
 message RequestHead {
@@ -21,12 +28,13 @@ message RequestHead {
 	uint64 seq = 2;
 
 	string phone_number = 3;
+	string coroutine_uuid = 4;
 }
 
 message ResponseHead {
 	uint32 cmd = 1;
 	uint64 seq = 2;
 
-	int32 retcode = 3;
+	int32 code = 3;
 	string message = 4;
 }

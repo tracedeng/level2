@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
-# import socket
 import ConfigParser
-import struct
 
 import gevent
 from gevent import Timeout
 
 import common_pb2
-
-import calculus.wrapper.log as log
+import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
+import package
+
+import login
+import consumer
+import merchant
+import exchange
 
 __all__ = ['Master']
 
@@ -35,60 +38,58 @@ class Master():
         except ConfigParser.NoOptionError as e:
             g_log.warning("config file miss %s:%s", e.section, e.option)
             expire = Master.TIMEOUT
-        g_log.debug("master timeout %sms", expire)
+        # g_log.debug("master timeout %sms", expire)
         self.expire = float(expire) / 1000  # 转换成秒
 
-
-    def _timeout_response(self, cmd, seq):
-        response = common_pb2.Response()
-        response.head.cmd = cmd
-        response.head.seq = seq
-        response.head.retcode = 1
-        response.head.message = "register timeout"
-        response_serial = response.SerializeToString()
-        return response_serial
-
-    def enter(self, data):
+    def enter(self, message):
         """
         主线处理入口，启动定时器，解析请求，返回业务逻辑处理结果
-        :param data: 请求包
-        :return: 返回处理结果，(errcode, errmsg | data)
-        errcode: 0-成功，1-超时，2:－其它错误
+        :param message: 请求包
+        :return: 0/不回包，pb/超时、程序异常、正常返回
         """
         timeout = gevent.Timeout(self.expire)
         timeout.start()
         try:
             g_log.debug("%s: begin service logic ...", gevent.getcurrent())
             request = common_pb2.Request()
-            request.ParseFromString(data[6:-2])
-            g_log.debug(request)
+            request.ParseFromString(message[6:-2])
+            g_log.debug("receive request %s", request)
             head = request.head
-            # g_log.debug("cmd:%s", head.cmd)
-            # g_log.debug("seq:%s", head.seq)
-            if head.cmd == 1:
-                # 注册
-                register = request.register
-                # g_log.debug(register)
-            response = common_pb2.Response()
-            response.head.cmd = head.cmd
-            response.head.seq = head.seq
-            response.head.retcode = 1
-            response.head.message = "register succeed"
-            g_log.debug(response)
-            # g_log.debug("retcode = %s", response.head.retcode)
-            response_serial = response.SerializeToString()
-            # gevent.sleep(2)
 
-            length = len(response_serial) + 4
-            f = "!I%ss" % length
-            message = struct.pack(f, length, "{{%s}}" % response_serial)
-            g_log.debug("%s: end service logic ...", gevent.getcurrent())
-            # timeout.cancel()
-            return message
+            if head.cmd < 100:
+                # 注册登录模块
+                response = login.enter(request)
+            elif head.cmd < 200:
+                # 用户资料模块
+                response = consumer.enter(request)
+            elif head.cmd < 300:
+                # 商户资料模块
+                response = merchant.enter(request)
+            elif head.cmd < 400:
+                # 积分兑换模块
+                response = exchange.enter(request)
+            else:
+                # 非法请求，无效命令，不回包
+                return 0
+            g_log.debug(response)
+            if response == 0:
+                # 留给具体业务逻辑不回包接口
+                return 0
+            elif response == "timeout":
+                # 旁路超时
+                # g_log.debug("timeout")
+                response = package.timeout_response(head.cmd, head.seq)
         except Timeout as e:
             # 超时，关闭定时器
             # timeout.cancel()
-            # 返回超时结果
-            return self._timeout_response(head.cmd, head.seq)
+            g_log.debug("%s", e)
+            g_log.debug("deal request timeout")
+            response = package.timeout_response(head.cmd, head.seq)
+        except Exception as e:
+            g_log.error("%s", e)
+            response = package.exception_response(head.cmd, head.seq)
         finally:
+            message = package.serial_pb(response)
+            g_log.debug("%s: end service logic ...", gevent.getcurrent())
             timeout.cancel()
+            return message

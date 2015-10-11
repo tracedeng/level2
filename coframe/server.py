@@ -5,14 +5,12 @@ __author__ = 'tracedeng'
 import ConfigParser
 import socket
 import sys
-import struct
 
-import gevent
 from gevent.core import loop
-from gevent import Timeout
 
-import calculus.wrapper.log as log
+import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能，将这行代码放在import自定义模块最前面
+import branch_socket
 
 
 class Server():
@@ -25,6 +23,7 @@ class Server():
     BMODULE = "calculus.lv2.branchbase"
     BCLASS = "BranchBase"
     BTIMEOUT = 500    # 单位毫秒
+    BADDRESS = "127.0.0.1:9527"
 
     def __init__(self, conf_path="loop.conf"):
         """
@@ -114,7 +113,8 @@ class Server():
                 bmodule = config.get(section, "module")
                 bcls = config.get(section, "class")
                 bexpire = config.get(section, "timeout")
-                handler = {"name": section, "module": bmodule, "class": bcls, "timeout": bexpire}
+                baddress = config.get(section, "address")
+                handler = {"name": section, "module": bmodule, "class": bcls, "timeout": bexpire, "address": baddress}
             except ConfigParser.NoSectionError as e:
                 g_log.warning("config file miss section %s" % section)
                 handler = {}
@@ -123,13 +123,14 @@ class Server():
                 bmodule = Server.BMODULE if 'bmodule' not in dir() else bmodule
                 bcls = Server.BCLASS if 'bcls' not in dir() else bcls
                 bexpire = Server.BTIMEOUT if 'bexpire' not in dir() else bexpire
-                handler = {"name": section, "module": bmodule, "class": bcls, "timeout": bexpire}
+                baddress = Server.BADDRESS if 'baddress' not in dir() else baddress
+                handler = {"name": section, "module": bmodule, "class": bcls, "timeout": bexpire, "address": baddress}
             except Exception as e:
                 g_log.warning("%s", e)
                 handler = {}
             if handler:
-                g_log.debug("branch %s, handler %s:%s, timeout %sms", handler["name"], handler["module"],
-                            handler["class"], handler["timeout"])
+                g_log.debug("branch %s, handler %s:%s, timeout %sms, address %s", handler["name"], handler["module"],
+                            handler["class"], handler["timeout"], handler["address"])
                 self.branch_handler.append(handler)
         g_log.debug("analyze branch handler config done ...")
         # g_log.debug(self.branch_handler)
@@ -139,12 +140,17 @@ class Server():
         for handler in self.branch_handler:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setblocking(0)
-            index = self.branch_handler.index(handler)
-            self.branch_handler[index]["sock"] = sock
+            # index = self.branch_handler.index(handler)
+            # self.branch_handler[index]["sock"] = sock
+            handler["sock"] = sock
             g_log.debug("create branch %s socket", handler["name"])
+            # 旁路socket通讯初始化
+            comm = branch_socket.BranchSocket()
+            if 0 == comm.add_branch(name=handler["name"], socket=sock, address=handler["address"],
+                                    timeout=handler["timeout"]):
+                # g_log.critical("")
+                sys.exit(-1)
         g_log.debug("create branch socket done...")
-        # g_log.debug(self.branch_handler)
-        # pass
 
         # import master处理函数
         try:
@@ -156,6 +162,17 @@ class Server():
             sys.exit(-1)
         g_log.debug("import master handler done...")
 
+        # import branch处理函数
+        try:
+            for handler in self.branch_handler:
+                branch_module = __import__(handler["module"], fromlist=handler["module"])
+                handler["class_real"] = getattr(branch_module, handler["class"])
+                g_log.debug("import branch %s handle", handler["name"])
+        except Exception as e:
+            g_log.critical("%s", e)
+            sys.exit(-1)
+        g_log.debug("import branch handler done...")
+
     def run(self):
         """
         注册master和branch协程
@@ -166,7 +183,7 @@ class Server():
         """
         l = loop()
 
-        # 注册master协程
+        # 注册master处理方法
         try:
             io = l.io(self.master_sock.fileno(), 1)   # 1代表read
             io.start(self.master_watch)
@@ -175,12 +192,12 @@ class Server():
             sys.exit(-1)
         g_log.debug("register master coroutine self.master_watch done ...")
 
-        # 注册旁路协程
+        # 注册旁路处理方法
         for handler in self.branch_handler:
             try:
                 sock = handler["sock"]
                 io = l.io(sock.fileno(), 1)
-                io.start(self.branch_watch)
+                io.start(self.branch_watch(handler["name"]))
             except Exception as e:
                 g_log.critical('error:', e)
                 sys.exit(-1)
@@ -188,8 +205,8 @@ class Server():
         g_log.debug("register branch coroutine done ...")
 
         # 启动libev loop
+        g_log.debug("now start event loop...")
         l.run()
-        # pass
 
     def master_watch(self):
         """
@@ -197,54 +214,49 @@ class Server():
         调用master处理类中的enter()函数
         :return:
         """
-        # 收包
-        sock = self.master_sock
-        data, addr = sock.recvfrom(65536)
-        # g_log.debug("receive request, length %s", len(data))
-
-        # 包有效性检查
-        if len(data) < 8:   # 4Byte长度 ＋ {{ + PB + }}
-            g_log("illegal package, not enough length" )
-            return -1
-        (packlen, stx) = struct.unpack('!I2s', data[0:6])
-        if stx != "{{":
-            g_log.warning("illegal package, illegal stx(%s)", stx)
-            return -1
-
-        if len(data) != (packlen + 4):
-            g_log.warning("illegal package, illegal length")
-            return -1
-
-        etx = data[-2:]
-        if etx != "}}":
-            g_log.warning("illegal package, illegal etx(%s)", etx)
-            return -1
-
-        # 调用业务处理逻辑
         try:
-            # master_module = __import__(self.master[2], fromlist=[self.master[2]])
-            # g_log.debug("%s", dir(master_module))
-            # master_class = getattr(master_module, self.master[3])
+            # 收包，放在这的原因是，如果包错误（可能性很大），省掉类实例话操作
+            result = branch_socket.receive_from_sock(self.master_sock)
+            if result == 0:
+                return 0
+            message, address = result
+
+            # 调用业务处理逻辑
             master_obj = self.master_class(config=self.config)
-            response = master_obj.enter(data)
+            response = master_obj.enter(message)
+            if response == 0:
+                # 非法包，不处理，不回包
+                return 0
             # g_log.debug(response)
-            sock.sendto(response, addr)
+            self.master_sock.sendto(response, address)
         except Exception as e:
             # TODO 后台处理异常，暂时不回包
             g_log.critical("%s", e)
-            sys.exit(-1)
-            # g_log.debug("%s: end service logic ...", gevent.getcurrent())
-            # pass
-        # except Timeout as e:
-        #     # 超时，关闭定时器，返回超时结果
-        #     timeout.cancel()
-        #     # print("i am here")
-        #
-        #     sock.sendto(, addr)
+            return 0
 
+    def branch_watch(self, name):
+        for handler in self.branch_handler:
+            if handler["name"] == name:
+                break
 
-    def branch_watch(self):
-        pass
+        def branch_watch_really():
+            try:
+                # 收包
+                result = branch_socket.receive_from_branch(name)
+                if result == 0:
+                    return 0
+                message, address = result
+
+                # 调用旁业务处理逻辑
+                branch_obj = handler["class_real"](name)
+                branch_obj.enter(message)
+                return 0
+            except Exception as e:
+                # TODO 后台处理异常，协程超时处理
+                g_log.critical("%s", e)
+                return 0
+                # sys.exit(-1)
+        return branch_watch_really
 
 
 if __name__ == "__main__":
