@@ -63,6 +63,21 @@ def exception_response(cmd, seq):
     return response
 
 
+def error_response(cmd, seq, code, message):
+    """
+    组装异常包
+    :param cmd: 命令号
+    :param seq: 序号
+    :return:
+    """
+    response = common_pb2.Response()
+    response.head.cmd = cmd
+    response.head.seq = seq
+    response.head.code = code
+    response.head.message = message
+    return response
+
+
 def serial_pb(pb):
     """
     序列化pb包

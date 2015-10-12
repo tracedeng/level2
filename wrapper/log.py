@@ -13,6 +13,7 @@ WARNING = WARN
 ERROR = logging.ERROR
 CRITICAL = logging.CRITICAL
 
+
 class WrapperLog(object):
     """
     logging模块wrapper

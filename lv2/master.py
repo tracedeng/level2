@@ -71,13 +71,7 @@ class Master():
             else:
                 # 非法请求，无效命令，不回包
                 return 0
-            g_log.debug(response)
-            if response == 0:
-                # 留给具体业务逻辑不回包接口
-                return 0
-            elif response == "timeout":
-                # 旁路超时
-                # g_log.debug("timeout")
+            if response == "timeout":
                 response = package.timeout_response(head.cmd, head.seq)
         except Timeout as e:
             # 超时，关闭定时器
@@ -85,11 +79,20 @@ class Master():
             g_log.debug("%s", e)
             g_log.debug("deal request timeout")
             response = package.timeout_response(head.cmd, head.seq)
+            # message = package.serial_pb(response)
         except Exception as e:
             g_log.error("%s", e)
             response = package.exception_response(head.cmd, head.seq)
+            # message = package.serial_pb(response)
+        g_log.debug("response %s", response)
+
+        try:
+            if response == 0:
+                return 0
+            else:
+                message = package.serial_pb(response)
+                return message
         finally:
-            message = package.serial_pb(response)
             g_log.debug("%s: end service logic ...", gevent.getcurrent())
             timeout.cancel()
-            return message
+            # return message

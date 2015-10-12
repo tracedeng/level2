@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+//商家用户CRUD操作，可电话号码或者商家ID做KEY
+
+// 增加商家
+message MerchantCreateRequest {
+    string phone_number = 1;
+    uint64 merchant_identity = 2;
+	MerchantMaterial material = 3;
+};
+
+message MerchantCreateResponse {
+
+};
+
+// 读取商家
+message MerchantRetrieveRequest {
+    string phone_number = 1;
+    uint64 merchant_identity = 2;
+}
+
+message MerchantRetrieveResponse {
+    MerchantMaterial material = 1;
+}
+
+// 批量读取商家
+message MerchantBatchRetrieveRequest {
+    repeated string phone_numbers = 1;
+    repeated uint64 merchant_identity_multi = 2;
+}
+
+message MerchantBatchRetrieveResponse {
+    repeated MerchantMaterial materials = 1;
+}
+
+// 更新商家
+message MerchantUpdateRequest {
+    string phone_number = 1;
+    uint64 merchant_identity = 2;
+    MerchantMaterial material = 3;
+}
+
+message MerchantUpdateResponse {
+
+}
+
+// 删除商家
+message MerchantDeleteRequest {
+    string phone_number = 1;
+    uint64 merchant_identity = 2;
+}
+
+message MerchantDeleteResponse {
+
+}
+
+// 商家资料
+message MerchantMaterial {
+    string phone_number = 1;
+    string merchant_name = 2;
+    string logo = 3;        //TODO... 商家logo
+    string email = 4;
+    string introduce = 5;   //商家介绍
+	float longitude = 6;    //经度
+    float latitude = 7;     //纬度
+    string country = 8;
+    string location = 9;    //地区，省市
+}

@@ -226,8 +226,9 @@ class Server():
             response = master_obj.enter(message)
             if response == 0:
                 # 非法包，不处理，不回包
+                # g_log.debug("no response")
                 return 0
-            # g_log.debug(response)
+            # g_log.debug("response %s", response)
             self.master_sock.sendto(response, address)
         except Exception as e:
             # TODO 后台处理异常，暂时不回包
