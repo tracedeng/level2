@@ -89,3 +89,9 @@ def serial_pb(pb):
     f = "!I%ss" % length
     message = struct.pack(f, length, "{{%s}}" % pb_serial)
     return message
+
+
+def un_serial_pb(message):
+    pb = common_pb2.Response()
+    pb.ParseFromString(message[6:-2])
+    return pb

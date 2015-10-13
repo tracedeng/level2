@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='consumer.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0e\x63onsumer.proto\"m\n\x15\x43onsumerCreateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerCreateResponse\"J\n\x17\x43onsumerRetrieveRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"?\n\x18\x43onsumerRetrieveResponse\x12#\n\x08material\x18\x01 \x01(\x0b\x32\x11.ConsumerMaterial\"V\n\x1c\x43onsumerBatchRetrieveRequest\x12\x15\n\rphone_numbers\x18\x01 \x03(\t\x12\x1f\n\x17\x63onsumer_identity_multi\x18\x02 \x03(\x04\"E\n\x1d\x43onsumerBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.ConsumerMaterial\"m\n\x15\x43onsumerUpdateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerUpdateResponse\"H\n\x15\x43onsumerDeleteRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"\x18\n\x16\x43onsumerDeleteResponse\"\xae\x01\n\x10\x43onsumerMaterial\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x12\n\nhead_image\x18\x03 \x01(\t\x12\x0c\n\x04sexy\x18\x04 \x01(\r\x12\x0b\n\x03\x61ge\x18\x05 \x01(\r\x12\r\n\x05\x65mail\x18\x06 \x01(\t\x12\x11\n\tintroduce\x18\x07 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x08 \x01(\t\x12\x10\n\x08location\x18\t \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0e\x63onsumer.proto\"m\n\x15\x43onsumerCreateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerCreateResponse\"J\n\x17\x43onsumerRetrieveRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"?\n\x18\x43onsumerRetrieveResponse\x12#\n\x08material\x18\x01 \x01(\x0b\x32\x11.ConsumerMaterial\"V\n\x1c\x43onsumerBatchRetrieveRequest\x12\x15\n\rphone_numbers\x18\x01 \x03(\t\x12\x1f\n\x17\x63onsumer_identity_multi\x18\x02 \x03(\x04\"E\n\x1d\x43onsumerBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.ConsumerMaterial\"m\n\x15\x43onsumerUpdateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerUpdateResponse\"H\n\x15\x43onsumerDeleteRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"\x18\n\x16\x43onsumerDeleteResponse\"\xbe\x01\n\x10\x43onsumerMaterial\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x12\n\nhead_image\x18\x03 \x01(\t\x12\x0c\n\x04sexy\x18\x04 \x01(\r\x12\x0b\n\x03\x61ge\x18\x05 \x01(\r\x12\r\n\x05\x65mail\x18\x06 \x01(\t\x12\x11\n\tintroduce\x18\x07 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x08 \x01(\t\x12\x10\n\x08location\x18\t \x01(\t\x12\x0e\n\x06qrcode\x18\n \x01(\tb\x06proto3'
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -432,6 +432,13 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='qrcode', full_name='ConsumerMaterial.qrcode', index=9,
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -445,7 +452,7 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=693,
-  serialized_end=867,
+  serialized_end=883,
 )
 
 _CONSUMERCREATEREQUEST.fields_by_name['material'].message_type = _CONSUMERMATERIAL

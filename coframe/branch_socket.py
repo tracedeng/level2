@@ -178,6 +178,30 @@ def receive_from_sock(sock):
         return 0
 
 
+def send_to_sock(sock, message, address=None):
+    if sock:
+        try:
+            if not address:
+                sock.send(message)
+            else:
+                sock.sendto(message, address)
+        except Exception as e:
+            g_log.debug("%s", e)
+            return 0
+    else:
+        return 0
+
+
+def send_to_address(message, address):
+    try:
+        import socket
+        sock = socket.socket(type=socket.SOCK_DGRAM)
+        sock.connect(address)
+        sock.send(message)
+    except Exception as e:
+        g_log.debug("%s", e)
+
+
 if __name__ == "__main__":
     branch1 = BranchSocket()
     branch1.add_branch(name="branch1", address="127.0.0.1:9527", socket="socket1")

@@ -65,4 +65,5 @@ message ConsumerMaterial {
     string introduce = 7;   //个人介绍
     string country = 8;
     string location = 9;    //地区，省市
+    string qrcode = 10;     //二维码
 }
