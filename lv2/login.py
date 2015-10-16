@@ -18,6 +18,7 @@ class Login():
         self.cmd = request.head.cmd
         self.seq = request.head.seq
 
+
     def enter(self):
         """
         处理具体业务
