@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='common.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0c\x63ommon.proto\x1a\x0eregister.proto\x1a\tvip.proto\x1a\x0e\x63onsumer.proto\x1a\x0emerchant.proto\"\xd1\x05\n\x07Request\x12\x1a\n\x04head\x18\x01 \x01(\x0b\x32\x0c.RequestHead\x12*\n\x10register_request\x18\x02 \x01(\x0b\x32\x10.RegisterRequest\x12\x37\n\x17\x63onsumer_create_request\x18\x64 \x01(\x0b\x32\x16.ConsumerCreateRequest\x12;\n\x19\x63onsumer_retrieve_request\x18\x65 \x01(\x0b\x32\x18.ConsumerRetrieveRequest\x12\x46\n\x1f\x63onsumer_batch_retrieve_request\x18\x66 \x01(\x0b\x32\x1d.ConsumerBatchRetrieveRequest\x12\x37\n\x17\x63onsumer_update_request\x18g \x01(\x0b\x32\x16.ConsumerUpdateRequest\x12\x37\n\x17\x63onsumer_delete_request\x18h \x01(\x0b\x32\x16.ConsumerDeleteRequest\x12\x38\n\x17merchant_create_request\x18\xc8\x01 \x01(\x0b\x32\x16.MerchantCreateRequest\x12<\n\x19merchant_retrieve_request\x18\xc9\x01 \x01(\x0b\x32\x18.MerchantRetrieveRequest\x12G\n\x1fmerchant_batch_retrieve_request\x18\xca\x01 \x01(\x0b\x32\x1d.MerchantBatchRetrieveRequest\x12\x38\n\x17merchant_update_request\x18\xcb\x01 \x01(\x0b\x32\x16.MerchantUpdateRequest\x12\x38\n\x17merchant_delete_request\x18\xcc\x01 \x01(\x0b\x32\x16.MerchantDeleteRequest\x12\x19\n\x03vip\x18\x90N \x01(\x0b\x32\x0b.VipRequest\"\xea\x05\n\x08Response\x12\x1b\n\x04head\x18\x01 \x01(\x0b\x32\r.ResponseHead\x12,\n\x11register_response\x18\x02 \x01(\x0b\x32\x11.RegisterResponse\x12\x39\n\x18\x63onsumer_create_response\x18\x64 \x01(\x0b\x32\x17.ConsumerCreateResponse\x12=\n\x1a\x63onsumer_retrieve_response\x18\x65 \x01(\x0b\x32\x19.ConsumerRetrieveResponse\x12H\n consumer_batch_retrieve_response\x18\x66 \x01(\x0b\x32\x1e.ConsumerBatchRetrieveResponse\x12\x39\n\x18\x63onsumer_update_response\x18g \x01(\x0b\x32\x17.ConsumerUpdateResponse\x12\x39\n\x18\x63onsumer_delete_response\x18h \x01(\x0b\x32\x17.ConsumerDeleteResponse\x12:\n\x18merchant_create_response\x18\xc8\x01 \x01(\x0b\x32\x17.MerchantCreateResponse\x12>\n\x1amerchant_retrieve_response\x18\xc9\x01 \x01(\x0b\x32\x19.MerchantRetrieveResponse\x12I\n merchant_batch_retrieve_response\x18\xca\x01 \x01(\x0b\x32\x1e.MerchantBatchRetrieveResponse\x12:\n\x18merchant_update_response\x18\xcb\x01 \x01(\x0b\x32\x17.MerchantUpdateResponse\x12:\n\x18merchant_delete_response\x18\xcc\x01 \x01(\x0b\x32\x17.MerchantDeleteResponse\x12\x1a\n\x03vip\x18\x90N \x01(\x0b\x32\x0c.VipResponse\"j\n\x0bRequestHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x14\n\x0cphone_number\x18\x03 \x01(\t\x12\x13\n\x0bsession_key\x18\x04 \x01(\t\x12\x16\n\x0e\x63oroutine_uuid\x18\x05 \x01(\t\"G\n\x0cResponseHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0c\n\x04\x63ode\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0c\x63ommon.proto\x1a\x0eregister.proto\x1a\tvip.proto\x1a\x0e\x63onsumer.proto\x1a\x0emerchant.proto\"\xd1\x05\n\x07Request\x12\x1a\n\x04head\x18\x01 \x01(\x0b\x32\x0c.RequestHead\x12*\n\x10register_request\x18\x02 \x01(\x0b\x32\x10.RegisterRequest\x12\x37\n\x17\x63onsumer_create_request\x18\x64 \x01(\x0b\x32\x16.ConsumerCreateRequest\x12;\n\x19\x63onsumer_retrieve_request\x18\x65 \x01(\x0b\x32\x18.ConsumerRetrieveRequest\x12\x46\n\x1f\x63onsumer_batch_retrieve_request\x18\x66 \x01(\x0b\x32\x1d.ConsumerBatchRetrieveRequest\x12\x37\n\x17\x63onsumer_update_request\x18g \x01(\x0b\x32\x16.ConsumerUpdateRequest\x12\x37\n\x17\x63onsumer_delete_request\x18h \x01(\x0b\x32\x16.ConsumerDeleteRequest\x12\x38\n\x17merchant_create_request\x18\xc8\x01 \x01(\x0b\x32\x16.MerchantCreateRequest\x12<\n\x19merchant_retrieve_request\x18\xc9\x01 \x01(\x0b\x32\x18.MerchantRetrieveRequest\x12G\n\x1fmerchant_batch_retrieve_request\x18\xca\x01 \x01(\x0b\x32\x1d.MerchantBatchRetrieveRequest\x12\x38\n\x17merchant_update_request\x18\xcb\x01 \x01(\x0b\x32\x16.MerchantUpdateRequest\x12\x38\n\x17merchant_delete_request\x18\xcc\x01 \x01(\x0b\x32\x16.MerchantDeleteRequest\x12\x19\n\x03vip\x18\x90N \x01(\x0b\x32\x0b.VipRequest\"\xea\x05\n\x08Response\x12\x1b\n\x04head\x18\x01 \x01(\x0b\x32\r.ResponseHead\x12,\n\x11register_response\x18\x02 \x01(\x0b\x32\x11.RegisterResponse\x12\x39\n\x18\x63onsumer_create_response\x18\x64 \x01(\x0b\x32\x17.ConsumerCreateResponse\x12=\n\x1a\x63onsumer_retrieve_response\x18\x65 \x01(\x0b\x32\x19.ConsumerRetrieveResponse\x12H\n consumer_batch_retrieve_response\x18\x66 \x01(\x0b\x32\x1e.ConsumerBatchRetrieveResponse\x12\x39\n\x18\x63onsumer_update_response\x18g \x01(\x0b\x32\x17.ConsumerUpdateResponse\x12\x39\n\x18\x63onsumer_delete_response\x18h \x01(\x0b\x32\x17.ConsumerDeleteResponse\x12:\n\x18merchant_create_response\x18\xc8\x01 \x01(\x0b\x32\x17.MerchantCreateResponse\x12>\n\x1amerchant_retrieve_response\x18\xc9\x01 \x01(\x0b\x32\x19.MerchantRetrieveResponse\x12I\n merchant_batch_retrieve_response\x18\xca\x01 \x01(\x0b\x32\x1e.MerchantBatchRetrieveResponse\x12:\n\x18merchant_update_response\x18\xcb\x01 \x01(\x0b\x32\x17.MerchantUpdateResponse\x12:\n\x18merchant_delete_response\x18\xcc\x01 \x01(\x0b\x32\x17.MerchantDeleteResponse\x12\x1a\n\x03vip\x18\x90N \x01(\x0b\x32\x0c.VipResponse\"y\n\x0bRequestHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x12\n\nto_numbers\x18\x04 \x01(\t\x12\x13\n\x0bsession_key\x18\x05 \x01(\t\x12\x16\n\x0e\x63oroutine_uuid\x18\x06 \x01(\t\"G\n\x0cResponseHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0c\n\x04\x63ode\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\tb\x06proto3'
   ,
   dependencies=[register__pb2.DESCRIPTOR,vip__pb2.DESCRIPTOR,consumer__pb2.DESCRIPTOR,merchant__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -281,22 +281,29 @@ _REQUESTHEAD = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='RequestHead.phone_number', index=2,
+      name='numbers', full_name='RequestHead.numbers', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='session_key', full_name='RequestHead.session_key', index=3,
+      name='to_numbers', full_name='RequestHead.to_numbers', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='coroutine_uuid', full_name='RequestHead.coroutine_uuid', index=4,
+      name='session_key', full_name='RequestHead.session_key', index=4,
       number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='coroutine_uuid', full_name='RequestHead.coroutine_uuid', index=5,
+      number=6, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -314,7 +321,7 @@ _REQUESTHEAD = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1548,
-  serialized_end=1654,
+  serialized_end=1669,
 )
 
 
@@ -365,8 +372,8 @@ _RESPONSEHEAD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1656,
-  serialized_end=1727,
+  serialized_start=1671,
+  serialized_end=1742,
 )
 
 _REQUEST.fields_by_name['head'].message_type = _REQUESTHEAD

@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='consumer.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0e\x63onsumer.proto\"m\n\x15\x43onsumerCreateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerCreateResponse\"J\n\x17\x43onsumerRetrieveRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"?\n\x18\x43onsumerRetrieveResponse\x12#\n\x08material\x18\x01 \x01(\x0b\x32\x11.ConsumerMaterial\"V\n\x1c\x43onsumerBatchRetrieveRequest\x12\x15\n\rphone_numbers\x18\x01 \x03(\t\x12\x1f\n\x17\x63onsumer_identity_multi\x18\x02 \x03(\x04\"E\n\x1d\x43onsumerBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.ConsumerMaterial\"m\n\x15\x43onsumerUpdateRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerUpdateResponse\"H\n\x15\x43onsumerDeleteRequest\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x19\n\x11\x63onsumer_identity\x18\x02 \x01(\x04\"\x18\n\x16\x43onsumerDeleteResponse\"\xbe\x01\n\x10\x43onsumerMaterial\x12\x14\n\x0cphone_number\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x12\n\nhead_image\x18\x03 \x01(\t\x12\x0c\n\x04sexy\x18\x04 \x01(\r\x12\x0b\n\x03\x61ge\x18\x05 \x01(\r\x12\r\n\x05\x65mail\x18\x06 \x01(\t\x12\x11\n\tintroduce\x18\x07 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x08 \x01(\t\x12\x10\n\x08location\x18\t \x01(\t\x12\x0e\n\x06qrcode\x18\n \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0e\x63onsumer.proto\"_\n\x15\x43onsumerCreateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerCreateResponse\"<\n\x17\x43onsumerRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\x04\"?\n\x18\x43onsumerRetrieveResponse\x12#\n\x08material\x18\x01 \x01(\x0b\x32\x11.ConsumerMaterial\"D\n\x1c\x43onsumerBatchRetrieveRequest\x12\x10\n\x08numberss\x18\x01 \x03(\t\x12\x12\n\nidentities\x18\x02 \x03(\x04\"E\n\x1d\x43onsumerBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.ConsumerMaterial\"_\n\x15\x43onsumerUpdateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\x04\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.ConsumerMaterial\"\x18\n\x16\x43onsumerUpdateResponse\":\n\x15\x43onsumerDeleteRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\x04\"\x18\n\x16\x43onsumerDeleteResponse\"\xb5\x01\n\x10\x43onsumerMaterial\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0e\n\x06\x61vatar\x18\x03 \x01(\t\x12\x0c\n\x04sexy\x18\x04 \x01(\t\x12\x0b\n\x03\x61ge\x18\x05 \x01(\r\x12\r\n\x05\x65mail\x18\x06 \x01(\t\x12\x11\n\tintroduce\x18\x07 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x08 \x01(\t\x12\x10\n\x08location\x18\t \x01(\t\x12\x0e\n\x06qrcode\x18\n \x01(\tb\x06proto3'
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -32,14 +32,14 @@ _CONSUMERCREATEREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='ConsumerCreateRequest.phone_number', index=0,
+      name='numbers', full_name='ConsumerCreateRequest.numbers', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_identity', full_name='ConsumerCreateRequest.consumer_identity', index=1,
+      name='identity', full_name='ConsumerCreateRequest.identity', index=1,
       number=2, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -65,7 +65,7 @@ _CONSUMERCREATEREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=18,
-  serialized_end=127,
+  serialized_end=113,
 )
 
 
@@ -88,8 +88,8 @@ _CONSUMERCREATERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=129,
-  serialized_end=153,
+  serialized_start=115,
+  serialized_end=139,
 )
 
 
@@ -101,14 +101,14 @@ _CONSUMERRETRIEVEREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='ConsumerRetrieveRequest.phone_number', index=0,
+      name='numbers', full_name='ConsumerRetrieveRequest.numbers', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_identity', full_name='ConsumerRetrieveRequest.consumer_identity', index=1,
+      name='identity', full_name='ConsumerRetrieveRequest.identity', index=1,
       number=2, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -126,8 +126,8 @@ _CONSUMERRETRIEVEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=155,
-  serialized_end=229,
+  serialized_start=141,
+  serialized_end=201,
 )
 
 
@@ -157,8 +157,8 @@ _CONSUMERRETRIEVERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=231,
-  serialized_end=294,
+  serialized_start=203,
+  serialized_end=266,
 )
 
 
@@ -170,14 +170,14 @@ _CONSUMERBATCHRETRIEVEREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_numbers', full_name='ConsumerBatchRetrieveRequest.phone_numbers', index=0,
+      name='numberss', full_name='ConsumerBatchRetrieveRequest.numberss', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_identity_multi', full_name='ConsumerBatchRetrieveRequest.consumer_identity_multi', index=1,
+      name='identities', full_name='ConsumerBatchRetrieveRequest.identities', index=1,
       number=2, type=4, cpp_type=4, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -195,8 +195,8 @@ _CONSUMERBATCHRETRIEVEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=296,
-  serialized_end=382,
+  serialized_start=268,
+  serialized_end=336,
 )
 
 
@@ -226,8 +226,8 @@ _CONSUMERBATCHRETRIEVERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=384,
-  serialized_end=453,
+  serialized_start=338,
+  serialized_end=407,
 )
 
 
@@ -239,14 +239,14 @@ _CONSUMERUPDATEREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='ConsumerUpdateRequest.phone_number', index=0,
+      name='numbers', full_name='ConsumerUpdateRequest.numbers', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_identity', full_name='ConsumerUpdateRequest.consumer_identity', index=1,
+      name='identity', full_name='ConsumerUpdateRequest.identity', index=1,
       number=2, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -271,8 +271,8 @@ _CONSUMERUPDATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=455,
-  serialized_end=564,
+  serialized_start=409,
+  serialized_end=504,
 )
 
 
@@ -295,8 +295,8 @@ _CONSUMERUPDATERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=566,
-  serialized_end=590,
+  serialized_start=506,
+  serialized_end=530,
 )
 
 
@@ -308,14 +308,14 @@ _CONSUMERDELETEREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='ConsumerDeleteRequest.phone_number', index=0,
+      name='numbers', full_name='ConsumerDeleteRequest.numbers', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_identity', full_name='ConsumerDeleteRequest.consumer_identity', index=1,
+      name='identity', full_name='ConsumerDeleteRequest.identity', index=1,
       number=2, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -333,8 +333,8 @@ _CONSUMERDELETEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=592,
-  serialized_end=664,
+  serialized_start=532,
+  serialized_end=590,
 )
 
 
@@ -357,8 +357,8 @@ _CONSUMERDELETERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=666,
-  serialized_end=690,
+  serialized_start=592,
+  serialized_end=616,
 )
 
 
@@ -370,7 +370,7 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='phone_number', full_name='ConsumerMaterial.phone_number', index=0,
+      name='numbers', full_name='ConsumerMaterial.numbers', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -384,7 +384,7 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='head_image', full_name='ConsumerMaterial.head_image', index=2,
+      name='avatar', full_name='ConsumerMaterial.avatar', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -392,8 +392,8 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='sexy', full_name='ConsumerMaterial.sexy', index=3,
-      number=4, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -451,8 +451,8 @@ _CONSUMERMATERIAL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=693,
-  serialized_end=883,
+  serialized_start=619,
+  serialized_end=800,
 )
 
 _CONSUMERCREATEREQUEST.fields_by_name['material'].message_type = _CONSUMERMATERIAL

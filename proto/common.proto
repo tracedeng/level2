@@ -58,10 +58,11 @@ message RequestHead {
 	uint32 cmd = 1;
 	uint64 seq = 2;
 
-	string phone_number = 3;
-	string session_key = 4;
+	string numbers = 3;         //发起请求的号码
+	string to_numbers = 4;      //
+	string session_key = 5;
 
-	string coroutine_uuid = 5;  //旁路使用
+	string coroutine_uuid = 6;  //旁路使用
 }
 
 message ResponseHead {
