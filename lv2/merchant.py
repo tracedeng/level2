@@ -48,32 +48,32 @@ class Merchant():
             g_log.error("%s", e)
             return 0
 
-    def consumer_create(self):
+    def merchant_create(self):
         """
-        创建consumer资料
+        创建merchant资料
         1 请求字段有效性检查
         2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
-            body = self.request.consumer_create_request
+            body = self.request.merchant_create_request
             phone_number = body.phone_number
             material = body.material
 
             if not phone_number:
                 if not material.phone_number:
-                    # TODO... 根据包体中的consumer_identity获取phone_number
+                    # TODO... 根据包体中的merchant_identity获取phone_number
                     pass
                 else:
                     phone_number = material.phone_number
 
-            # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
             if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to create consumer %s", self.phone_number, phone_number)
+                g_log.warning("%s no privilege to create merchant %s", self.phone_number, phone_number)
                 self.code = 30105
-                self.message = "no privilege to create consumer"
+                self.message = "no privilege to create merchant"
                 return 1
 
             kwargs = {"phone_number": phone_number, "merchant_name": material.merchat_name,
@@ -97,29 +97,29 @@ class Merchant():
             g_log.error("%s", e)
             return 0
 
-    def consumer_retrieve(self):
+    def merchant_retrieve(self):
         """
-        获取consumer资料
+        获取merchant资料
         1 请求字段有效性检查
         2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
-            body = self.request.consumer_delete_request
+            body = self.request.merchant_delete_request
             phone_number = body.phone_number
             merchant_identity = body.merchant_identity
 
             if not phone_number:
-                # TODO... 根据包体中的consumer_identity获取phone_number
+                # TODO... 根据包体中的merchant_identity获取phone_number
                 pass
 
-            # 发起请求的用户和要获取的用户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商户和要获取的商户不同，认为没有权限，TODO...更精细控制
             if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to retrieve consumer %s", self.phone_number, phone_number)
+                g_log.warning("%s no privilege to retrieve merchant %s", self.phone_number, phone_number)
                 self.code = 30208
-                self.message = "no privilege to retrieve consumer"
+                self.message = "no privilege to retrieve merchant"
                 return 1
 
             self.code, self.message = merchant_retrieve_with_phone_number(phone_number)
@@ -133,7 +133,7 @@ class Merchant():
                 response.head.message = "delete merchant done"
 
                 value = self.message
-                material = response.consumer_retrieve_response.material
+                material = response.merchant_retrieve_response.material
                 material.phone_number = phone_number
                 material.introduce = value["introduce"]
                 material.merchant_name = value["name"]
@@ -150,32 +150,32 @@ class Merchant():
             g_log.error("%s", e)
             return 0
 
-    def consumer_update(self):
+    def merchant_update(self):
         """
-        创建consumer资料
+        创建merchant资料
         1 请求字段有效性检查
         2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
-            body = self.request.consumer_create_request
+            body = self.request.merchant_create_request
             phone_number = body.phone_number
             material = body.material
 
             if not phone_number:
                 if not material.phone_number:
-                    # TODO... 根据包体中的consumer_identity获取phone_number
+                    # TODO... 根据包体中的merchant_identity获取phone_number
                     pass
                 else:
                     phone_number = material.phone_number
 
-            # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
             if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to update consumer %s", self.phone_number, phone_number)
+                g_log.warning("%s no privilege to update merchant %s", self.phone_number, phone_number)
                 self.code = 30400
-                self.message = "no privilege to update consumer"
+                self.message = "no privilege to update merchant"
                 return 1
 
             kwargs = {"phone_number": phone_number, "merchant_name": material.merchat_name,
@@ -199,29 +199,29 @@ class Merchant():
             g_log.error("%s", e)
             return 0
 
-    def consumer_delete(self):
+    def merchant_delete(self):
         """
-        删除consumer资料
+        删除merchant资料
         1 请求字段有效性检查
         2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
-            body = self.request.consumer_delete_request
+            body = self.request.merchant_delete_request
             phone_number = body.phone_number
             merchant_identity = body.merchant_identity
 
             if not phone_number:
-                # TODO... 根据包体中的consumer_identity获取phone_number
+                # TODO... 根据包体中的merchant_identity获取phone_number
                 pass
 
-            # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
             if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to delete consumer %s", self.phone_number, phone_number)
+                g_log.warning("%s no privilege to delete merchant %s", self.phone_number, phone_number)
                 self.code = 30510
-                self.message = "no privilege to delete consumer"
+                self.message = "no privilege to delete merchant"
                 return 1
 
             self.code, self.message = merchant_delete_with_phone_number(phone_number)
@@ -270,13 +270,13 @@ def merchant_create(**kwargs):
     :return: (30100, "yes")/成功，(>30100, "errmsg")/失败
     """
     try:
-        # 检查要创建的用户phone_number
+        # 检查要创建的商户phone_number
         phone_number = kwargs.get("phone_number", "")
         if not user_is_valid_merchant(phone_number):
             g_log.warning("invalid customer account %s", phone_number)
             return 30101, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
+        # 连接redis，检查该商户是否已经创建
         connection = get_redis_connection(phone_number)
         if not connection:
             g_log.error("connect to redis failed")
@@ -343,7 +343,7 @@ def merchant_retrieve_with_phone_number(phone_number):
             g_log.warning("invalid customer account %s", phone_number)
             return 30201, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
+        # 连接redis，检查该商户是否已经创建
         connection = get_redis_connection(phone_number)
         if not connection:
             g_log.error("connect to redis failed")
@@ -351,8 +351,8 @@ def merchant_retrieve_with_phone_number(phone_number):
 
         key = "user:%s" % phone_number
         if not connection.exists(key) or connection.hget(key, "deleted") == 1:
-            g_log.warning("consumer %s not exist", key)
-            return 30203, "consumer not exist"
+            g_log.warning("merchant %s not exist", key)
+            return 30203, "merchant not exist"
 
         value = connection.hgetall(key)
         g_log.debug("get %s %s", key, value)
@@ -411,7 +411,7 @@ def merchant_delete_with_phone_number(phone_number):
             g_log.warning("invalid customer account %s", phone_number)
             return 30501, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
+        # 连接redis，检查该商户是否已经创建
         connection = get_redis_connection(phone_number)
         if not connection:
             g_log.error("connect to redis failed")
@@ -420,15 +420,15 @@ def merchant_delete_with_phone_number(phone_number):
         # 检查账号是否存在
         key = "user:%s" % phone_number
         if not connection.exists(key):
-            g_log.warning("consumer %s not exist", key)
-            return 30503, "consumer not exist"
+            g_log.warning("merchant %s not exist", key)
+            return 30503, "merchant not exist"
         value = connection.hget(key, "deleted")
         g_log.debug("get %s#deleted %s", key, value)
         if value == "1":
-            g_log.warning("consumer %s deleted already", key)
-            return 30504, "consumer not exist"
+            g_log.warning("merchant %s deleted already", key)
+            return 30504, "merchant not exist"
 
-        # 删除consumer
+        # 删除merchant
         connection.hset(key, "deleted", 1)
         return 30500, "yes"
     except (redis.ConnectionError, redis.TimeoutError) as e:
