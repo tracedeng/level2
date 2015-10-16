@@ -4,8 +4,8 @@ syntax = "proto3";
 
 // 增加用户
 message ConsumerCreateRequest {
-    string phone_number = 1;
-    uint64 consumer_identity = 2;
+    string numbers = 1;
+    uint64 identity = 2;
 	ConsumerMaterial material = 3;
 };
 
@@ -15,8 +15,8 @@ message ConsumerCreateResponse {
 
 // 读取用户
 message ConsumerRetrieveRequest {
-    string phone_number = 1;
-    uint64 consumer_identity = 2;
+    string numbers = 1;
+    uint64 identity = 2;
 }
 
 message ConsumerRetrieveResponse {
@@ -25,8 +25,8 @@ message ConsumerRetrieveResponse {
 
 // 批量读取用户
 message ConsumerBatchRetrieveRequest {
-    repeated string phone_numbers = 1;
-    repeated uint64 consumer_identity_multi = 2;
+    repeated string numberss = 1;
+    repeated uint64 identities = 2;
 }
 
 message ConsumerBatchRetrieveResponse {
@@ -35,8 +35,8 @@ message ConsumerBatchRetrieveResponse {
 
 // 更新用户
 message ConsumerUpdateRequest {
-    string phone_number = 1;
-    uint64 consumer_identity = 2;
+    string numbers = 1;
+    uint64 identity = 2;
     ConsumerMaterial material = 3;
 }
 
@@ -46,8 +46,8 @@ message ConsumerUpdateResponse {
 
 // 删除用户
 message ConsumerDeleteRequest {
-    string phone_number = 1;
-    uint64 consumer_identity = 2;
+    string numbers = 1;
+    uint64 identity = 2;
 }
 
 message ConsumerDeleteResponse {
@@ -56,10 +56,10 @@ message ConsumerDeleteResponse {
 
 // 普通用户资料
 message ConsumerMaterial {
-    string phone_number = 1;
+    string numbers = 1;
     string nickname = 2;
-    string head_image = 3;  //TODO... 用户头像
-	uint32 sexy = 4;         //1-male，2-female，0-unknow
+    string avatar = 3;  //TODO... 用户头像
+	string sexy = 4;         //male，female，unknow
     uint32 age = 5;
     string email = 6;
     string introduce = 7;   //个人介绍
