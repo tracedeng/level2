@@ -44,4 +44,4 @@ def sexy_string_2_number(sexy):
 
 def sexy_number_2_string(sexy):
     number2string = {'1': 'female', '2': 'male'}
-    return number2string(str(sexy), 'unknow')
+    return number2string.get(str(sexy), 'unknow')

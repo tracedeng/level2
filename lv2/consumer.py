@@ -132,15 +132,14 @@ class Consumer():
                 response.head.code = 1
                 response.head.message = "delete consumer done"
 
-                value = self.message
                 material = response.consumer_retrieve_response.material
-                
                 material.numbers = numbers
+                value = self.message
                 material.sexy = sexy_number_2_string(value["sexy"])  # 从redis取出来的值都是字符串
                 material.age = int(value["age"])
                 material.introduce = value["introduce"]
                 material.email = value["email"]
-                material.nickname = value["nickname"]
+                material.nickname = value["name"]
                 material.location = value["location"]
                 material.country = value["country"]
                 material.qrcode = value["qrcode"]
@@ -151,6 +150,9 @@ class Consumer():
         except Exception as e:
             g_log.error("%s", e)
             return 0
+
+    def consumer_batch_retrieve(self):
+        pass
 
     def consumer_update(self):
         """

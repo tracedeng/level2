@@ -30,34 +30,34 @@ def consumer_create_test(numbers='18688982240'):
     pack_send_receive(req)
 
 
-def consumer_retrieve_test():
+def consumer_retrieve_test(numbers='18688982240'):
     req = common_pb2.Request()
     req.head.cmd = 101
     req.head.seq = 2
-    req.head.numbers = "18688982243"
-    req.consumer_retrieve_request.numbers = "18688982243"
+    req.head.numbers = numbers
+    req.consumer_retrieve_request.numbers = numbers
 
     pack_send_receive(req)
 
 
-def consumer_update_test():
+def consumer_update_test(numbers='18688982240'):
     req = common_pb2.Request()
     req.head.cmd = 103
     req.head.seq = 2
-    req.head.numbers = "18688982243"
-    req.consumer_update_request.numbers = "18688982243"
+    req.head.numbers = numbers
+    req.consumer_update_request.numbers = numbers
     req.consumer_update_request.material.nickname = "dudu"
     req.consumer_update_request.material.age = 1000
 
     pack_send_receive(req)
 
 
-def consumer_delete_test():
+def consumer_delete_test(numbers='18688982240'):
     req = common_pb2.Request()
     req.head.cmd = 104
     req.head.seq = 2
-    req.head.numbers = "18688982243"
-    req.consumer_delete_request.numbers = "18688982243"
+    req.head.numbers = numbers
+    req.consumer_delete_request.numbers = numbers
 
     pack_send_receive(req)
 
@@ -69,7 +69,7 @@ def pack_send_receive(req):
     # 发包
     sock = socket.socket(type=socket.SOCK_DGRAM)
     sock.connect(address)
-    g_log.debug("Sending %s bytes to %s:%s", len(request), address)
+    g_log.debug("Sending %s bytes to %s", len(request), address)
     g_log.debug("%s", req)
     send_to_sock(sock, request)
 
@@ -78,7 +78,7 @@ def pack_send_receive(req):
     if result == 0:
         return 0
     response, _ = result
-    g_log.debug('receive %s bytes from %s:%s', len(response), _)
+    g_log.debug('receive %s bytes from %s', len(response), _)
 
     res = common_pb2.Response()
     res.ParseFromString(response[6:-2])
@@ -98,7 +98,8 @@ def batch_test_create():
 
 if "__main__" == __name__:
     # consumer_delete_test()
-    # consumer_retrieve_test()
+    # consumer_create_test()
+    consumer_retrieve_test()
     # consumer_update_test()
     # consumer_retrieve_test()
     pass
