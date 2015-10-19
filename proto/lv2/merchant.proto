@@ -5,19 +5,19 @@ syntax = "proto3";
 // 增加商家
 message MerchantCreateRequest {
     string numbers = 1;
-    string identity = 2; //登录模块生成的商户ID
+    string identity = 2; //登录模块生成的用户ID
 	MerchantMaterial material = 3;
 };
 
 message MerchantCreateResponse {
-    string material_identity = 1;   //商户资料ID
+    string merchant_identity = 1;   //商户资料ID
 };
 
 // 读取商家
 message MerchantRetrieveRequest {
-    string number = 1;
+    string numbers = 1;
     string identity = 2;
-    repeated string merchant_identities = 3;       //要查询商户的ID列表
+    string merchant_identities = 3;       //要查询商户的ID
 }
 
 message MerchantRetrieveResponse {
@@ -36,7 +36,7 @@ message MerchantBatchRetrieveResponse {
 
 // 更新商家
 message MerchantUpdateRequest {
-    string number = 1;
+    string numbers = 1;
     string identity = 2;
     string merchant_identity = 3;
     MerchantMaterial material = 4;
@@ -48,7 +48,7 @@ message MerchantUpdateResponse {
 
 // 删除商家
 message MerchantDeleteRequest {
-    string number = 1;
+    string numbers = 1;
     string identity = 2;
     string merchant_identity = 3;   //要删除的商户资料ID
 }
