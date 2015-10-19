@@ -184,6 +184,14 @@ class Consumer():
 
             value = {}
             # TODO... HasField 问题
+            # g_log.debug(dir(material))
+            g_log.debug(body.HasField('material'))
+            # g_log.debug(body.HasField('numbers'))
+            # g_log.debug(material.HasField(material.nickname))
+            g_log.debug(material.ListFields()[0][0].name)
+            g_log.debug(material.ListFields()[1][0].name)
+            g_log.debug("%s", material.ListFields())
+            g_log.debug("%s", body.ListFields())
             if material.HasField('nickname'):
                 value["nickname"] = material.nickname
 

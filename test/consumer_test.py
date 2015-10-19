@@ -7,7 +7,7 @@ import common_pb2
 import package
 
 import calculus.wrapper.log as log
-g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
+g_log = log.WrapperLog('stream', name=__name__, level=log.ERROR).log  # 启动日志功能
 from branch_socket import receive_from_sock
 from branch_socket import send_to_sock
 
@@ -88,7 +88,7 @@ def pack_send_receive(req):
 def batch_test_create():
     import time
     begin = 15100001111
-    last = 15100001111
+    last = 15100101111
     start = time.clock()
     for i in xrange(begin, last):
         consumer_create_test(str(i))
@@ -96,10 +96,24 @@ def batch_test_create():
     g_log.debug("create %s consumer, cost %s cpu time", last - begin, end-start)
 
 
+def batch_test_retrieve():
+    import time
+    begin = 15100001111
+    last = 15100101111
+    start = time.clock()
+    for i in xrange(begin, last):
+        consumer_retrieve_test(str(i))
+    end = time.clock()
+    g_log.debug("retrieve %s consumer, cost %s cpu time", last - begin, end-start)
+    print("retrieve %s consumer, cost %s cpu time" % (last - begin, end-start))
+
+
 if "__main__" == __name__:
     # consumer_delete_test()
     # consumer_create_test()
-    consumer_retrieve_test()
+    # consumer_retrieve_test()
     # consumer_update_test()
     # consumer_retrieve_test()
+    # batch_test_create()
+    # batch_test_retrieve()
     pass
