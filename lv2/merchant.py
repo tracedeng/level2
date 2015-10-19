@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
+import string
+import random
 import redis
 import common_pb2
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 from redis_connection import get_redis_connection
-from account_valid import user_is_valid_merchant
+from account_valid import user_is_valid_merchant, yes_no_2_char, char_2_yes_no
 
 
 class Merchant():
@@ -20,7 +22,7 @@ class Merchant():
         self.head = request.head
         self.cmd = self.head.cmd
         self.seq = self.head.seq
-        self.phone_number = self.head.phone_number
+        self.numbers = self.head.numbers
         self.code = 1   # 模块号(2位) + 功能号(2位) + 错误号(2位)
         self.message = ""
 
@@ -59,24 +61,24 @@ class Merchant():
         """
         try:
             body = self.request.merchant_create_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             material = body.material
 
-            if not phone_number:
-                if not material.phone_number:
-                    # TODO... 根据包体中的merchant_identity获取phone_number
+            if not numbers:
+                if not material.numbers:
+                    # TODO... 根据包体中的merchant_identity获取numbers
                     pass
                 else:
-                    phone_number = material.phone_number
+                    numbers = material.numbers
 
             # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
-            if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to create merchant %s", self.phone_number, phone_number)
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to create merchant %s", self.numbers, numbers)
                 self.code = 30105
                 self.message = "no privilege to create merchant"
                 return 1
 
-            kwargs = {"phone_number": phone_number, "merchant_name": material.merchat_name,
+            kwargs = {"numbers": numbers, "merchant_name": material.merchat_name,
                       "introduce": material.introduce, "logo": material.logo, "email": material.email,
                       "country": material.country, "location": material.location,
                       "latitude": material.latitude, "longitude": material.longitude}
@@ -108,21 +110,21 @@ class Merchant():
         """
         try:
             body = self.request.merchant_delete_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             merchant_identity = body.merchant_identity
 
-            if not phone_number:
-                # TODO... 根据包体中的merchant_identity获取phone_number
+            if not numbers:
+                # TODO... 根据包体中的merchant_identity获取numbers
                 pass
 
             # 发起请求的商户和要获取的商户不同，认为没有权限，TODO...更精细控制
-            if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to retrieve merchant %s", self.phone_number, phone_number)
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve merchant %s", self.numbers, numbers)
                 self.code = 30208
                 self.message = "no privilege to retrieve merchant"
                 return 1
 
-            self.code, self.message = merchant_retrieve_with_phone_number(phone_number)
+            self.code, self.message = merchant_retrieve_with_numbers(numbers)
 
             if 30200 == self.code:
                 # 获取成功
@@ -134,7 +136,7 @@ class Merchant():
 
                 value = self.message
                 material = response.merchant_retrieve_response.material
-                material.phone_number = phone_number
+                material.numbers = numbers
                 material.introduce = value["introduce"]
                 material.merchant_name = value["name"]
                 material.logo = value["logo"]
@@ -161,24 +163,24 @@ class Merchant():
         """
         try:
             body = self.request.merchant_create_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             material = body.material
 
-            if not phone_number:
-                if not material.phone_number:
-                    # TODO... 根据包体中的merchant_identity获取phone_number
+            if not numbers:
+                if not material.numbers:
+                    # TODO... 根据包体中的merchant_identity获取numbers
                     pass
                 else:
-                    phone_number = material.phone_number
+                    numbers = material.numbers
 
             # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
-            if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to update merchant %s", self.phone_number, phone_number)
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to update merchant %s", self.numbers, numbers)
                 self.code = 30400
                 self.message = "no privilege to update merchant"
                 return 1
 
-            kwargs = {"phone_number": phone_number, "merchant_name": material.merchat_name,
+            kwargs = {"numbers": numbers, "merchant_name": material.merchat_name,
                       "introduce": material.introduce, "logo": material.logo, "email": material.email,
                       "country": material.country, "location": material.location,
                       "latitude": material.latitude, "longitude": material.longitude}
@@ -210,21 +212,21 @@ class Merchant():
         """
         try:
             body = self.request.merchant_delete_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             merchant_identity = body.merchant_identity
 
-            if not phone_number:
-                # TODO... 根据包体中的merchant_identity获取phone_number
+            if not numbers:
+                # TODO... 根据包体中的merchant_identity获取numbers
                 pass
 
             # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
-            if self.phone_number != phone_number:
-                g_log.warning("%s no privilege to delete merchant %s", self.phone_number, phone_number)
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to delete merchant %s", self.numbers, numbers)
                 self.code = 30510
                 self.message = "no privilege to delete merchant"
                 return 1
 
-            self.code, self.message = merchant_delete_with_phone_number(phone_number)
+            self.code, self.message = merchant_delete_with_numbers(numbers)
 
             if 30500 == self.code:
                 # 删除成功
@@ -264,46 +266,48 @@ def enter(request):
 def merchant_create(**kwargs):
     """
     增加商户资料
-    :param kwargs: {"phone_number": "18688982240", "merchant_name": "Star Bucks", "introduce": "We sell coffee",
-                    "logo": "", "email": "vip@starbucks.com", "country": "USA", "location": "california",
-                    "latitude": 38.38, "longitude": -114.8}
+    :param kwargs: {"numbers": "18688982240", "name": "星巴克", "name_en": "Star Bucks", "introduce": "We sell coffee",
+                    "logo": "", "email": "vip@starbucks.com", "country": "USA", "location": "california", "qrcode": "",
+                    "contact_numbers", "021-88888888", "latitude": 38.38, "longitude": -114.8, "contract": ""}
     :return: (30100, "yes")/成功，(>30100, "errmsg")/失败
     """
     try:
-        # 检查要创建的商户phone_number
-        phone_number = kwargs.get("phone_number", "")
-        if not user_is_valid_merchant(phone_number):
-            g_log.warning("invalid customer account %s", phone_number)
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid customer account %s", numbers)
             return 30101, "invalid phone number"
 
-        # 连接redis，检查该商户是否已经创建
-        connection = get_redis_connection(phone_number)
-        if not connection:
-            g_log.error("connect to redis failed")
-            return 30102, "connect to redis failed"
+        # 商户名称不能超过64字节，超过要截取前64字节
+        name = kwargs.get("name")
+        if not name:
+            g_log.error("lost merchant name")
+            return 30102, "illegal argument"
 
-        key = "user:%s" % phone_number
-        if connection.exists(key) and connection.hget(key, "deleted") == "0":
-            g_log.warning("duplicate create user %s", key)
-            return 30103, "duplicate create user"
+        if len(name) > 64:
+            g_log.warning("too long merchant name %s", name)
+            name = name[0:64]
 
-        # 昵称不能超过16字节，超过要截取前16字节
-        merchant_name = kwargs.get("merchant_name", phone_number)
-        if len(merchant_name) > 32:
-            g_log.warning("too long merchant_name %s", merchant_name)
-            merchant_name = merchant_name[0:16]
+        name_en = kwargs.get("name_en")
+        if len(name_en) > 64:
+            g_log.warning("too long merchant english name %s", name_en)
+            name_en = name_en[0:64]
 
-        # 个人介绍不能超过512字节，超过要截取前512字节
+        verified = yes_no_2_char(kwargs.get("verified", "no"))
+
+        # 商户介绍不能超过512字节，超过要截取前512字节
         introduce = kwargs.get("introduce", "")
         if len(introduce) > 512:
             g_log.warning("too long introduce %s", introduce)
             introduce = introduce[0:512]
 
-        # TODO... email、logo、国家、地区检查
+        # TODO... qrcode、email、logo、国家、地区、合同编号检查
         logo = kwargs.get("logo", "")
         email = kwargs.get("email", "")
         country = kwargs.get("country", "")
         location = kwargs.get("location", "")
+        qrcode = kwargs.get("qrcode", "")
+        contract = kwargs.get("contract", "")
 
         latitude = kwargs.get("latitude", 0)
         if latitude < -90 or latitude > 90:
@@ -314,10 +318,23 @@ def merchant_create(**kwargs):
             g_log.warning("longitude illegal, %s", longitude)
             longitude = 0
 
-        value = {"name": merchant_name, "logo": logo, "email": email, "introduce": introduce, "latitude": latitude,
+        value = {"name": name, "name_en": name_en, "verified": verified, "logo": logo, "email": email,
+                 "introduce": introduce, "latitude": latitude, "qrcode": qrcode, "contract": contract,
                  "longitude": longitude, "country": country, "location": location, "deleted": 0}
 
-        # 存入数据库
+        # 连接redis
+        connection = get_redis_connection(numbers)
+        if not connection:
+            g_log.error("connect to redis failed")
+            return 30102, "connect to redis failed"
+
+        # 创建商户资料，商户和资料关联
+        merchant_identity = generate_merchant_identity(numbers)
+        key = "merchant:%s" % merchant_identity
+        connection.hmset(key, value)
+        g_log.debug("insert %s %s", key, value)
+        key = "%s:%s" % numbers, merchant_identity
+        value = {"deleted": 0}
         connection.hmset(key, value)
         g_log.debug("insert %s %s", key, value)
 
@@ -331,25 +348,25 @@ def merchant_create(**kwargs):
 
 
 # pragma 读取商户资料API
-def merchant_retrieve_with_phone_number(phone_number):
+def merchant_retrieve_with_numbers(numbers):
     """
     读取商户资料
-    :param phone_number: 商户电话号码
+    :param numbers: 商户电话号码
     :return: (30200, "yes")/成功，(>30200, "errmsg")/失败
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(phone_number):
-            g_log.warning("invalid customer account %s", phone_number)
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid customer account %s", numbers)
             return 30201, "invalid phone number"
 
         # 连接redis，检查该商户是否已经创建
-        connection = get_redis_connection(phone_number)
+        connection = get_redis_connection(numbers)
         if not connection:
             g_log.error("connect to redis failed")
             return 30202, "connect to redis failed"
 
-        key = "user:%s" % phone_number
+        key = "user:%s" % numbers
         if not connection.exists(key) or connection.hget(key, "deleted") == 1:
             g_log.warning("merchant %s not exist", key)
             return 30203, "merchant not exist"
@@ -373,23 +390,23 @@ def merchant_retrieve_with_identity(merchant_identity):
     """
     try:
         # 根据商户id查找商户电话号码
-        phone_number = ""
-        return merchant_retrieve_with_phone_number(phone_number)
+        numbers = ""
+        return merchant_retrieve_with_numbers(numbers)
     except Exception as e:
         g_log.error("%s", e)
         return 30205, "exception"
 
 
-def merchant_retrieve(phone_number=None, merchant_identity=None):
+def merchant_retrieve(numbers=None, merchant_identity=None):
     """
     获取商户资料，商户电话号码优先
-    :param phone_number: 商户电话号码
+    :param numbers: 商户电话号码
     :param merchant_identity: 商户ID
     :return:
     """
     try:
-        if phone_number:
-            return merchant_retrieve_with_phone_number(phone_number)
+        if numbers:
+            return merchant_retrieve_with_numbers(numbers)
         elif merchant_identity:
             return merchant_retrieve_with_identity(merchant_identity)
         else:
@@ -399,26 +416,26 @@ def merchant_retrieve(phone_number=None, merchant_identity=None):
         return 30207, "exception"
 
 # pragma 删除商户资料API
-def merchant_delete_with_phone_number(phone_number):
+def merchant_delete_with_numbers(numbers):
     """
     删除商户资料
-    :param phone_number: 商户电话号码
+    :param numbers: 商户电话号码
     :return: (30500, "yes")/成功，(>30500, "errmsg")/失败
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(phone_number):
-            g_log.warning("invalid customer account %s", phone_number)
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid customer account %s", numbers)
             return 30501, "invalid phone number"
 
         # 连接redis，检查该商户是否已经创建
-        connection = get_redis_connection(phone_number)
+        connection = get_redis_connection(numbers)
         if not connection:
             g_log.error("connect to redis failed")
             return 30502, "connect to redis failed"
 
         # 检查账号是否存在
-        key = "user:%s" % phone_number
+        key = "user:%s" % numbers
         if not connection.exists(key):
             g_log.warning("merchant %s not exist", key)
             return 30503, "merchant not exist"
@@ -447,23 +464,23 @@ def merchant_delete_with_identity(merchant_identity):
     """
     try:
         # 根据商户id查找商户电话号码
-        phone_number = ""
-        return merchant_delete_with_phone_number(phone_number)
+        numbers = ""
+        return merchant_delete_with_numbers(numbers)
     except Exception as e:
         g_log.error("%s", e)
         return 30507, "exception"
 
 
-def merchant_delete(phone_number=None, merchant_identity=None):
+def merchant_delete(numbers=None, merchant_identity=None):
     """
     删除商户资料，商户电话号码优先
-    :param phone_number: 商户电话号码
+    :param numbers: 商户电话号码
     :param merchant_identity: 商户ID
     :return:
     """
     try:
-        if phone_number:
-            return merchant_delete_with_phone_number(phone_number)
+        if numbers:
+            return merchant_delete_with_numbers(numbers)
         elif merchant_identity:
             return merchant_delete_with_identity(merchant_identity)
         else:
@@ -471,3 +488,19 @@ def merchant_delete(phone_number=None, merchant_identity=None):
     except Exception as e:
         g_log.error("%s", e)
         return 30509, "exception"
+
+
+def generate_merchant_identity(numbers):
+    """
+    随即生成商家ID ＝ random([a-z,A-Z,0-9] , 3) + random(手机号码后8位，2)，异常使用手机号码后5位
+    :param numbers: 手机号码
+    :return: 5位随机字符串
+    """
+    try:
+        merchant_identity = "".join(random.sample(string.ascii_letters + string.digits, 3)
+                                    + random.sample(numbers[-8:], 2))
+        return merchant_identity
+    except Exception as e:
+        g_log.critical("%s", e)
+        return numbers[-5:]
+

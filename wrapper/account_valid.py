@@ -45,3 +45,13 @@ def sexy_string_2_number(sexy):
 def sexy_number_2_string(sexy):
     number2string = {'1': 'female', '2': 'male'}
     return number2string.get(str(sexy), 'unknow')
+
+
+def yes_no_2_char(yes_no):
+    yesno2char = {"yes": "y", "no": "n"}
+    return yesno2char.get(yes_no, 'n')
+
+
+def char_2_yes_no(yes_no):
+    char2yesno = {"y": "yes", "n": "no"}
+    return char2yesno.get(yes_no, 'no')

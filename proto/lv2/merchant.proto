@@ -4,30 +4,30 @@ syntax = "proto3";
 
 // 增加商家
 message MerchantCreateRequest {
-    string number = 1;
-    uint64 merchant_identity = 2;
+    string numbers = 1;
+    string identity = 2; //登录模块生成的商户ID
 	MerchantMaterial material = 3;
-    MerchantMaterialAlter material_alter = 4;
 };
 
 message MerchantCreateResponse {
-
+    string material_identity = 1;   //商户资料ID
 };
 
 // 读取商家
 message MerchantRetrieveRequest {
     string number = 1;
-    uint64 merchant_identity = 2;
+    string identity = 2;
+    repeated string merchant_identities = 3;       //要查询商户的ID列表
 }
 
 message MerchantRetrieveResponse {
-    MerchantMaterial material = 1;
+    repeated MerchantMaterial materials = 1;
 }
 
 // 批量读取商家
 message MerchantBatchRetrieveRequest {
     repeated string numbers = 1;
-    repeated uint64 merchant_identity_multi = 2;
+    repeated string identities = 2;
 }
 
 message MerchantBatchRetrieveResponse {
@@ -37,8 +37,9 @@ message MerchantBatchRetrieveResponse {
 // 更新商家
 message MerchantUpdateRequest {
     string number = 1;
-    uint64 merchant_identity = 2;
-    MerchantMaterial material = 3;
+    string identity = 2;
+    string merchant_identity = 3;
+    MerchantMaterial material = 4;
 }
 
 message MerchantUpdateResponse {
@@ -48,29 +49,29 @@ message MerchantUpdateResponse {
 // 删除商家
 message MerchantDeleteRequest {
     string number = 1;
-    uint64 merchant_identity = 2;
+    string identity = 2;
+    string merchant_identity = 3;   //要删除的商户资料ID
 }
 
 message MerchantDeleteResponse {
 
 }
 
-// 商家资料，只有平台可修改
+// 商家资料
 message MerchantMaterial {
-    string contract = 1;    //商家和平台的合同编号
-    string merchant_name = 2;   //商家名称
-    string manager_number = 3;    //管理员
-}
+    string name = 1;      //商家名称，认证后不可修改
+    string name_en = 2;   //商家名称英文，认证后不可修改
+    string numbers = 3;     //创建者电话号码
+    string verified = 4;      //是否通过验证，yes、no
 
-
-// 商家资料，商家可修改
-message MerchantMaterialAlter {
-    string number = 2;    //商家联系电话
-    string logo = 3;        //TODO... 商家logo
-    string email = 4;
-    string introduce = 5;   //商家介绍
-	float longitude = 6;    //经度
-    float latitude = 7;     //纬度
-    string country = 8;
-    string location = 9;    //地区，省市
+    string qrcode = 21;     //商家二维码，供用户扫描生成积分
+    string contact_numbers = 22;    //商家联系电话
+    string logo =23;        //商家logo
+    string email = 24;
+    string introduce = 25;   //商家介绍
+	float longitude = 26;    //经度
+    float latitude = 27;     //纬度
+    string country = 28;
+    string location = 29;    //地区，省市
+    string contract = 30;    //商家和平台的合同编号
 }
