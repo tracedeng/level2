@@ -244,7 +244,10 @@ class Merchant():
                 self.message = "no privilege to delete merchant"
                 return 1
 
-            self.code, self.message = merchant_delete_with_numbers(numbers)
+            if merchant_identity:
+                self.code, self.message = merchant_delete_with_merchant_identity(numbers, merchant_identity)
+            else:
+                self.code, self.message = merchant_delete_with_numbers(numbers)
 
             if 30500 == self.code:
                 # 删除成功
@@ -469,51 +472,57 @@ def merchant_retrieve_with_merchant_identity(merchant_identity):
         g_log.error("%s %s", e.__class__, e)
         return 30210, "exception"
 
+
 # pragma 删除商户资料API
 def merchant_delete_with_numbers(numbers):
     """
     删除商户资料
-    :param numbers: 商户电话号码
+    :param numbers: 商户所有者电话号码
     :return: (30500, "yes")/成功，(>30500, "errmsg")/失败
     """
     try:
         # 检查合法账号
         if not user_is_valid_merchant(numbers):
-            g_log.warning("invalid customer account %s", numbers)
+            g_log.warning("invalid merchant account %s", numbers)
             return 30501, "invalid phone number"
 
-        # 连接mongo，检查该商户是否已经创建
-        connection = get_mongo_connection(numbers)
-        if not connection:
-            g_log.error("connect to mongo failed")
-            return 30502, "connect to mongo failed"
+        # 获取用户拥有的所有商户ID
+        collection = get_mongo_collection(numbers, "number_merchant")
+        if not collection:
+            g_log.error("get collection number_merchant failed")
+            return 30502, "get collection number_merchant failed"
+        merchants = collection.update_many({"numbers": numbers, "deleted": 0}, {"deleted": 1})
 
-        # 检查账号是否存在
-        key = "user:%s" % numbers
-        if not connection.exists(key):
-            g_log.warning("merchant %s not exist", key)
-            return 30503, "merchant not exist"
-        value = connection.hget(key, "deleted")
-        g_log.debug("get %s#deleted %s", key, value)
-        if value == "1":
-            g_log.warning("merchant %s deleted already", key)
-            return 30504, "merchant not exist"
+        # merchants = collection.find({"numbers": numbers, "deleted": 0}, {"merchant_identity": 1, "_id": 0})
+        # # g_log.debug(merchants.__class__)
+        # identities = []
+        # for merchant in merchants:
+        #     # g_log.debug(merchant["merchant_identity"])
+        #     identities.append(ObjectId(merchant["merchant_identity"]))
+        # # g_log.debug(identities)
+        #
+        # collection = get_mongo_collection(numbers, "merchant")
+        # if not collection:
+        #     g_log.error("get collection merchant failed")
+        #     return 30203, "get collection merchant failed"
+        # collection.update_many({})
+        # merchants = collection.update_many({"_id": {"$in": identities}, "deleted": 0}, {"deleted": 1})
+        # # TODO...对没有商户做特殊处理
+        if not merchants.matched_count:
+            g_log.debug("account %s has no merchant", numbers)
+        else:
+            g_log.debug("update %s merchant", merchants.modified_count)
 
-        # 删除merchant
-        connection.hset(key, "deleted", 1)
         return 30500, "yes"
-    except (mongo.ConnectionError, mongo.TimeoutError) as e:
-        g_log.error("connect to mongo failed")
-        return 30505, "connect to mongo failed"
     except Exception as e:
         g_log.error("%s", e)
         return 30506, "exception"
 
 
-def merchant_delete_with_identity(merchant_identity):
+def merchant_delete_with_identity(identity):
     """
     删除商户资料
-    :param merchant_identity: 商户ID
+    :param identity: 商户所有者ID
     :return:
     """
     try:
@@ -525,23 +534,62 @@ def merchant_delete_with_identity(merchant_identity):
         return 30507, "exception"
 
 
-def merchant_delete(numbers=None, merchant_identity=None):
+def merchant_delete(numbers=None, identity=None):
     """
-    删除商户资料，商户电话号码优先
-    :param numbers: 商户电话号码
-    :param merchant_identity: 商户ID
+    删除商户资料，商户所有者电话号码优先
+    :param numbers: 商户所有者电话号码
+    :param identity: 商户所有者ID
     :return:
     """
     try:
         if numbers:
             return merchant_delete_with_numbers(numbers)
-        elif merchant_identity:
-            return merchant_delete_with_identity(merchant_identity)
+        elif identity:
+            return merchant_delete_with_identity(identity)
         else:
             return 30508, "bad arguments"
     except Exception as e:
         g_log.error("%s", e)
         return 30509, "exception"
+
+
+def merchant_delete_with_merchant_identity(numbers, merchant_identity):
+    """
+    删除商户资料
+    :param numbers: 商户所有者电话号码
+    :return: (30500, "yes")/成功，(>30500, "errmsg")/失败
+    """
+    try:
+        # 检查合法账号
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid merchant account %s", numbers)
+            return 30510, "invalid phone number"
+
+        # 获取用户拥有的所有商户ID
+        collection = get_mongo_collection(numbers, "number_merchant")
+        if not collection:
+            g_log.error("get collection number_merchant failed")
+            return 30511, "get collection number_merchant failed"
+        merchants = collection.update_one({"numbers": numbers, "merchant_identity": merchant_identity,
+                                           "deleted": 0}, {"deleted": 1})
+        # TODO...对没有商户做特殊处理
+        if not merchants.matched_count:
+            g_log.debug("account %s has no merchant", numbers)
+        else:
+            g_log.debug("delete %s merchant %s", numbers, merchant_identity)
+            # merchants = collection.find({"merchant_identity": merchant_identity, "deleted": 0})
+            # if not merchants.count:
+            #     # 已经没有任何用户关联该商户资料，删除商户资料，用merchant_identity路由
+            #     collection = get_mongo_collection(merchant_identity, "merchant")
+            #     if not collection:
+            #         g_log.error("get collection merchant failed")
+            #         return 30212, "get collection merchant failed"
+            #     merchants = collection.update_one({"_id": ObjectId(merchant_identity), "deleted": 0}, {"deleted": 1})
+            #
+        return 30500, "yes"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30512, "exception"
 
 
 def generate_merchant_identity(numbers):

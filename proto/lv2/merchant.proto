@@ -5,7 +5,7 @@ syntax = "proto3";
 // 增加商家
 message MerchantCreateRequest {
     string numbers = 1;
-    string identity = 2; //登录模块生成的用户ID
+    string identity = 2;        //商户创建者ID
 	MerchantMaterial material = 3;
 };
 
@@ -50,7 +50,7 @@ message MerchantUpdateResponse {
 message MerchantDeleteRequest {
     string numbers = 1;
     string identity = 2;
-    string merchant_identity = 3;   //要删除的商户资料ID
+    string merchant_identity = 3;   //要删除的商户资料ID，有这个字段表示只删除
 }
 
 message MerchantDeleteResponse {
@@ -62,7 +62,7 @@ message MerchantMaterial {
     string name = 1;      //商家名称，认证后不可修改
     string name_en = 2;   //商家名称英文，认证后不可修改
     string numbers = 3;     //创建者电话号码
-    string verified = 4;      //是否通过验证，yes、no
+    string verified = 4;    //是否通过验证，yes、no
     string identity = 5;    //商户ID
 
     string qrcode = 21;     //商家二维码，供用户扫描生成积分
