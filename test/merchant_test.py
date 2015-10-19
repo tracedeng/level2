@@ -109,7 +109,7 @@ def batch_test_retrieve():
 
 if "__main__" == __name__:
     # merchant_delete_test()
-    # merchant_create_test()
+    merchant_create_test()
     merchant_retrieve_test()
     # merchant_update_test()
     # merchant_retrieve_test()

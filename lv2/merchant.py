@@ -136,24 +136,35 @@ class Merchant():
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "delete merchant done"
+                response.head.message = "retrieve merchant done"
 
-                value = self.message
-                material = response.merchant_retrieve_response.material
-                material.numbers = numbers
-                material.introduce = value["introduce"]
-                material.merchant_name = value["name"]
-                material.logo = value["logo"]
-                material.email = value["email"]
-                material.location = value["location"]
-                material.country = value["country"]
-                material.latitude = float(value["latitude"])
-                material.longitude = float(value["longitude"])
+                merchants = self.message
+                materials = response.merchant_retrieve_response.materials
+                g_log.debug(dir(materials))
+                for value in merchants:
+                    material = materials.add()
+                    material.name = value["name"]
+                    material.name_en = value["name_en"]
+                    material.numbers = value["numbers"]
+                    material.verified = char_2_yes_no(value["verified"])
+                    # g_log.debug(value["_id"])
+                    # g_log.debug(value["_id"].__class__)
+                    material.identity = str(value["_id"])
+                    material.logo = value["logo"]
+                    material.email = value["email"]
+                    material.qrcode = value["qrcode"]
+                    material.introduce = value["introduce"]
+                    material.contact_numbers = value["contact_numbers"]
+                    material.contract = value["contract"]
+                    material.location = value["location"]
+                    material.country = value["country"]
+                    material.latitude = float(value["latitude"])
+                    material.longitude = float(value["longitude"])
                 return response
             else:
                 return 1
         except Exception as e:
-            g_log.error("%s", e)
+            g_log.error("%s %s", e.__class__, e)
             return 0
 
     def merchant_batch_retrieve(self):
@@ -333,7 +344,7 @@ def merchant_create(**kwargs):
         value = {"name": name, "name_en": name_en, "verified": verified, "logo": logo, "email": email,
                  "introduce": introduce, "latitude": latitude, "qrcode": qrcode, "contract": contract,
                  "longitude": longitude, "country": country, "location": location, 
-                 "contact_numbers": contact_numbers, "deleted": 0}
+                 "contact_numbers": contact_numbers, "deleted": 0, "numbers": numbers}
         
         # 创建商户资料，商户和资料关联，事务
         collection = get_mongo_collection(numbers, "merchant")
@@ -365,7 +376,7 @@ def merchant_retrieve_with_numbers(numbers):
     """
     读取商户资料
     :param numbers: 商户电话号码
-    :return: (30200, "yes")/成功，(>30200, "errmsg")/失败
+    :return: (30200, merchants)/成功，(>30200, "errmsg")/失败
     """
     try:
         # 检查合法账号
@@ -384,31 +395,28 @@ def merchant_retrieve_with_numbers(numbers):
         for merchant in merchants:
             # g_log.debug(merchant["merchant_identity"])
             identities.append(ObjectId(merchant["merchant_identity"]))
-        g_log.debug(identities)
+        # g_log.debug(identities)
 
         collection = get_mongo_collection(numbers, "merchant")
         if not collection:
             g_log.error("get collection merchant failed")
-            return 30202, "get collection merchant failed"
-        merchants = collection.find({"_id": {"$in": identities}}).toArray()
-        g_log.debug(merchants)
-        for merchant in merchants:
-            g_log.debug(merchant["name"])
-        # if not merchant or merchant["deleted"] == 1:
-        #     g_log.warning("merchant %s not exist", merchant_identity)
-        #     return 30203, "merchant not exist"
-        # g_log.debug("get %s %s", merchant_identity, merchant)
-        # return 30200, merchant
-        return 30220, "TODO..."
+            return 30203, "get collection merchant failed"
+        merchants = collection.find({"_id": {"$in": identities}, "deleted": 0})
+        # TODO...对没有商户做特殊处理
+        if not merchants.count:
+            g_log.debug("account %s has no merchant", numbers)
+
+        # 返回的是pymongo.Cursor
+        return 30200, merchants
     except Exception as e:
         g_log.error("%s", e)
         return 30204, "exception"
 
 
-def merchant_retrieve_with_identity(merchant_identity):
+def merchant_retrieve_with_identity(identity):
     """
     查询商户资料
-    :param merchant_identity: 商户ID
+    :param identity: 商户所有者ID
     :return:
     """
     try:
@@ -420,18 +428,18 @@ def merchant_retrieve_with_identity(merchant_identity):
         return 30205, "exception"
 
 
-def merchant_retrieve(numbers=None, merchant_identity=None):
+def merchant_retrieve(numbers=None, identity=None):
     """
     获取商户资料，商户电话号码优先
     :param numbers: 商户电话号码
-    :param merchant_identity: 商户ID
+    :param identity: 商户所有者ID
     :return:
     """
     try:
         if numbers:
             return merchant_retrieve_with_numbers(numbers)
-        elif merchant_identity:
-            return merchant_retrieve_with_identity(merchant_identity)
+        elif identity:
+            return merchant_retrieve_with_identity(identity)
         else:
             return 30206, "bad arguments"
     except Exception as e:
@@ -446,7 +454,7 @@ def merchant_retrieve_with_merchant_identity(merchant_identity):
     :return: (30200, merchant)/成功，(>30200, "errmsg")/失败
     """
     try:
-        # TODO... 目前无法实现按照商户ID路由到数据库
+        # TODO... 目前无法实现按照商户ID路由到数据库，暂时不使用该接口
         collection = get_mongo_collection(merchant_identity, "merchant")
         if not collection:
             g_log.error("get collection merchant failed")

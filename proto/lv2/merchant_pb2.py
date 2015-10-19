@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='merchant.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0emerchant.proto\"_\n\x15MerchantCreateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.MerchantMaterial\"3\n\x16MerchantCreateResponse\x12\x19\n\x11merchant_identity\x18\x01 \x01(\t\"Y\n\x17MerchantRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x1b\n\x13merchant_identities\x18\x03 \x01(\t\"@\n\x18MerchantRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"C\n\x1cMerchantBatchRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x03(\t\x12\x12\n\nidentities\x18\x02 \x03(\t\"E\n\x1dMerchantBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"z\n\x15MerchantUpdateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\x12#\n\x08material\x18\x04 \x01(\x0b\x32\x11.MerchantMaterial\"\x18\n\x16MerchantUpdateResponse\"U\n\x15MerchantDeleteRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\"\x18\n\x16MerchantDeleteResponse\"\x87\x02\n\x10MerchantMaterial\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07name_en\x18\x02 \x01(\t\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x10\n\x08verified\x18\x04 \x01(\t\x12\x0e\n\x06qrcode\x18\x15 \x01(\t\x12\x17\n\x0f\x63ontact_numbers\x18\x16 \x01(\t\x12\x0c\n\x04logo\x18\x17 \x01(\t\x12\r\n\x05\x65mail\x18\x18 \x01(\t\x12\x11\n\tintroduce\x18\x19 \x01(\t\x12\x11\n\tlongitude\x18\x1a \x01(\x02\x12\x10\n\x08latitude\x18\x1b \x01(\x02\x12\x0f\n\x07\x63ountry\x18\x1c \x01(\t\x12\x10\n\x08location\x18\x1d \x01(\t\x12\x10\n\x08\x63ontract\x18\x1e \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0emerchant.proto\"_\n\x15MerchantCreateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.MerchantMaterial\"3\n\x16MerchantCreateResponse\x12\x19\n\x11merchant_identity\x18\x01 \x01(\t\"Y\n\x17MerchantRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x1b\n\x13merchant_identities\x18\x03 \x01(\t\"@\n\x18MerchantRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"C\n\x1cMerchantBatchRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x03(\t\x12\x12\n\nidentities\x18\x02 \x03(\t\"E\n\x1dMerchantBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"z\n\x15MerchantUpdateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\x12#\n\x08material\x18\x04 \x01(\x0b\x32\x11.MerchantMaterial\"\x18\n\x16MerchantUpdateResponse\"U\n\x15MerchantDeleteRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\"\x18\n\x16MerchantDeleteResponse\"\x99\x02\n\x10MerchantMaterial\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07name_en\x18\x02 \x01(\t\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x10\n\x08verified\x18\x04 \x01(\t\x12\x10\n\x08identity\x18\x05 \x01(\t\x12\x0e\n\x06qrcode\x18\x15 \x01(\t\x12\x17\n\x0f\x63ontact_numbers\x18\x16 \x01(\t\x12\x0c\n\x04logo\x18\x17 \x01(\t\x12\r\n\x05\x65mail\x18\x18 \x01(\t\x12\x11\n\tintroduce\x18\x19 \x01(\t\x12\x11\n\tlongitude\x18\x1a \x01(\x02\x12\x10\n\x08latitude\x18\x1b \x01(\x02\x12\x0f\n\x07\x63ountry\x18\x1c \x01(\t\x12\x10\n\x08location\x18\x1d \x01(\t\x12\x10\n\x08\x63ontract\x18\x1e \x01(\tb\x06proto3'
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -426,70 +426,77 @@ _MERCHANTMATERIAL = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='qrcode', full_name='MerchantMaterial.qrcode', index=4,
+      name='identity', full_name='MerchantMaterial.identity', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='qrcode', full_name='MerchantMaterial.qrcode', index=5,
       number=21, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='contact_numbers', full_name='MerchantMaterial.contact_numbers', index=5,
+      name='contact_numbers', full_name='MerchantMaterial.contact_numbers', index=6,
       number=22, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='logo', full_name='MerchantMaterial.logo', index=6,
+      name='logo', full_name='MerchantMaterial.logo', index=7,
       number=23, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='email', full_name='MerchantMaterial.email', index=7,
+      name='email', full_name='MerchantMaterial.email', index=8,
       number=24, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='introduce', full_name='MerchantMaterial.introduce', index=8,
+      name='introduce', full_name='MerchantMaterial.introduce', index=9,
       number=25, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='longitude', full_name='MerchantMaterial.longitude', index=9,
+      name='longitude', full_name='MerchantMaterial.longitude', index=10,
       number=26, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='latitude', full_name='MerchantMaterial.latitude', index=10,
+      name='latitude', full_name='MerchantMaterial.latitude', index=11,
       number=27, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='country', full_name='MerchantMaterial.country', index=11,
+      name='country', full_name='MerchantMaterial.country', index=12,
       number=28, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='location', full_name='MerchantMaterial.location', index=12,
+      name='location', full_name='MerchantMaterial.location', index=13,
       number=29, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='contract', full_name='MerchantMaterial.contract', index=13,
+      name='contract', full_name='MerchantMaterial.contract', index=14,
       number=30, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -508,7 +515,7 @@ _MERCHANTMATERIAL = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=729,
-  serialized_end=992,
+  serialized_end=1010,
 )
 
 _MERCHANTCREATEREQUEST.fields_by_name['material'].message_type = _MERCHANTMATERIAL

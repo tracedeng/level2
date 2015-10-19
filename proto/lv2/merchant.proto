@@ -63,6 +63,7 @@ message MerchantMaterial {
     string name_en = 2;   //商家名称英文，认证后不可修改
     string numbers = 3;     //创建者电话号码
     string verified = 4;      //是否通过验证，yes、no
+    string identity = 5;    //商户ID
 
     string qrcode = 21;     //商家二维码，供用户扫描生成积分
     string contact_numbers = 22;    //商家联系电话
