@@ -5,19 +5,19 @@ syntax = "proto3";
 // 增加商家
 message MerchantCreateRequest {
     string numbers = 1;
-    string identity = 2;        //商户创建者ID
+    string identity = 2;        //商家创建者ID
 	MerchantMaterial material = 3;
 };
 
 message MerchantCreateResponse {
-    string merchant_identity = 1;   //商户资料ID
+    string merchant_identity = 1;   //商家资料ID
 };
 
 // 读取商家
 message MerchantRetrieveRequest {
-    string numbers = 1;
+    string numbers = 1;         //管理员
     string identity = 2;
-    string merchant_identities = 3;       //要查询商户的ID
+    string merchant_identity = 3;       //要查询商家的ID，如果有值则读取指定ID的商家，否则全部商家
 }
 
 message MerchantRetrieveResponse {
@@ -38,7 +38,7 @@ message MerchantBatchRetrieveResponse {
 message MerchantUpdateRequest {
     string numbers = 1;
     string identity = 2;
-    string merchant_identity = 3;
+    string merchant_identity = 3;   // must
     MerchantMaterial material = 4;
 }
 
@@ -46,24 +46,74 @@ message MerchantUpdateResponse {
 
 }
 
+// 更新商家是否验证标志，和更新资料分开是为了统计
+message MerchantUpdateVerifiedRequest {
+    string numbers = 1;             //创建者
+    string identity = 2;
+    string merchant_identity = 3;   //商家ID，must
+    string verified = 4;    //是否通过验证，yes、no，must
+}
+
+message MerchantUpdateVerifiedResponse {
+    string verified = 1;
+}
+
 // 删除商家
 message MerchantDeleteRequest {
     string numbers = 1;
     string identity = 2;
-    string merchant_identity = 3;   //要删除的商户资料ID，有这个字段表示只删除
+    string merchant_identity = 3;   //要删除的商家资料ID，如果有值则删除指定ID的商家关联，否则该管理员全部商家关联
 }
 
 message MerchantDeleteResponse {
 
 }
 
+/////////////////////商家和商家管理员关系/////////////////////
+// 新增商家管理者
+message MerchantCreateManagerRequest {
+    string numbers = 1;     //商家创建人
+    string identity = 2;    //商家创建人ID
+    string merchant_identity = 3;   //商家ID
+    string manager_numbers = 4; //商家管理员
+}
+
+message MerchantCreateManagerResponse {
+
+}
+
+
+// 创建人将商家委托给其它管理员
+message MerchantDelegateManagerRequest {
+    string numbers = 1;             //创建者
+    string identity = 2;
+    string merchant_identity = 3;   //商家ID
+    string delegate_numbers = 4;             //被委托的管理员
+    string delegate_identity = 4;             //被委托的管理员ID
+}
+
+message MerchantDelegateManagerResponse {
+
+}
+
+// 删除商家
+message MerchantDeleteManagerRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   //要删除的商家资料ID，如果有值则删除指定ID的商家关联，否则该管理员全部商家关联
+}
+
+message MerchantDeleteManagerResponse {
+
+}
+
 // 商家资料
 message MerchantMaterial {
-    string name = 1;      //商家名称，认证后不可修改
+    string name = 1;      //商家名称，认证后不可修改，must
     string name_en = 2;   //商家名称英文，认证后不可修改
-    string numbers = 3;     //创建者电话号码
-    string verified = 4;    //是否通过验证，yes、no
-    string identity = 5;    //商户ID
+    string numbers = 3;     //商家创建者
+    string verified = 4;    //商家是否通过验证，yes、no
+    string identity = 5;    //商家ID，response使用
 
     string qrcode = 21;     //商家二维码，供用户扫描生成积分
     string contact_numbers = 22;    //商家联系电话

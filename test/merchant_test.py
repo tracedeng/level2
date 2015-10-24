@@ -35,6 +35,7 @@ def merchant_retrieve_test(numbers='18688982240'):
     req.head.seq = 2
     req.head.numbers = numbers
     req.merchant_retrieve_request.numbers = numbers
+    req.merchant_retrieve_request.merchant_identity = "56273ddf4e7915048ee91f48"
 
     pack_send_receive(req)
 
@@ -57,6 +58,18 @@ def merchant_delete_test(numbers='18688982240'):
     req.head.seq = 2
     req.head.numbers = numbers
     req.merchant_delete_request.numbers = numbers
+
+    pack_send_receive(req)
+
+
+def merchant_create_manager_test(numbers='18688982240'):
+    req = common_pb2.Request()
+    req.head.cmd = 205
+    req.head.seq = 2
+    req.head.numbers = numbers
+    req.merchant_create_manager_request.numbers = numbers
+    req.merchant_create_manager_request.merchant_identity = "56273ddf4e7915048ee91f48"
+    req.merchant_create_manager_request.manager_numbers = "18688982241"
 
     pack_send_receive(req)
 
@@ -109,10 +122,11 @@ def batch_test_retrieve():
 
 if "__main__" == __name__:
     # merchant_delete_test()
-    merchant_create_test()
+    # merchant_create_test()
     merchant_retrieve_test()
     # merchant_update_test()
     # merchant_retrieve_test()
     # batch_test_create()
     # batch_test_retrieve()
+    # merchant_create_manager_test()
     pass

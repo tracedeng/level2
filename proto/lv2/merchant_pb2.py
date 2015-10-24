@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='merchant.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0emerchant.proto\"_\n\x15MerchantCreateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.MerchantMaterial\"3\n\x16MerchantCreateResponse\x12\x19\n\x11merchant_identity\x18\x01 \x01(\t\"Y\n\x17MerchantRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x1b\n\x13merchant_identities\x18\x03 \x01(\t\"@\n\x18MerchantRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"C\n\x1cMerchantBatchRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x03(\t\x12\x12\n\nidentities\x18\x02 \x03(\t\"E\n\x1dMerchantBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"z\n\x15MerchantUpdateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\x12#\n\x08material\x18\x04 \x01(\x0b\x32\x11.MerchantMaterial\"\x18\n\x16MerchantUpdateResponse\"U\n\x15MerchantDeleteRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\"\x18\n\x16MerchantDeleteResponse\"\x99\x02\n\x10MerchantMaterial\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07name_en\x18\x02 \x01(\t\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x10\n\x08verified\x18\x04 \x01(\t\x12\x10\n\x08identity\x18\x05 \x01(\t\x12\x0e\n\x06qrcode\x18\x15 \x01(\t\x12\x17\n\x0f\x63ontact_numbers\x18\x16 \x01(\t\x12\x0c\n\x04logo\x18\x17 \x01(\t\x12\r\n\x05\x65mail\x18\x18 \x01(\t\x12\x11\n\tintroduce\x18\x19 \x01(\t\x12\x11\n\tlongitude\x18\x1a \x01(\x02\x12\x10\n\x08latitude\x18\x1b \x01(\x02\x12\x0f\n\x07\x63ountry\x18\x1c \x01(\t\x12\x10\n\x08location\x18\x1d \x01(\t\x12\x10\n\x08\x63ontract\x18\x1e \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0emerchant.proto\"_\n\x15MerchantCreateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12#\n\x08material\x18\x03 \x01(\x0b\x32\x11.MerchantMaterial\"3\n\x16MerchantCreateResponse\x12\x19\n\x11merchant_identity\x18\x01 \x01(\t\"W\n\x17MerchantRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\"@\n\x18MerchantRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"C\n\x1cMerchantBatchRetrieveRequest\x12\x0f\n\x07numbers\x18\x01 \x03(\t\x12\x12\n\nidentities\x18\x02 \x03(\t\"E\n\x1dMerchantBatchRetrieveResponse\x12$\n\tmaterials\x18\x01 \x03(\x0b\x32\x11.MerchantMaterial\"z\n\x15MerchantUpdateRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\x12#\n\x08material\x18\x04 \x01(\x0b\x32\x11.MerchantMaterial\"\x18\n\x16MerchantUpdateResponse\"U\n\x15MerchantDeleteRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\"\x18\n\x16MerchantDeleteResponse\"u\n\x1cMerchantCreateManagerRequest\x12\x0f\n\x07numbers\x18\x01 \x01(\t\x12\x10\n\x08identity\x18\x02 \x01(\t\x12\x19\n\x11merchant_identity\x18\x03 \x01(\t\x12\x17\n\x0fmanager_numbers\x18\x04 \x01(\t\"\x1f\n\x1dMerchantCreateManagerResponse\"\x99\x02\n\x10MerchantMaterial\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07name_en\x18\x02 \x01(\t\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x10\n\x08verified\x18\x04 \x01(\t\x12\x10\n\x08identity\x18\x05 \x01(\t\x12\x0e\n\x06qrcode\x18\x15 \x01(\t\x12\x17\n\x0f\x63ontact_numbers\x18\x16 \x01(\t\x12\x0c\n\x04logo\x18\x17 \x01(\t\x12\r\n\x05\x65mail\x18\x18 \x01(\t\x12\x11\n\tintroduce\x18\x19 \x01(\t\x12\x11\n\tlongitude\x18\x1a \x01(\x02\x12\x10\n\x08latitude\x18\x1b \x01(\x02\x12\x0f\n\x07\x63ountry\x18\x1c \x01(\t\x12\x10\n\x08location\x18\x1d \x01(\t\x12\x10\n\x08\x63ontract\x18\x1e \x01(\tb\x06proto3'
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -122,7 +122,7 @@ _MERCHANTRETRIEVEREQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_identities', full_name='MerchantRetrieveRequest.merchant_identities', index=2,
+      name='merchant_identity', full_name='MerchantRetrieveRequest.merchant_identity', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -141,7 +141,7 @@ _MERCHANTRETRIEVEREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=168,
-  serialized_end=257,
+  serialized_end=255,
 )
 
 
@@ -171,8 +171,8 @@ _MERCHANTRETRIEVERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=259,
-  serialized_end=323,
+  serialized_start=257,
+  serialized_end=321,
 )
 
 
@@ -209,8 +209,8 @@ _MERCHANTBATCHRETRIEVEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=325,
-  serialized_end=392,
+  serialized_start=323,
+  serialized_end=390,
 )
 
 
@@ -240,8 +240,8 @@ _MERCHANTBATCHRETRIEVERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=394,
-  serialized_end=463,
+  serialized_start=392,
+  serialized_end=461,
 )
 
 
@@ -292,8 +292,8 @@ _MERCHANTUPDATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=465,
-  serialized_end=587,
+  serialized_start=463,
+  serialized_end=585,
 )
 
 
@@ -316,8 +316,8 @@ _MERCHANTUPDATERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=589,
-  serialized_end=613,
+  serialized_start=587,
+  serialized_end=611,
 )
 
 
@@ -361,8 +361,8 @@ _MERCHANTDELETEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=615,
-  serialized_end=700,
+  serialized_start=613,
+  serialized_end=698,
 )
 
 
@@ -385,8 +385,84 @@ _MERCHANTDELETERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=702,
-  serialized_end=726,
+  serialized_start=700,
+  serialized_end=724,
+)
+
+
+_MERCHANTCREATEMANAGERREQUEST = _descriptor.Descriptor(
+  name='MerchantCreateManagerRequest',
+  full_name='MerchantCreateManagerRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='numbers', full_name='MerchantCreateManagerRequest.numbers', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='identity', full_name='MerchantCreateManagerRequest.identity', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='merchant_identity', full_name='MerchantCreateManagerRequest.merchant_identity', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='manager_numbers', full_name='MerchantCreateManagerRequest.manager_numbers', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=726,
+  serialized_end=843,
+)
+
+
+_MERCHANTCREATEMANAGERRESPONSE = _descriptor.Descriptor(
+  name='MerchantCreateManagerResponse',
+  full_name='MerchantCreateManagerResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=845,
+  serialized_end=876,
 )
 
 
@@ -514,8 +590,8 @@ _MERCHANTMATERIAL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=729,
-  serialized_end=1010,
+  serialized_start=879,
+  serialized_end=1160,
 )
 
 _MERCHANTCREATEREQUEST.fields_by_name['material'].message_type = _MERCHANTMATERIAL
@@ -532,6 +608,8 @@ DESCRIPTOR.message_types_by_name['MerchantUpdateRequest'] = _MERCHANTUPDATEREQUE
 DESCRIPTOR.message_types_by_name['MerchantUpdateResponse'] = _MERCHANTUPDATERESPONSE
 DESCRIPTOR.message_types_by_name['MerchantDeleteRequest'] = _MERCHANTDELETEREQUEST
 DESCRIPTOR.message_types_by_name['MerchantDeleteResponse'] = _MERCHANTDELETERESPONSE
+DESCRIPTOR.message_types_by_name['MerchantCreateManagerRequest'] = _MERCHANTCREATEMANAGERREQUEST
+DESCRIPTOR.message_types_by_name['MerchantCreateManagerResponse'] = _MERCHANTCREATEMANAGERRESPONSE
 DESCRIPTOR.message_types_by_name['MerchantMaterial'] = _MERCHANTMATERIAL
 
 MerchantCreateRequest = _reflection.GeneratedProtocolMessageType('MerchantCreateRequest', (_message.Message,), dict(
@@ -603,6 +681,20 @@ MerchantDeleteResponse = _reflection.GeneratedProtocolMessageType('MerchantDelet
   # @@protoc_insertion_point(class_scope:MerchantDeleteResponse)
   ))
 _sym_db.RegisterMessage(MerchantDeleteResponse)
+
+MerchantCreateManagerRequest = _reflection.GeneratedProtocolMessageType('MerchantCreateManagerRequest', (_message.Message,), dict(
+  DESCRIPTOR = _MERCHANTCREATEMANAGERREQUEST,
+  __module__ = 'merchant_pb2'
+  # @@protoc_insertion_point(class_scope:MerchantCreateManagerRequest)
+  ))
+_sym_db.RegisterMessage(MerchantCreateManagerRequest)
+
+MerchantCreateManagerResponse = _reflection.GeneratedProtocolMessageType('MerchantCreateManagerResponse', (_message.Message,), dict(
+  DESCRIPTOR = _MERCHANTCREATEMANAGERRESPONSE,
+  __module__ = 'merchant_pb2'
+  # @@protoc_insertion_point(class_scope:MerchantCreateManagerResponse)
+  ))
+_sym_db.RegisterMessage(MerchantCreateManagerResponse)
 
 MerchantMaterial = _reflection.GeneratedProtocolMessageType('MerchantMaterial', (_message.Message,), dict(
   DESCRIPTOR = _MERCHANTMATERIAL,

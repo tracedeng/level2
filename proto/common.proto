@@ -13,19 +13,24 @@ message Request {
     // 注册登录，[2, 100)
     RegisterRequest register_request = 2;
 
-    // 普通用户，[100, 200)
-    ConsumerCreateRequest consumer_create_request = 100;
-    ConsumerRetrieveRequest consumer_retrieve_request = 101;
-    ConsumerBatchRetrieveRequest consumer_batch_retrieve_request = 102;
-    ConsumerUpdateRequest consumer_update_request = 103;
-    ConsumerDeleteRequest consumer_delete_request = 104;
+    // 普通用户，[101, 200]
+    ConsumerCreateRequest consumer_create_request = 101;
+    ConsumerRetrieveRequest consumer_retrieve_request = 102;
+    ConsumerBatchRetrieveRequest consumer_batch_retrieve_request = 103;
+    ConsumerUpdateRequest consumer_update_request = 104;
+    ConsumerDeleteRequest consumer_delete_request = 105;
 
-    // 商家用户，[200, 300)
-    MerchantCreateRequest merchant_create_request = 200;
-    MerchantRetrieveRequest merchant_retrieve_request = 201;
-    MerchantBatchRetrieveRequest merchant_batch_retrieve_request = 202;
-    MerchantUpdateRequest merchant_update_request = 203;
-    MerchantDeleteRequest merchant_delete_request = 204;
+    // 商家用户，[200, 300]
+    MerchantCreateRequest merchant_create_request = 201;
+    MerchantRetrieveRequest merchant_retrieve_request = 202;
+    MerchantBatchRetrieveRequest merchant_batch_retrieve_request = 203;
+    MerchantUpdateRequest merchant_update_request = 204;
+    MerchantUpdateVerifiedRequest merchant_update_verified_request = 205;
+    MerchantDeleteRequest merchant_delete_request = 206;
+    MerchantCreateManagerRequest merchant_create_manager_request = 207;
+    MerchantDelegateManagerRequest merchant_delegate_manager_request = 208;
+    MerchantDeleteManagerRequest merchant_delete_manager_request = 209;
+
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -37,19 +42,24 @@ message Response {
     // 注册登录，[2, 100)
     RegisterResponse register_response = 2;
 
-    // 普通用户，[100, 200)
-    ConsumerCreateResponse consumer_create_response = 100;
-    ConsumerRetrieveResponse consumer_retrieve_response = 101;
-    ConsumerBatchRetrieveResponse consumer_batch_retrieve_response = 102;
-    ConsumerUpdateResponse consumer_update_response = 103;
-    ConsumerDeleteResponse consumer_delete_response = 104;
+    // 普通用户，[101, 200]
+    ConsumerCreateResponse consumer_create_response = 101;
+    ConsumerRetrieveResponse consumer_retrieve_response = 102;
+    ConsumerBatchRetrieveResponse consumer_batch_retrieve_response = 103;
+    ConsumerUpdateResponse consumer_update_response = 104;
+    ConsumerDeleteResponse consumer_delete_response = 105;
 
-    // 商家用户，[200, 300)
-    MerchantCreateResponse merchant_create_response = 200;
-    MerchantRetrieveResponse merchant_retrieve_response = 201;
-    MerchantBatchRetrieveResponse merchant_batch_retrieve_response = 202;
-    MerchantUpdateResponse merchant_update_response = 203;
-    MerchantDeleteResponse merchant_delete_response = 204;
+    // 商家用户，[201, 300]
+    MerchantCreateResponse merchant_create_response = 201;
+    MerchantRetrieveResponse merchant_retrieve_response = 202;
+    MerchantBatchRetrieveResponse merchant_batch_retrieve_response = 203;
+    MerchantUpdateResponse merchant_update_response = 204;
+    MerchantDeleteResponse merchant_delete_response = 205;
+    MerchantCreateManagerResponse merchant_create_manager_response = 206;
+    MerchantUpdateVerifiedResponse merchant_update_verified_response = 207;
+    MerchantDelegateManagerResponse merchant_delegate_manager_response = 208;
+    MerchantDeleteManagerResponse merchant_delete_manager_response = 209;
+
     // 旁路
     VipResponse vip = 10000;
 }

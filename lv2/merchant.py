@@ -3,8 +3,8 @@ __author__ = 'tracedeng'
 
 import string
 import random
-import pymongo
 from bson.objectid import ObjectId
+from pymongo.collection import ReturnDocument
 import common_pb2
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
@@ -34,8 +34,10 @@ class Merchant():
         """
         # TODO... 验证登录态
         try:
-            command_handle = {200: self.merchant_create, 201: self.merchant_retrieve, 202: self.merchant_batch_retrieve,
-                              203: self.merchant_update, 204: self.merchant_delete}
+            command_handle = {201: self.merchant_create, 202: self.merchant_retrieve, 203: self.merchant_batch_retrieve,
+                              204: self.merchant_update, 205: self.merchant_delete, 206: self.merchant_create_manager,
+                              207: self.merchant_create_manager, 208: self.merchant_delegate_manager,
+                              209: self.merchant_delete_manager}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -72,7 +74,7 @@ class Merchant():
                 else:
                     numbers = material.numbers
 
-            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商家和要创建的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to create merchant %s", self.numbers, numbers)
                 self.code = 30106
@@ -116,19 +118,22 @@ class Merchant():
             body = self.request.merchant_retrieve_request
             numbers = body.numbers
             identity = body.identity
+            merchant_identity = body.merchant_identity
 
             if not numbers:
                 # TODO... 根据包体中的merchant_identity获取numbers
                 pass
 
-            # 发起请求的商户和要获取的商户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商家和要获取的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to retrieve merchant %s", self.numbers, numbers)
                 self.code = 30208
                 self.message = "no privilege to retrieve merchant"
                 return 1
-
-            self.code, self.message = merchant_retrieve_with_numbers(numbers)
+            if merchant_identity:
+                self.code, self.message = merchant_retrieve_with_merchant_identity(numbers, merchant_identity)
+            else:
+                self.code, self.message = merchant_retrieve_with_numbers(numbers)
 
             if 30200 == self.code:
                 # 获取成功
@@ -140,7 +145,7 @@ class Merchant():
 
                 merchants = self.message
                 materials = response.merchant_retrieve_response.materials
-                g_log.debug(dir(materials))
+                # g_log.debug(dir(materials))
                 for value in merchants:
                     material = materials.add()
                     material.name = value["name"]
@@ -172,7 +177,7 @@ class Merchant():
 
     def merchant_update(self):
         """
-        创建merchant资料
+        修改merchant资料
         1 请求字段有效性检查
         2 验证登录态
         3 检查是否已创建的merchant
@@ -180,38 +185,137 @@ class Merchant():
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
-            body = self.request.merchant_create_request
+            body = self.request.merchant_update_request
             numbers = body.numbers
+            merchant_identity = body.merchant_identity
             material = body.material
 
             if not numbers:
                 if not material.numbers:
-                    # TODO... 根据包体中的merchant_identity获取numbers
+                    # TODO... 根据包体中的identity获取numbers
                     pass
                 else:
                     numbers = material.numbers
 
-            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商家和要创建的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to update merchant %s", self.numbers, numbers)
-                self.code = 30400
+                self.code = 30411
                 self.message = "no privilege to update merchant"
                 return 1
 
-            kwargs = {"numbers": numbers, "merchant_name": material.merchat_name,
-                      "introduce": material.introduce, "logo": material.logo, "email": material.email,
-                      "country": material.country, "location": material.location,
-                      "latitude": material.latitude, "longitude": material.longitude}
-            g_log.debug("create merchant: %s", kwargs)
-            self.code, self.message = merchant_update(kwargs)
+            value = {}
+            # TODO... HasField 问题
+            # g_log.debug(dir(material))
+            # g_log.debug(body.HasField('material'))
+            # g_log.debug(material.HasField(material.nickname))
+            # g_log.debug(material.ListFields()[0][0].name)
+            # g_log.debug("create merchant: %s", kwargs)
+            if material.HasField('name'):
+                value["name"] = material.name
+
+            if material.HasField("name_en"):
+                value["name_en"] = material.name_en
+
+            if material.HasField("logo"):
+                value["logo"] = material.logo
+
+            if material.HasField("email"):
+                value["email"] = material.email
+
+            if material.HasField("introduce"):
+                value["introduce"] = material.introduce
+
+            if material.HasField("country"):
+                value["country"] = material.country
+
+            if material.HasField("location"):
+                value["location"] = material.location
+
+            if material.HasField("contact_numbers"):
+                value["contact_numbers"] = material.contact_numbers
+
+            if material.HasField("qrcode"):
+                value["qrcode"] = material.qrcode
+            
+            if material.HasField("contract"):
+                value["contract"] = material.contract
+            
+            if material.HasField("latitude"):
+                value["latitude"] = material.latitude
+                
+            if material.HasField("longitude"):
+                value["longitude"] = material.longitude
+
+            # 认证标志修改参考merchant_update_verified
+            # if material.HasField("verified"):
+            #     value["verified"] = material.verified
+                
+            g_log.debug("update merchant material: %s", value)
+            self.code, self.message = merchant_update_with_numbers(numbers, merchant_identity, **value)
 
             if 30400 == self.code:
-                # 创建成功
+                # 更新成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "create merchant done"
+                response.head.message = "update merchant material done"
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0 
+
+    def merchant_update_verified(self):
+        """
+        修改商家认证标志
+        1 请求字段有效性检查
+        2 验证登录态
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.merchant_update_verified_request
+            numbers = body.numbers
+            merchant_identity = body.merchant_identity
+            material = body.material
+
+            if not numbers:
+                if not material.numbers:
+                    # TODO... 根据包体中的identity获取numbers
+                    pass
+                else:
+                    numbers = material.numbers
+
+            # 发起请求的商家和要创建的商家不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to update merchant %s", self.numbers, numbers)
+                self.code = 30511
+                self.message = "no privilege to update merchant"
+                return 1
+
+            # TODO... HasField 问题
+            if not material.HasField("verified"):
+                g_log.error("lost argument verified")
+                self.code = 30512
+                self.message = "illegal argument"
+                return 1
+
+            verified = material.verified
+            self.code, self.message = merchant_update_verified_with_numbers(numbers, merchant_identity, verified)
+
+            if 30500 == self.code:
+                # 更新成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "update field verified done"
+
+                response.merchant_update_verified_response.verified = self.message
                 return response
             else:
                 return 1
@@ -221,7 +325,110 @@ class Merchant():
 
     def merchant_delete(self):
         """
-        删除merchant资料
+        单独删除商家的操作几乎不出现，先保留
+        :return:
+        """
+        pass
+
+    def merchant_create_manager(self):
+        """
+        创建merchant资料
+        1 请求字段有效性检查
+        2 验证登录态
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.merchant_create_manager_request
+            numbers = body.numbers
+            merchant_identity = body.merchant_identity
+            manager_numbers = body.manager_numbers
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                identity = body.identity
+
+            # 发起请求的商家和商家创建人不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to create merchant manager %s", self.numbers, numbers)
+                self.code = 30709
+                self.message = "no privilege to create merchant manager"
+                return 1
+
+            kwargs = {"manager_numbers": manager_numbers, "merchant_identity": merchant_identity,
+                      "merchant_founder": numbers}
+            g_log.debug("create numbers merchant: %s", kwargs)
+            self.code, self.message = merchant_create_manager(**kwargs)
+
+            if 30700 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "create numbers merchant done"
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def merchant_delegate_manager(self):
+        """
+        创建人将商家委托给其它管理员
+        1 请求字段有效性检查
+        2 验证登录态
+        3 检查是否已创建的merchant
+        4 merchant写入数据库
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.merchant_delegate_manager_request
+            numbers = body.numbers
+            merchant_identity = body.merchant_identity
+            delegate_numbers = body.delegate_numbers
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                identity = body.identity
+
+            if not delegate_numbers:
+                # TODO... 根据包体中的delegate_identity获取number
+                delegate_identity = body.delegate_identity
+
+            # 发起请求的商家和商家创建人不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to create merchant manager %s", self.numbers, numbers)
+                self.code = 30813
+                self.message = "no privilege to create merchant manager"
+                return 1
+
+            kwargs = {"delegate_numbers": delegate_numbers, "merchant_identity": merchant_identity,
+                      "merchant_founder": numbers}
+            g_log.debug("founder %s delegate merchant %s to manager: %s", numbers, merchant_identity, delegate_numbers)
+            self.code, self.message = merchant_delegate_manager(**kwargs)
+
+            if 30800 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "delegate merchant to manager done"
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def merchant_delete_manager(self):
+        """
+        删除merchant资料的管理员
         1 请求字段有效性检查
         2 验证登录态
         3 检查是否已创建的merchant
@@ -231,16 +438,17 @@ class Merchant():
         try:
             body = self.request.merchant_delete_request
             numbers = body.numbers
+            identity = body.identity
             merchant_identity = body.merchant_identity
 
             if not numbers:
                 # TODO... 根据包体中的merchant_identity获取numbers
                 pass
 
-            # 发起请求的商户和要创建的商户不同，认为没有权限，TODO...更精细控制
+            # 发起请求的商家和要创建的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to delete merchant %s", self.numbers, numbers)
-                self.code = 30510
+                self.code = 30914
                 self.message = "no privilege to delete merchant"
                 return 1
 
@@ -249,13 +457,13 @@ class Merchant():
             else:
                 self.code, self.message = merchant_delete_with_numbers(numbers)
 
-            if 30500 == self.code:
+            if 30900 == self.code:
                 # 删除成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "delete merchant done"
+                response.head.message = "delete merchant manager done"
                 return response
             else:
                 return 1
@@ -283,10 +491,11 @@ def enter(request):
         return 0
 
 
-# pragma 增加商户资料API
+# ---------------------------APIAPIAPIAPIAPIAPIAPIAPIAPIAPIAPIAPAPIAPIAPIAPIAPIAPAPIAPIAPIAPI
+# pragma 增加商家资料API
 def merchant_create(**kwargs):
     """
-    增加商户资料
+    增加商家资料
     :param kwargs: {"numbers": "18688982240", "name": "星巴克", "name_en": "Star Bucks", "introduce": "We sell coffee",
                     "logo": "", "email": "vip@starbucks.com", "country": "USA", "location": "california", "qrcode": "",
                     "contact_numbers", "021-88888888", "latitude": 38.38, "longitude": -114.8, "contract": "", 
@@ -300,7 +509,7 @@ def merchant_create(**kwargs):
             g_log.warning("invalid customer account %s", numbers)
             return 30101, "invalid phone number"
 
-        # 商户名称不能超过64字节，超过要截取前64字节
+        # 商家名称不能超过64字节，超过要截取前64字节
         name = kwargs.get("name")
         if not name:
             g_log.error("lost merchant name")
@@ -317,7 +526,7 @@ def merchant_create(**kwargs):
 
         verified = yes_no_2_char(kwargs.get("verified", "no"))
 
-        # 商户介绍不能超过512字节，超过要截取前512字节
+        # 商家介绍不能超过512字节，超过要截取前512字节
         introduce = kwargs.get("introduce", "")
         if len(introduce) > 512:
             g_log.warning("too long introduce %s", introduce)
@@ -349,7 +558,7 @@ def merchant_create(**kwargs):
                  "longitude": longitude, "country": country, "location": location, 
                  "contact_numbers": contact_numbers, "deleted": 0, "numbers": numbers}
         
-        # 创建商户资料，商户和资料关联，事务
+        # 创建商家资料，商家和资料关联，TODO... 事务
         collection = get_mongo_collection(numbers, "merchant")
         if not collection:
             g_log.error("get collection merchant failed")
@@ -358,13 +567,14 @@ def merchant_create(**kwargs):
         merchant_identity = str(merchant_identity)
         g_log.debug("insert merchant %s", value)
 
-        collection = get_mongo_collection(numbers, "number_merchant")
+        collection = get_mongo_collection(numbers, "numbers_merchant")
         if not collection:
-            g_log.error("get collection number_merchant failed")
-            return 30104, "get collection number_merchant failed"
-        collection.insert_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0})
-        g_log.debug("insert merchant numbers many-many relation, %s:%s", merchant_identity, numbers)
+            g_log.error("get collection numbers_merchant failed")
+            return 30104, "get collection numbers_merchant failed"
 
+        collection.insert_one({"numbers": numbers, "merchant_founder": numbers,
+                               "merchant_identity": merchant_identity, "deleted": 0})
+        g_log.debug("insert merchant numbers many-many relation, %s:%s", merchant_identity, numbers)
         return 30100, merchant_identity
     # except (mongo.ConnectionError, mongo.TimeoutError) as e:
     #     g_log.error("connect to mongo failed")
@@ -374,11 +584,11 @@ def merchant_create(**kwargs):
         return 30105, "exception"
 
 
-# pragma 读取商户资料API
+# pragma 读取商家资料API
 def merchant_retrieve_with_numbers(numbers):
     """
-    读取商户资料
-    :param numbers: 商户电话号码
+    读取管理员所有商家资料
+    :param numbers: 商家电话号码
     :return: (30200, merchants)/成功，(>30200, "errmsg")/失败
     """
     try:
@@ -387,29 +597,36 @@ def merchant_retrieve_with_numbers(numbers):
             g_log.warning("invalid merchant account %s", numbers)
             return 30201, "invalid phone number"
 
-        # 获取用户拥有的所有商户ID
-        collection = get_mongo_collection(numbers, "number_merchant")
+        # 获取商家拥有的所有商家ID
+        collection = get_mongo_collection(numbers, "numbers_merchant")
         if not collection:
-            g_log.error("get collection number_merchant failed")
-            return 30202, "get collection number_merchant failed"
-        merchants = collection.find({"numbers": numbers, "deleted": 0}, {"merchant_identity": 1, "_id": 0})
-        # g_log.debug(merchants.__class__)
-        identities = []
-        for merchant in merchants:
-            # g_log.debug(merchant["merchant_identity"])
-            identities.append(ObjectId(merchant["merchant_identity"]))
-        # g_log.debug(identities)
+            g_log.error("get collection numbers_merchant failed")
+            return 30202, "get collection numbers_merchant failed"
+        numbers_merchants = collection.find({"numbers": numbers, "deleted": 0},
+                                    {"merchant_identity": 1, "merchant_founder": 1, "_id": 0})
+        g_log.debug("[numbers_merchant] numbers %s managers %s merchant", numbers, numbers_merchants.count())
+        merchants = []
+        for numbers_merchant in numbers_merchants:
+            merchant_founder = numbers_merchant["merchant_founder"]
+            merchant_identity = numbers_merchant["merchant_identity"]
+            g_log.debug("merchant %s, founder %s", merchant_identity, merchant_founder)
+            # identities.append(ObjectId(merchant["merchant_identity"]))
 
-        collection = get_mongo_collection(numbers, "merchant")
-        if not collection:
-            g_log.error("get collection merchant failed")
-            return 30203, "get collection merchant failed"
-        merchants = collection.find({"_id": {"$in": identities}, "deleted": 0})
-        # TODO...对没有商户做特殊处理
-        if not merchants.count:
-            g_log.debug("account %s has no merchant", numbers)
+            collection = get_mongo_collection(merchant_founder, "merchant")
+            if not collection:
+                g_log.error("get collection merchant %s failed", merchant_founder)
+                return 30203, "get collection merchant failed"
+            merchant = collection.find_one({"_id": ObjectId(merchant_identity), "deleted": 0})
+            if merchant:
+                merchants.append(merchant)
+            else:
+                g_log.warn("merchant %s not exist", merchant_identity)
+        g_log.debug("[merchant] numbers %s managers %s merchant", numbers, len(merchants))
 
-        # 返回的是pymongo.Cursor
+        # TODO...对没有商家做特殊处理
+        if not len(merchants):
+            g_log.debug("account %s managers no merchant", numbers)
+
         return 30200, merchants
     except Exception as e:
         g_log.error("%s", e)
@@ -418,12 +635,12 @@ def merchant_retrieve_with_numbers(numbers):
 
 def merchant_retrieve_with_identity(identity):
     """
-    查询商户资料
-    :param identity: 商户所有者ID
+    读取管理员所有商家资料
+    :param identity: 商家管理员ID
     :return:
     """
     try:
-        # 根据商户id查找商户电话号码
+        # 根据商家id查找商家电话号码
         numbers = ""
         return merchant_retrieve_with_numbers(numbers)
     except Exception as e:
@@ -433,9 +650,9 @@ def merchant_retrieve_with_identity(identity):
 
 def merchant_retrieve(numbers=None, identity=None):
     """
-    获取商户资料，商户电话号码优先
-    :param numbers: 商户电话号码
-    :param identity: 商户所有者ID
+    读取管理员所有商家资料，商家电话号码优先
+    :param numbers: 商家管理员电话号码
+    :param identity: 商家管理员ID
     :return:
     """
     try:
@@ -450,102 +667,514 @@ def merchant_retrieve(numbers=None, identity=None):
         return 30207, "exception"
 
 
-def merchant_retrieve_with_merchant_identity(merchant_identity):
+def merchant_retrieve_with_merchant_identity(numbers, merchant_identity):
     """
-    获取商户资料
-    :param merchant_identity: 商户ID
+    获取指定商家管理员ID的商家资料
+    :param numbers: 商家管理员
+    :param merchant_identity: 商家ID
     :return: (30200, merchant)/成功，(>30200, "errmsg")/失败
     """
     try:
-        # TODO... 目前无法实现按照商户ID路由到数据库，暂时不使用该接口
-        collection = get_mongo_collection(merchant_identity, "merchant")
+        # 找到商家创建人numbers
+        collection = get_mongo_collection(numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection number merchant failed")
+            return 30208, "get collection number merchant failed"
+        merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
+                                       {"merchant_founder": 1})
+        if not merchant:
+            g_log.warn("merchant %s not exist", merchant_identity)
+            return 30209, "merchant not exist"
+
+        merchant_founder = merchant["merchant_founder"]
+        g_log.debug("merchant founder %s", merchant_founder)
+        collection = get_mongo_collection(merchant_founder, "merchant")
         if not collection:
             g_log.error("get collection merchant failed")
-            return 30208, "get collection merchant failed"
-        merchant = collection.find_one({"_id": ObjectId(merchant_identity)})
-        if not merchant or merchant["deleted"] == 1:
+            return 30210, "get collection merchant failed"
+        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "deleted": 0})
+        if not merchant:
             g_log.warning("merchant %s not exist", merchant_identity)
-            return 30209, "merchant not exist"
+            return 30211, "merchant not exist"
         g_log.debug("get %s %s", merchant_identity, merchant)
-        return 30200, merchant
+        return 30200, [merchant]    # 返回的要是一个list和merchant_retrieve_with_numbers一致
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 30210, "exception"
+        return 30212, "exception"
 
 
-# pragma 删除商户资料API
-def merchant_delete_with_numbers(numbers):
+# pragma 更新商家资料API
+def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
     """
-    删除商户资料
-    :param numbers: 商户所有者电话号码
-    :return: (30500, "yes")/成功，(>30500, "errmsg")/失败
+    更新商家资料
+    :param numbers: 商家管理员迪纳好号码
+    :param merchant_identity: 商家Id
+    :param kwargs:
+    :return: (30400, "yes")/成功，(>30400, "errmsg")/失败
     """
     try:
         # 检查合法账号
         if not user_is_valid_merchant(numbers):
-            g_log.warning("invalid merchant account %s", numbers)
-            return 30501, "invalid phone number"
+            g_log.warning("invalid manager number %s", numbers)
+            return 30401, "invalid phone number"
 
-        # 获取用户拥有的所有商户ID
-        collection = get_mongo_collection(numbers, "number_merchant")
+        # 检查该商家是否存在
+        collection = get_mongo_collection(numbers, "numbers_merchant")
         if not collection:
-            g_log.error("get collection number_merchant failed")
-            return 30502, "get collection number_merchant failed"
-        merchants = collection.update_many({"numbers": numbers, "deleted": 0}, {"deleted": 1})
+            g_log.error("get collection number merchant failed")
+            return 30402, "get collection number merchant failed"
+        merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
+                                       {"merchant_founder": 1})
+        if not merchant:
+            g_log.warn("merchant %s not exist", merchant_identity)
+            return 30403, "merchant not exist"
+        merchant_founder = merchant["merchant_founder"]
+        g_log.debug("merchant founder %s", merchant_founder)
 
-        # merchants = collection.find({"numbers": numbers, "deleted": 0}, {"merchant_identity": 1, "_id": 0})
-        # # g_log.debug(merchants.__class__)
-        # identities = []
-        # for merchant in merchants:
-        #     # g_log.debug(merchant["merchant_identity"])
-        #     identities.append(ObjectId(merchant["merchant_identity"]))
-        # # g_log.debug(identities)
-        #
-        # collection = get_mongo_collection(numbers, "merchant")
-        # if not collection:
-        #     g_log.error("get collection merchant failed")
-        #     return 30203, "get collection merchant failed"
-        # collection.update_many({})
-        # merchants = collection.update_many({"_id": {"$in": identities}, "deleted": 0}, {"deleted": 1})
-        # # TODO...对没有商户做特殊处理
-        if not merchants.matched_count:
-            g_log.debug("account %s has no merchant", numbers)
+        value = {}
+        # 名称不能超过64字节，超过要截取前64字节
+        name = kwargs.get("name")
+        if name and len(name) > 64:
+            g_log.warning("too long name %s", name)
+            name = name[0:64]
+            value["name"] = name
+
+        name_en = kwargs.get("name_en")
+        if name_en and len(name_en) > 64:
+            g_log.warning("too long name_en %s", name_en)
+            name_en = name_en[0:64]
+            value["name_en"] = name_en
+
+        # 商家介绍不能超过512字节，超过要截取前512字节
+        introduce = kwargs.get("introduce")
+        if introduce and len(introduce) > 512:
+            g_log.warning("too long introduce %s", introduce)
+            introduce = introduce[0:512]
+            value["introduce"] = introduce
+
+        # TODO... 头像、email、logo、国家、地区检查
+        logo = kwargs.get("logo")
+        if logo:
+            value["logo"] = logo
+        email = kwargs.get("email")
+        if email:
+            value["email"] = email
+        country = kwargs.get("country")
+        if country:
+            value["country"] = country
+        location = kwargs.get("location")
+        if location:
+            value["location"] = location
+        qrcode = kwargs.get("qrcode")
+        if qrcode:
+            value["qrcode"] = qrcode
+        contract = kwargs.get("contract")
+        if contract:
+            value["contract"] = contract
+        contact_numbers = kwargs.get("contact_numbers")
+        if contact_numbers:
+            value["contact_numbers"] = contact_numbers
+
+        latitude = kwargs.get("latitude")
+        if latitude:
+            if latitude < -90 or latitude > 90:
+                g_log.warning("latitude illegal, %s", latitude)
+                latitude = 0
+            value["latitude"] = latitude
+        longitude = kwargs.get("longitude", 0)
+        if longitude:
+            if longitude < -180 or longitude > 180:
+                g_log.warning("longitude illegal, %s", longitude)
+                longitude = 0
+            value["longitude"] = longitude
+
+        # 存入数据库
+        collection = get_mongo_collection(merchant_founder, "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 30404, "get collection merchant failed"
+        g_log.debug("update merchant %s: %s", merchant_identity, value)
+        if name or name_en:
+            # 未认证才可修改商家名称
+            merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity),
+                                                       "verified": yes_no_2_char("no"), "deleted": 0},
+                                                      {"$set", value},
+                                                      return_document=ReturnDocument.AFTER)
+            if merchant and merchant.verified == "y":
+                g_log.error("update name of verified merchant is forbidden")
+                return 30405, "update name of verified merchant is forbidden"
         else:
-            g_log.debug("update %s merchant", merchants.modified_count)
-
-        return 30500, "yes"
+            merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity), "deleted": 0},
+                                                      {"$set", value})
+        if not merchant or merchant.modified_count != 1:
+            g_log.warning("match count:%s, modified count:%s", merchant.match_count, merchant.modified_count)
+            return 30406, "update failed"
+        return 30400, "yes"
+    # except (redis.ConnectionError, redis.TimeoutError) as e:
+    #     g_log.error("connect to redis failed")
+    #     return 20405, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
-        return 30506, "exception"
+        return 30407, "exception"
 
 
-def merchant_delete_with_identity(identity):
+def merchant_update_with_identity(identity, merchant_identity, **kwargs):
     """
-    删除商户资料
-    :param identity: 商户所有者ID
+    更商家资料
+    :param identity: 商家管理员ID
+    :param merchant_identity: 商家Id
+    :param kwargs:
     :return:
     """
     try:
-        # 根据商户id查找商户电话号码
+        # 根据商家id查找商家电话号码
         numbers = ""
-        return merchant_delete_with_numbers(numbers)
+        return merchant_update_with_numbers(numbers, **kwargs)
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30408, "exception"
+
+
+def merchant_update(merchant_identity, numbers=None, identity=None, **kwargs):
+    """
+    更新商家资料，商家电话号码优先
+    :param merchant_identity: 商家ID
+    :param numbers: 管理员电话号码
+    :param identity: 管理员ID
+    :param kwargs:
+    :return:
+    """
+    try:
+        if numbers:
+            return merchant_update_with_numbers(numbers, merchant_identity, **kwargs)
+        elif identity:
+            return merchant_update_with_identity(identity, merchant_identity, **kwargs)
+        else:
+            return 30409, "bad arguments"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30410, "exception"
+
+
+# pragma 更新商家资料API
+def merchant_update_verified_with_numbers(numbers, merchant_identity, verified):
+    """
+    更新商家资料验证标志位
+    :param numbers: 管理员电话号码码
+    :param merchant_identity: 商家ID
+    :param verified: 验证标志, yes|no
+    :return: (30500, 验证标志yes|no)/成功，(>30500, "errmsg")/失败
+    """
+    try:
+        # 检查合法账号
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 30501, "invalid phone number"
+
+        # 检查该商家是否存在
+        collection = get_mongo_collection(numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection number merchant failed")
+            return 30502, "get collection number merchant failed"
+        merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
+                                       {"merchant_founder": 1})
+        if not merchant:
+            g_log.warn("merchant %s not exist", merchant_identity)
+            return 30503, "merchant not exist"
+        merchant_founder = merchant["merchant_founder"]
+        g_log.debug("merchant founder %s", merchant_founder)
+
+        # 存入数据库
+        collection = get_mongo_collection(merchant_founder, "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 30504, "get collection merchant failed"
+        merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity), "deleted": 0},
+                                                  {"$set": {"verified": yes_no_2_char(verified)}},
+                                                  return_document=ReturnDocument.AFTER)
+        if not merchant:
+            g_log.warning("merchant %s not exist", merchant_identity)
+            return 30506, "merchant not exist"
+        return 30500, char_2_yes_no(merchant.verified)
+    # except (redis.ConnectionError, redis.TimeoutError) as e:
+    #     g_log.error("connect to redis failed")
+    #     return 20405, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
         return 30507, "exception"
 
 
-def merchant_delete(numbers=None, identity=None):
+def merchant_update_verified_with_identity(identity, merchant_identity, verified):
     """
-    删除商户资料，商户所有者电话号码优先
-    :param numbers: 商户所有者电话号码
-    :param identity: 商户所有者ID
+    更商家资料
+    :param identity: 商家管理员ID
+    :param merchant_identity: 商家ID
+    :param verified: 验证标志, yes|no
+    :return:
+    """
+    try:
+        # 根据商家id查找商家电话号码
+        numbers = ""
+        return merchant_update_verified_with_numbers(numbers, merchant_identity, verified)
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30508, "exception"
+
+
+def merchant_update_verified(merchant_identity, verified, numbers=None, identity=None):
+    """
+    更新商家资料，商家电话号码优先
+    :param merchant_identity: 商家ID
+    :param verified: 验证标志, yes|no
+    :param numbers: 管理员电话号码
+    :param identity: 管理员ID
     :return:
     """
     try:
         if numbers:
-            return merchant_delete_with_numbers(numbers)
+            return merchant_update_verified_with_numbers(numbers, merchant_identity, verified)
         elif identity:
-            return merchant_delete_with_identity(identity)
+            return merchant_update_verified_with_identity(identity, merchant_identity, verified)
+        else:
+            return 30509, "bad arguments"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30510, "exception"
+
+
+def merchant_create_manager(**kwargs):
+    """
+    增加商家管理员
+    :param kwargs: {"manager_numbers": "18688982241", "merchant_identity": "562726ad4e79150235f20b64",
+                    "merchant_founder": "18688982240"}
+    :return: (30600, yes)/成功，(>30600, "errmsg")/失败
+    """
+    try:
+        # 检查管理员numbers
+        manager_numbers = kwargs.get("manager_numbers", "")
+        if not user_is_valid_merchant(manager_numbers):
+            g_log.error("invalid merchant account %s", manager_numbers)
+            return 30701, "invalid merchant account"
+
+        # 检查创建者numbers
+        merchant_founder = kwargs.get("merchant_founder", "")
+        if not user_is_valid_merchant(merchant_founder):
+            g_log.error("invalid merchant account %s", merchant_founder)
+            return 30702, "invalid merchant account"
+
+        # 商家ID检查
+        merchant_identity = kwargs.get("merchant_identity")
+        if not merchant_identity or len(merchant_identity) != 24:
+            g_log.error("invalid merchant identity")
+            return 30703, "invalid merchant identity"
+
+        # 检查商家是否存在
+        value = {"numbers": merchant_founder, "merchant_founder": merchant_founder,
+                 "merchant_identity": merchant_identity, "deleted": 0}
+        collection = get_mongo_collection(merchant_founder, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers_merchant failed")
+            return 30704, "get collection numbers_merchant failed"
+        result = collection.find_one(value)
+
+        if not result:
+            g_log.error("merchant %s not exist", merchant_identity)
+            return 30705, "merchant_identity not exist"
+
+        # 新增管理员
+        value = {"numbers": manager_numbers, "merchant_founder": merchant_founder,
+                 "merchant_identity": merchant_identity, "deleted": 0}
+        collection = get_mongo_collection(manager_numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers_merchant failed")
+            return 30706, "get collection numbers_merchant failed"
+        # collection.insert_one(value)
+        relation = collection.find_one_and_update({"numbers": manager_numbers, "merchant_identity": merchant_identity},
+                                                  {'$set': value}, upsert=True)
+        if relation:
+            g_log.warn("numbers %s already manager merchant %s", manager_numbers, merchant_identity)
+            return 30707, "already manager"
+
+        g_log.debug("insert merchant numbers many-many relation, %s:%s", merchant_identity, manager_numbers)
+        return 30700, "yes"
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 30708, "exception"
+
+
+def merchant_delegate_manager(**kwargs):
+    """
+    创建人将商家委托给其它管理员
+    1 检查是创建人创建的商家
+    2 检查被委托管理员是该商家的管理员
+    3 将商家资料创建人修改为新创建人，商家ID不做修改
+    4 将与该商家关联的管理员的创建人field修改成新创建人
+    :param kwargs: {"delegate_numbers": "18688982241", "merchant_identity": "562726ad4e79150235f20b64",
+                    "merchant_founder": "18688982240"}
+    :return: (30800, yes)/成功，(>30800, "errmsg")/失败
+    """
+    try:
+        # 检查管理员numbers
+        delegate_numbers = kwargs.get("delegate_numbers", "")
+        if not user_is_valid_merchant(delegate_numbers):
+            g_log.error("invalid merchant account %s", delegate_numbers)
+            return 30801, "invalid merchant account"
+
+        # 检查创建者numbers
+        merchant_founder = kwargs.get("merchant_founder", "")
+        if not user_is_valid_merchant(merchant_founder):
+            g_log.error("invalid merchant account %s", merchant_founder)
+            return 30802, "invalid merchant account"
+
+        # 商家ID检查
+        merchant_identity = kwargs.get("merchant_identity")
+        if not merchant_identity or len(merchant_identity) != 24:
+            g_log.error("invalid merchant identity")
+            return 30803, "invalid merchant identity"
+
+        # 检查是创建人创建的商家
+        value = {"numbers": merchant_founder, "merchant_founder": merchant_founder,
+                 "merchant_identity": merchant_identity, "deleted": 0}
+        collection = get_mongo_collection(merchant_founder, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers_merchant failed")
+            return 30804, "get collection numbers_merchant failed"
+        result = collection.find_one(value)
+        if not result:
+            g_log.error("manager %s not merchant %s founder", merchant_founder, merchant_identity)
+            return 30805, "manager is not founder"
+
+        # 检查被委托管理员是该商家的管理员
+        value = {"numbers": delegate_numbers, "merchant_founder": merchant_founder,
+                 "merchant_identity": merchant_identity, "deleted": 0}
+        collection = get_mongo_collection(delegate_numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers_merchant failed")
+            return 30806, "get collection numbers_merchant failed"
+        result = collection.find_one(value)
+        if not result:
+            g_log.error("delegate manager %s is not merchant %s manager", delegate_numbers, merchant_identity)
+            return 30807, "delegate manager is not merchant manager"
+
+        # TODO... 事务
+        # 读取商家资料
+        collection = get_mongo_collection(merchant_founder, "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 30808, "get collection merchant failed"
+        merchant = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
+                                                {"$set": {"deleted": 1}})
+        if not merchant or merchant.modified_count != 1:
+            g_log.error("merchant %s not exist", merchant_identity)
+            return 30809, "merchant not exist"
+
+        # 修改商家资料为新的创建人，插入数据库
+        collection_delegate = get_mongo_collection(delegate_numbers, "merchant")
+        if not collection_delegate:
+            g_log.error("get collection merchant failed")
+            return 30810, "get collection merchant failed"
+        merchant.numbers = delegate_numbers
+        result = collection_delegate.insert_one(merchant)
+        if not result:
+            g_log.error("insert merchant failed")
+            return 30811, "insert merchant failed"
+
+        # 将与该商家关联的管理员的创建人field修改成新创建人员
+        # TODO...待数据层独立时处理，目前只考虑单机，逻辑层数据层合并
+        collection = get_mongo_collection(delegate_numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers_merchant failed")
+            return 30812, "get collection numbers_merchant failed"
+        result = collection.find_one_and_update({"merchant_identity": merchant_identity},
+                                                {'$set': {"merchant_founder": delegate_numbers}})
+        if result:
+            g_log.debug("match count:%s, update count:%s", result.match_count, result.update_count)
+        return 30800, "yes"
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 30813, "exception"
+
+
+# pragma 删除商家API
+def merchant_delete_manager_with_numbers(numbers):
+    """
+    删除管理员拥有的所有商家关联
+    :param numbers: 商家管理员电话号码
+    :return: (30900, "yes")/成功，(>30900, "errmsg")/失败
+    """
+    try:
+        # 检查合法账号
+        if not user_is_valid_merchant(numbers):
+            g_log.warning("invalid manager %s", numbers)
+            return 30901, "invalid manager"
+        
+        # 找到管理员所有商家，删除管理员和商家关联
+        collection = get_mongo_collection(numbers, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection number merchant failed")
+            return 30902, "get collection number merchant failed"
+        merchants = collection.find({"numbers": numbers, "deleted": 0},
+                                    {"merchant_founder": True, "merchant_identity": True, "_id": False})
+        # merchants = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, {"$set": {"deleted": 1}},
+        #                                            projection={"merchant_founder": True, "merchant_identity": True,
+        #                                                        "_id": False}, return_document=ReturnDocument.AFTER)
+        # if not merchants or merchants.modified_count == 0:
+        #     g_log.warn("manager %s owns no merchant", numbers)
+        #     return 30903, "not own any merchant"
+        if not merchants:
+            g_log.warning("manager %s owns no merchant", numbers)
+        
+        # 如果管理员拥有该商家则同时删除该商家资料，并删除与该商家的所有关联
+        for merchant in merchants:
+            merchant_founder = merchant["merchant_founder"]
+            merchant_identity = merchant["merchant_identity"]
+            g_log.debug("merchant founder %s", merchant_founder)
+
+            # 要删除的管理员是当前商家的创建者，则删除该商家的所有管理员，并且删除商家资料
+            yes = 0
+            no = 0
+            if numbers == merchant_founder:
+                code, message = merchant_delete_manager_with_merchant_identity(numbers, merchant_identity)
+                if code == 30900:
+                    g_log.debug("delete merchant %s all manager done", merchant_identity)
+                    yes += 1
+                else:
+                    g_log.error("delete merchant %s all manager failed", merchant_identity)
+                    no += 1
+        g_log.debug("delete merchant all managers success: %s, failed: %s", yes, no)
+        return 30900, "yes"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30906, "exception"
+
+
+def merchant_delete_manager_with_identity(identity):
+    """
+    删除商家
+    :param identity: 商家管理员ID
+    :return:
+    """
+    try:
+        # 根据商家id查找商家电话号码
+        numbers = ""
+        return merchant_delete_manager_with_numbers(numbers)
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30907, "exception"
+
+
+def merchant_delete(numbers=None, identity=None):
+    """
+    删除商家，商家管理员电话号码优先
+    :param numbers: 商家管理员电话号码
+    :param identity: 商家管理员ID
+    :return:
+    """
+    try:
+        if numbers:
+            return merchant_delete_manager_with_numbers(numbers)
+        elif identity:
+            return merchant_delete_manager_with_identity(identity)
         else:
             return 30508, "bad arguments"
     except Exception as e:
@@ -553,43 +1182,57 @@ def merchant_delete(numbers=None, identity=None):
         return 30509, "exception"
 
 
-def merchant_delete_with_merchant_identity(numbers, merchant_identity):
+def merchant_delete_manager_with_merchant_identity(numbers, merchant_identity):
     """
-    删除商户资料
-    :param numbers: 商户所有者电话号码
+    删除商家管理员和指定商家的关联
+    :param numbers: 商家管理员电话号码
+    :param merchant_identity: 商家ID
     :return: (30500, "yes")/成功，(>30500, "errmsg")/失败
     """
     try:
-        # 检查合法账号
-        if not user_is_valid_merchant(numbers):
-            g_log.warning("invalid merchant account %s", numbers)
-            return 30510, "invalid phone number"
-
-        # 获取用户拥有的所有商户ID
-        collection = get_mongo_collection(numbers, "number_merchant")
+        # 找到商家创建人numbers
+        collection = get_mongo_collection(numbers, "numbers_merchant")
         if not collection:
-            g_log.error("get collection number_merchant failed")
-            return 30511, "get collection number_merchant failed"
-        merchants = collection.update_one({"numbers": numbers, "merchant_identity": merchant_identity,
-                                           "deleted": 0}, {"deleted": 1})
-        # TODO...对没有商户做特殊处理
-        if not merchants.matched_count:
-            g_log.debug("account %s has no merchant", numbers)
-        else:
-            g_log.debug("delete %s merchant %s", numbers, merchant_identity)
-            # merchants = collection.find({"merchant_identity": merchant_identity, "deleted": 0})
-            # if not merchants.count:
-            #     # 已经没有任何用户关联该商户资料，删除商户资料，用merchant_identity路由
-            #     collection = get_mongo_collection(merchant_identity, "merchant")
-            #     if not collection:
-            #         g_log.error("get collection merchant failed")
-            #         return 30212, "get collection merchant failed"
-            #     merchants = collection.update_one({"_id": ObjectId(merchant_identity), "deleted": 0}, {"deleted": 1})
-            #
-        return 30500, "yes"
+            g_log.error("get collection numbers merchant failed")
+            return 30910, "get collection numbers merchant failed"
+        # merchant = collection.find_one_and_update({"numbers": numbers, "merchant_identity": merchant_identity,
+        merchants = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0}, 
+                                                   {"$set": {"deleted": 1}},
+                                                   projection={"merchant_founder": True, "_id": False})
+        if not merchants:
+            g_log.warn("merchant %s not exist", merchant_identity)
+            return 30911, "merchant not exist"
+
+        merchant_founder = merchants[0]["merchant_founder"]
+        g_log.debug("merchant founder %s", merchant_founder)
+
+        # 要删除的管理员是当前商家的创建者，则删除该商家的所有管理员，并且删除商家资料
+        if numbers == merchant_founder:
+            # 删除商家资料
+            collection = get_mongo_collection(merchant_founder, "merchant")
+            if not collection:
+                g_log.error("get collection merchant failed")
+                return 30912, "get collection merchant failed"
+            merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity), "deleted": 0},
+                                                      {"$set": {"deleted": 1}})
+            if not merchant or merchant.modified_count != 1:
+                g_log.error("delete merchant %s failed", merchant_identity)
+                return 30913, "but delete merchant failed"
+
+            # TODO...广播删除该商家的所有管理员，没法获取merchant_identity列表，所以广播给所有分片数据库处理，
+            # 待数据层独立时处理，目前只考虑单机，逻辑层数据层合
+            collection = get_mongo_collection(numbers, "numbers_merchant")
+            if not collection:
+                g_log.error("get collection numbers merchant failed")
+                return 30910, "get collection numbers merchant failed"
+            result = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
+                                                    {"$set": {"deleted": 1}})
+            if result:
+                g_log.debug("match count:%s, update count:%s", result.match_count, result.update_count)
+        return 30900, "yes"
     except Exception as e:
-        g_log.error("%s", e)
-        return 30512, "exception"
+        g_log.error("%s %s", e.__class__, e)
+        return 30914, "exception"
 
 
 def generate_merchant_identity(numbers):
