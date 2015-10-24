@@ -49,9 +49,9 @@ def sexy_number_2_string(sexy):
 
 def yes_no_2_char(yes_no):
     yesno2char = {"yes": "y", "no": "n"}
-    return yesno2char.get(yes_no, 'n')
+    return yesno2char.get(yes_no.lower(), 'n')
 
 
 def char_2_yes_no(yes_no):
     char2yesno = {"y": "yes", "n": "no"}
-    return char2yesno.get(yes_no, 'no')
+    return char2yesno.get(yes_no.lower(), 'no')
