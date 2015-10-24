@@ -39,7 +39,7 @@ class Login():
 
 
         try:
-            print "start ... try...."
+            print "start ... try..."
             command_handle = {2: self.user_register, 3: self.user_login, 5:self.change_password, 6: self.send_verifycode, 7: self.verify_code}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
