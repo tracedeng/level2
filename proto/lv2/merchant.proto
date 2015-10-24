@@ -89,7 +89,7 @@ message MerchantDelegateManagerRequest {
     string identity = 2;
     string merchant_identity = 3;   //商家ID
     string delegate_numbers = 4;             //被委托的管理员
-    string delegate_identity = 4;             //被委托的管理员ID
+    string delegate_identity = 5;             //被委托的管理员ID
 }
 
 message MerchantDelegateManagerResponse {
