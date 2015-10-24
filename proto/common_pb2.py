@@ -11,7 +11,7 @@ from google.protobuf import descriptor_pb2
 _sym_db = _symbol_database.Default()
 
 
-import register_pb2 as register__pb2
+import login_pb2 as login__pb2
 import vip_pb2 as vip__pb2
 import consumer_pb2 as consumer__pb2
 import merchant_pb2 as merchant__pb2
@@ -21,9 +21,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='common.proto',
   package='',
   syntax='proto3',
-  serialized_pb=b'\n\x0c\x63ommon.proto\x1a\x0eregister.proto\x1a\tvip.proto\x1a\x0e\x63onsumer.proto\x1a\x0emerchant.proto\"\xd1\x05\n\x07Request\x12\x1a\n\x04head\x18\x01 \x01(\x0b\x32\x0c.RequestHead\x12*\n\x10register_request\x18\x02 \x01(\x0b\x32\x10.RegisterRequest\x12\x37\n\x17\x63onsumer_create_request\x18\x64 \x01(\x0b\x32\x16.ConsumerCreateRequest\x12;\n\x19\x63onsumer_retrieve_request\x18\x65 \x01(\x0b\x32\x18.ConsumerRetrieveRequest\x12\x46\n\x1f\x63onsumer_batch_retrieve_request\x18\x66 \x01(\x0b\x32\x1d.ConsumerBatchRetrieveRequest\x12\x37\n\x17\x63onsumer_update_request\x18g \x01(\x0b\x32\x16.ConsumerUpdateRequest\x12\x37\n\x17\x63onsumer_delete_request\x18h \x01(\x0b\x32\x16.ConsumerDeleteRequest\x12\x38\n\x17merchant_create_request\x18\xc8\x01 \x01(\x0b\x32\x16.MerchantCreateRequest\x12<\n\x19merchant_retrieve_request\x18\xc9\x01 \x01(\x0b\x32\x18.MerchantRetrieveRequest\x12G\n\x1fmerchant_batch_retrieve_request\x18\xca\x01 \x01(\x0b\x32\x1d.MerchantBatchRetrieveRequest\x12\x38\n\x17merchant_update_request\x18\xcb\x01 \x01(\x0b\x32\x16.MerchantUpdateRequest\x12\x38\n\x17merchant_delete_request\x18\xcc\x01 \x01(\x0b\x32\x16.MerchantDeleteRequest\x12\x19\n\x03vip\x18\x90N \x01(\x0b\x32\x0b.VipRequest\"\xea\x05\n\x08Response\x12\x1b\n\x04head\x18\x01 \x01(\x0b\x32\r.ResponseHead\x12,\n\x11register_response\x18\x02 \x01(\x0b\x32\x11.RegisterResponse\x12\x39\n\x18\x63onsumer_create_response\x18\x64 \x01(\x0b\x32\x17.ConsumerCreateResponse\x12=\n\x1a\x63onsumer_retrieve_response\x18\x65 \x01(\x0b\x32\x19.ConsumerRetrieveResponse\x12H\n consumer_batch_retrieve_response\x18\x66 \x01(\x0b\x32\x1e.ConsumerBatchRetrieveResponse\x12\x39\n\x18\x63onsumer_update_response\x18g \x01(\x0b\x32\x17.ConsumerUpdateResponse\x12\x39\n\x18\x63onsumer_delete_response\x18h \x01(\x0b\x32\x17.ConsumerDeleteResponse\x12:\n\x18merchant_create_response\x18\xc8\x01 \x01(\x0b\x32\x17.MerchantCreateResponse\x12>\n\x1amerchant_retrieve_response\x18\xc9\x01 \x01(\x0b\x32\x19.MerchantRetrieveResponse\x12I\n merchant_batch_retrieve_response\x18\xca\x01 \x01(\x0b\x32\x1e.MerchantBatchRetrieveResponse\x12:\n\x18merchant_update_response\x18\xcb\x01 \x01(\x0b\x32\x17.MerchantUpdateResponse\x12:\n\x18merchant_delete_response\x18\xcc\x01 \x01(\x0b\x32\x17.MerchantDeleteResponse\x12\x1a\n\x03vip\x18\x90N \x01(\x0b\x32\x0c.VipResponse\"y\n\x0bRequestHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x12\n\nto_numbers\x18\x04 \x01(\t\x12\x13\n\x0bsession_key\x18\x05 \x01(\t\x12\x16\n\x0e\x63oroutine_uuid\x18\x06 \x01(\t\"G\n\x0cResponseHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0c\n\x04\x63ode\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0c\x63ommon.proto\x1a\x0blogin.proto\x1a\tvip.proto\x1a\x0e\x63onsumer.proto\x1a\x0emerchant.proto\"\xfe\x06\n\x07Request\x12\x1a\n\x04head\x18\x01 \x01(\x0b\x32\x0c.RequestHead\x12*\n\x10register_request\x18\x02 \x01(\x0b\x32\x10.RegisterRequest\x12$\n\rlogin_request\x18\x03 \x01(\x0b\x32\r.LoginRequest\x12*\n\x10password_request\x18\x05 \x01(\x0b\x32\x10.PasswordRequest\x12&\n\x0everify_request\x18\x07 \x01(\x0b\x32\x0e.VerifyRequest\x12\x31\n\x14phone_number_request\x18\x08 \x01(\x0b\x32\x13.PhoneNumberRequest\x12\x37\n\x17\x63onsumer_create_request\x18\x64 \x01(\x0b\x32\x16.ConsumerCreateRequest\x12;\n\x19\x63onsumer_retrieve_request\x18\x65 \x01(\x0b\x32\x18.ConsumerRetrieveRequest\x12\x46\n\x1f\x63onsumer_batch_retrieve_request\x18\x66 \x01(\x0b\x32\x1d.ConsumerBatchRetrieveRequest\x12\x37\n\x17\x63onsumer_update_request\x18g \x01(\x0b\x32\x16.ConsumerUpdateRequest\x12\x37\n\x17\x63onsumer_delete_request\x18h \x01(\x0b\x32\x16.ConsumerDeleteRequest\x12\x38\n\x17merchant_create_request\x18\xc8\x01 \x01(\x0b\x32\x16.MerchantCreateRequest\x12<\n\x19merchant_retrieve_request\x18\xc9\x01 \x01(\x0b\x32\x18.MerchantRetrieveRequest\x12G\n\x1fmerchant_batch_retrieve_request\x18\xca\x01 \x01(\x0b\x32\x1d.MerchantBatchRetrieveRequest\x12\x38\n\x17merchant_update_request\x18\xcb\x01 \x01(\x0b\x32\x16.MerchantUpdateRequest\x12\x38\n\x17merchant_delete_request\x18\xcc\x01 \x01(\x0b\x32\x16.MerchantDeleteRequest\x12\x19\n\x03vip\x18\x90N \x01(\x0b\x32\x0b.VipRequest\"\x9f\x07\n\x08Response\x12\x1b\n\x04head\x18\x01 \x01(\x0b\x32\r.ResponseHead\x12,\n\x11register_response\x18\x02 \x01(\x0b\x32\x11.RegisterResponse\x12&\n\x0elogin_response\x18\x03 \x01(\x0b\x32\x0e.LoginResponse\x12,\n\x11password_response\x18\x05 \x01(\x0b\x32\x11.PasswordResponse\x12(\n\x0fverify_response\x18\x07 \x01(\x0b\x32\x0f.VerifyResponse\x12\x33\n\x15phone_number_response\x18\x08 \x01(\x0b\x32\x14.PhoneNumberResponse\x12\x39\n\x18\x63onsumer_create_response\x18\x64 \x01(\x0b\x32\x17.ConsumerCreateResponse\x12=\n\x1a\x63onsumer_retrieve_response\x18\x65 \x01(\x0b\x32\x19.ConsumerRetrieveResponse\x12H\n consumer_batch_retrieve_response\x18\x66 \x01(\x0b\x32\x1e.ConsumerBatchRetrieveResponse\x12\x39\n\x18\x63onsumer_update_response\x18g \x01(\x0b\x32\x17.ConsumerUpdateResponse\x12\x39\n\x18\x63onsumer_delete_response\x18h \x01(\x0b\x32\x17.ConsumerDeleteResponse\x12:\n\x18merchant_create_response\x18\xc8\x01 \x01(\x0b\x32\x17.MerchantCreateResponse\x12>\n\x1amerchant_retrieve_response\x18\xc9\x01 \x01(\x0b\x32\x19.MerchantRetrieveResponse\x12I\n merchant_batch_retrieve_response\x18\xca\x01 \x01(\x0b\x32\x1e.MerchantBatchRetrieveResponse\x12:\n\x18merchant_update_response\x18\xcb\x01 \x01(\x0b\x32\x17.MerchantUpdateResponse\x12:\n\x18merchant_delete_response\x18\xcc\x01 \x01(\x0b\x32\x17.MerchantDeleteResponse\x12\x1a\n\x03vip\x18\x90N \x01(\x0b\x32\x0c.VipResponse\"y\n\x0bRequestHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0f\n\x07numbers\x18\x03 \x01(\t\x12\x12\n\nto_numbers\x18\x04 \x01(\t\x12\x13\n\x0bsession_key\x18\x05 \x01(\t\x12\x16\n\x0e\x63oroutine_uuid\x18\x06 \x01(\t\"G\n\x0cResponseHead\x12\x0b\n\x03\x63md\x18\x01 \x01(\r\x12\x0b\n\x03seq\x18\x02 \x01(\x04\x12\x0c\n\x04\x63ode\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\tb\x06proto3'
   ,
-  dependencies=[register__pb2.DESCRIPTOR,vip__pb2.DESCRIPTOR,consumer__pb2.DESCRIPTOR,merchant__pb2.DESCRIPTOR,])
+  dependencies=[login__pb2.DESCRIPTOR,vip__pb2.DESCRIPTOR,consumer__pb2.DESCRIPTOR,merchant__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
@@ -51,77 +51,105 @@ _REQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_create_request', full_name='Request.consumer_create_request', index=2,
+      name='login_request', full_name='Request.login_request', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='password_request', full_name='Request.password_request', index=3,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='verify_request', full_name='Request.verify_request', index=4,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='phone_number_request', full_name='Request.phone_number_request', index=5,
+      number=8, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='consumer_create_request', full_name='Request.consumer_create_request', index=6,
       number=100, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_retrieve_request', full_name='Request.consumer_retrieve_request', index=3,
+      name='consumer_retrieve_request', full_name='Request.consumer_retrieve_request', index=7,
       number=101, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_batch_retrieve_request', full_name='Request.consumer_batch_retrieve_request', index=4,
+      name='consumer_batch_retrieve_request', full_name='Request.consumer_batch_retrieve_request', index=8,
       number=102, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_update_request', full_name='Request.consumer_update_request', index=5,
+      name='consumer_update_request', full_name='Request.consumer_update_request', index=9,
       number=103, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_delete_request', full_name='Request.consumer_delete_request', index=6,
+      name='consumer_delete_request', full_name='Request.consumer_delete_request', index=10,
       number=104, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_create_request', full_name='Request.merchant_create_request', index=7,
+      name='merchant_create_request', full_name='Request.merchant_create_request', index=11,
       number=200, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_retrieve_request', full_name='Request.merchant_retrieve_request', index=8,
+      name='merchant_retrieve_request', full_name='Request.merchant_retrieve_request', index=12,
       number=201, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_batch_retrieve_request', full_name='Request.merchant_batch_retrieve_request', index=9,
+      name='merchant_batch_retrieve_request', full_name='Request.merchant_batch_retrieve_request', index=13,
       number=202, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_update_request', full_name='Request.merchant_update_request', index=10,
+      name='merchant_update_request', full_name='Request.merchant_update_request', index=14,
       number=203, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_delete_request', full_name='Request.merchant_delete_request', index=11,
+      name='merchant_delete_request', full_name='Request.merchant_delete_request', index=15,
       number=204, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='vip', full_name='Request.vip', index=12,
+      name='vip', full_name='Request.vip', index=16,
       number=10000, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -139,8 +167,8 @@ _REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=76,
-  serialized_end=797,
+  serialized_start=73,
+  serialized_end=967,
 )
 
 
@@ -166,77 +194,105 @@ _RESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_create_response', full_name='Response.consumer_create_response', index=2,
+      name='login_response', full_name='Response.login_response', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='password_response', full_name='Response.password_response', index=3,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='verify_response', full_name='Response.verify_response', index=4,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='phone_number_response', full_name='Response.phone_number_response', index=5,
+      number=8, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='consumer_create_response', full_name='Response.consumer_create_response', index=6,
       number=100, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_retrieve_response', full_name='Response.consumer_retrieve_response', index=3,
+      name='consumer_retrieve_response', full_name='Response.consumer_retrieve_response', index=7,
       number=101, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_batch_retrieve_response', full_name='Response.consumer_batch_retrieve_response', index=4,
+      name='consumer_batch_retrieve_response', full_name='Response.consumer_batch_retrieve_response', index=8,
       number=102, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_update_response', full_name='Response.consumer_update_response', index=5,
+      name='consumer_update_response', full_name='Response.consumer_update_response', index=9,
       number=103, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='consumer_delete_response', full_name='Response.consumer_delete_response', index=6,
+      name='consumer_delete_response', full_name='Response.consumer_delete_response', index=10,
       number=104, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_create_response', full_name='Response.merchant_create_response', index=7,
+      name='merchant_create_response', full_name='Response.merchant_create_response', index=11,
       number=200, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_retrieve_response', full_name='Response.merchant_retrieve_response', index=8,
+      name='merchant_retrieve_response', full_name='Response.merchant_retrieve_response', index=12,
       number=201, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_batch_retrieve_response', full_name='Response.merchant_batch_retrieve_response', index=9,
+      name='merchant_batch_retrieve_response', full_name='Response.merchant_batch_retrieve_response', index=13,
       number=202, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_update_response', full_name='Response.merchant_update_response', index=10,
+      name='merchant_update_response', full_name='Response.merchant_update_response', index=14,
       number=203, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='merchant_delete_response', full_name='Response.merchant_delete_response', index=11,
+      name='merchant_delete_response', full_name='Response.merchant_delete_response', index=15,
       number=204, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='vip', full_name='Response.vip', index=12,
+      name='vip', full_name='Response.vip', index=16,
       number=10000, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -254,8 +310,8 @@ _RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=800,
-  serialized_end=1546,
+  serialized_start=970,
+  serialized_end=1897,
 )
 
 
@@ -320,8 +376,8 @@ _REQUESTHEAD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1548,
-  serialized_end=1669,
+  serialized_start=1899,
+  serialized_end=2020,
 )
 
 
@@ -372,12 +428,16 @@ _RESPONSEHEAD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1671,
-  serialized_end=1742,
+  serialized_start=2022,
+  serialized_end=2093,
 )
 
 _REQUEST.fields_by_name['head'].message_type = _REQUESTHEAD
-_REQUEST.fields_by_name['register_request'].message_type = register__pb2._REGISTERREQUEST
+_REQUEST.fields_by_name['register_request'].message_type = login__pb2._REGISTERREQUEST
+_REQUEST.fields_by_name['login_request'].message_type = login__pb2._LOGINREQUEST
+_REQUEST.fields_by_name['password_request'].message_type = login__pb2._PASSWORDREQUEST
+_REQUEST.fields_by_name['verify_request'].message_type = login__pb2._VERIFYREQUEST
+_REQUEST.fields_by_name['phone_number_request'].message_type = login__pb2._PHONENUMBERREQUEST
 _REQUEST.fields_by_name['consumer_create_request'].message_type = consumer__pb2._CONSUMERCREATEREQUEST
 _REQUEST.fields_by_name['consumer_retrieve_request'].message_type = consumer__pb2._CONSUMERRETRIEVEREQUEST
 _REQUEST.fields_by_name['consumer_batch_retrieve_request'].message_type = consumer__pb2._CONSUMERBATCHRETRIEVEREQUEST
@@ -390,7 +450,11 @@ _REQUEST.fields_by_name['merchant_update_request'].message_type = merchant__pb2.
 _REQUEST.fields_by_name['merchant_delete_request'].message_type = merchant__pb2._MERCHANTDELETEREQUEST
 _REQUEST.fields_by_name['vip'].message_type = vip__pb2._VIPREQUEST
 _RESPONSE.fields_by_name['head'].message_type = _RESPONSEHEAD
-_RESPONSE.fields_by_name['register_response'].message_type = register__pb2._REGISTERRESPONSE
+_RESPONSE.fields_by_name['register_response'].message_type = login__pb2._REGISTERRESPONSE
+_RESPONSE.fields_by_name['login_response'].message_type = login__pb2._LOGINRESPONSE
+_RESPONSE.fields_by_name['password_response'].message_type = login__pb2._PASSWORDRESPONSE
+_RESPONSE.fields_by_name['verify_response'].message_type = login__pb2._VERIFYRESPONSE
+_RESPONSE.fields_by_name['phone_number_response'].message_type = login__pb2._PHONENUMBERRESPONSE
 _RESPONSE.fields_by_name['consumer_create_response'].message_type = consumer__pb2._CONSUMERCREATERESPONSE
 _RESPONSE.fields_by_name['consumer_retrieve_response'].message_type = consumer__pb2._CONSUMERRETRIEVERESPONSE
 _RESPONSE.fields_by_name['consumer_batch_retrieve_response'].message_type = consumer__pb2._CONSUMERBATCHRETRIEVERESPONSE

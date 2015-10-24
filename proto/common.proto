@@ -1,7 +1,7 @@
 //package calculus.proto;
 syntax = "proto3";
 
-import "register.proto";
+import "login.proto";
 import "vip.proto";
 import "consumer.proto";
 import "merchant.proto";
@@ -12,6 +12,11 @@ message Request {
     // ------------------------具体业务包体---------------------------
     // 注册登录，[2, 100)
     RegisterRequest register_request = 2;
+    LoginRequest login_request = 3;
+    PasswordRequest password_request = 5;
+    VerifyRequest verify_request = 7;
+    PhoneNumberRequest phone_number_request = 8;
+
 
     // 普通用户，[100, 200)
     ConsumerCreateRequest consumer_create_request = 100;
@@ -36,6 +41,11 @@ message Response {
 
     // 注册登录，[2, 100)
     RegisterResponse register_response = 2;
+    LoginResponse login_response = 3;
+    PasswordResponse password_response = 5;
+    VerifyResponse verify_response = 7;
+    PhoneNumberResponse phone_number_response = 8;
+
 
     // 普通用户，[100, 200)
     ConsumerCreateResponse consumer_create_response = 100;

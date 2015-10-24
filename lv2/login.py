@@ -13,8 +13,12 @@ from account_valid import *
 
 import pymongo
 
+from bson.objectid import ObjectId
+
+
 import time
 from random import Random
+
 class Login():
     """
     注册登录模块，命令号<100
@@ -289,7 +293,7 @@ class Login():
             g_log.error("%s", e)
             return 0
 
-    #忘记密码，走提交验证码，修改密码流程
+    #忘记密码，走提交验证码，重置密码流程
 
     #修改密码
     def change_password(self):
@@ -307,9 +311,10 @@ class Login():
             response.head.message = ""
             recordtime = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
 
+            print "|||||||||||||"
 
-            print password
-            print password_md5
+            print self.searchphonenumber("5629b9f9b8a7c10cfc70c8f1")
+            print "|||||||||||||"
 
             #判断手机号码格式正确
             if phone_number_is_valid(phone_number) <> 1 :
@@ -323,9 +328,7 @@ class Login():
             db = conn.test #连接库
 
             try:
-                aaa = db.client_password.update({"user_id":phone_number},{"$set":{"password":password,"password_md5":password_md5}})
-                print aaa
-                print '{{{{{'
+                db.client_password.update({"user_id":phone_number},{"$set":{"password":password,"password_md5":password_md5}})
                 response.head.message = "change password succeed"
                 response.password_response.change_result = "change succeed"
                 response.head.code = 100501
@@ -335,6 +338,49 @@ class Login():
 
             g_log.debug("%s", response)
             return response
+
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    #查找电话号码
+    def searchphonenumber(self, id):
+        try:
+
+            #验证ID 格式正确，否则返回100811
+
+            conn = pymongo.MongoClient("127.0.0.1",27017)
+            db = conn.test #连接库
+
+            content = db.client_password.find_one({"_id":ObjectId (id)})
+
+            if content:
+                return 100801,content["user_id"]
+            else:
+                return 100810,"id is not exist"
+
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    #验证登录态
+    def checklogin(self,phonoe_number,skey):
+        try:
+
+            #验证phonenumber,skey  格式正确，否则返回100911
+
+            conn = pymongo.MongoClient("127.0.0.1",27017)
+            db = conn.test #连接库
+
+            content = db.user_login_status.find_one({"user_id":phonoe_number,"skey":skey})
+            if content:
+                if 1 == 1:
+                    #判断在登录有效期内
+                    return 100901,"skey is ok"
+                else:
+                    return 100912,"login out of time"
+            else:
+                return 100910,"phonenumber not login or skey unavaliable"
 
         except Exception as e:
             g_log.error("%s", e)
