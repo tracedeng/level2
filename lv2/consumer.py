@@ -145,6 +145,7 @@ class Consumer():
                 material.country = value["country"]
                 material.qrcode = value["qrcode"]
                 material.avatar = value["avatar"]
+                material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
                 return response
             else:
                 return 1
@@ -351,8 +352,10 @@ def consumer_create(**kwargs):
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
 
+        from datetime import datetime
         value = {"numbers": numbers, "name": nickname, "avatar": avatar, "email": email, "introduce": introduce,
-                 "sexy": sexy, "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0}
+                 "sexy": sexy, "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0,
+                 "create_time": datetime.now()}
 
         # 存入数据库
         collection = get_mongo_collection(numbers, "consumer")
@@ -360,7 +363,7 @@ def consumer_create(**kwargs):
             g_log.error("get collection consumer failed")
             return 20102, "get collection consumer failed"
         consumer = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True)
-        if consumer:
+        if consumer and not consumer["deleted"]:
             g_log.error("consumer %s exist", numbers)
             return 20103, "duplicate consumer"
         # connection.hmset(key, value)
