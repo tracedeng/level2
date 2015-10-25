@@ -7,7 +7,7 @@ import common_pb2
 import package
 
 import calculus.wrapper.log as log
-g_log = log.WrapperLog('stream', name=__name__, level=log.ERROR).log  # 启动日志功能
+g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 from branch_socket import receive_from_sock
 from branch_socket import send_to_sock
 
@@ -109,9 +109,9 @@ def batch_test_retrieve():
 
 
 if "__main__" == __name__:
-    # consumer_delete_test()
-    # consumer_create_test()
-    # consumer_retrieve_test()
+    consumer_delete_test()
+    consumer_create_test()
+    consumer_retrieve_test()
     # consumer_update_test()
     # consumer_retrieve_test()
     # batch_test_create()

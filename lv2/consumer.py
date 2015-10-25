@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
-import redis
-from redis_connection import get_redis_connection
+# import redis
+# from redis_connection import get_redis_connection
+from mongo_connection import get_mongo_collection
 import common_pb2
 import package
 import log
@@ -130,7 +131,7 @@ class Consumer():
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "delete consumer done"
+                response.head.message = "retrieve consumer done"
 
                 material = response.consumer_retrieve_response.material
                 material.numbers = numbers
@@ -227,7 +228,7 @@ class Consumer():
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "create consumer done"
+                response.head.message = "update consumer done"
                 return response
             else:
                 return 1
@@ -312,16 +313,16 @@ def consumer_create(**kwargs):
             g_log.warning("invalid customer account %s", numbers)
             return 20101, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
-        connection = get_redis_connection(numbers)
-        if not connection:
-            g_log.error("connect to redis failed")
-            return 20102, "connect to redis failed"
-
-        key = "user:%s" % numbers
-        if connection.exists(key) and connection.hget(key, "deleted") == "0":
-            g_log.warning("duplicate create user %s", key)
-            return 20103, "duplicate create user"
+        # # 连接redis，检查该用户是否已经创建
+        # connection = get_redis_connection(numbers)
+        # if not connection:
+        #     g_log.error("connect to redis failed")
+        #     return 20102, "connect to redis failed"
+        #
+        # key = "user:%s" % numbers
+        # if connection.exists(key) and connection.hget(key, "deleted") == "0":
+        #     g_log.warning("duplicate create user %s", key)
+        #     return 20103, "duplicate create user"
 
         # 昵称不能超过16字节，超过要截取前16字节
         nickname = kwargs.get("nickname", numbers)
@@ -350,17 +351,24 @@ def consumer_create(**kwargs):
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
 
-        value = {"name": nickname, "avatar": avatar, "email": email, "introduce": introduce, "sexy": sexy,
-                 "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0}
+        value = {"numbers": numbers, "name": nickname, "avatar": avatar, "email": email, "introduce": introduce,
+                 "sexy": sexy, "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0}
 
         # 存入数据库
-        connection.hmset(key, value)
-        g_log.debug("insert %s %s", key, value)
-
+        collection = get_mongo_collection(numbers, "consumer")
+        if not collection:
+            g_log.error("get collection consumer failed")
+            return 20102, "get collection consumer failed"
+        consumer = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True)
+        if consumer:
+            g_log.error("consumer %s exist", numbers)
+            return 20103, "duplicate consumer"
+        # connection.hmset(key, value)
+        # g_log.debug("insert %s %s", key, value)
         return 20100, "yes"
-    except (redis.ConnectionError, redis.TimeoutError) as e:
-        g_log.error("connect to redis failed")
-        return 20102, "connect to redis failed"
+    # except (redis.ConnectionError, redis.TimeoutError) as e:
+    #     g_log.error("connect to redis failed")
+    #     return 20102, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
         return 20104, "exception"
@@ -379,23 +387,32 @@ def consumer_retrieve_with_numbers(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20201, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
-        connection = get_redis_connection(numbers)
-        if not connection:
-            g_log.error("connect to redis failed")
-            return 20202, "connect to redis failed"
-
-        key = "user:%s" % numbers
-        if not connection.exists(key) or connection.hget(key, "deleted") == 1:
-            g_log.warning("consumer %s not exist", key)
+        # # 连接redis，检查该用户是否已经创建
+        # connection = get_redis_connection(numbers)
+        # if not connection:
+        #     g_log.error("connect to redis failed")
+        #     return 20202, "connect to redis failed"
+        #
+        # key = "user:%s" % numbers
+        # if not connection.exists(key) or connection.hget(key, "deleted") == 1:
+        #     g_log.warning("consumer %s not exist", key)
+        #     return 20203, "consumer not exist"
+        #
+        # value = connection.hgetall(key)
+        # g_log.debug("get %s %s", key, value)
+        collection = get_mongo_collection(numbers, "consumer")
+        if not collection:
+            g_log.error("get collection consumer failed")
+            return 20202, "get collection consumer failed"
+        consumer = collection.find_one({"numbers": numbers, "deleted": 0})
+        if not consumer:
+            g_log.debug("consumer %s not exist", numbers)
             return 20203, "consumer not exist"
 
-        value = connection.hgetall(key)
-        g_log.debug("get %s %s", key, value)
-        return 20200, value
-    except (redis.ConnectionError, redis.TimeoutError) as e:
-        g_log.error("connect to redis failed")
-        return 20202, "connect to redis failed"
+        return 20200, consumer
+    # except (redis.ConnectionError, redis.TimeoutError) as e:
+    #     g_log.error("connect to redis failed")
+    #     return 20202, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
         return 20204, "exception"
@@ -572,29 +589,38 @@ def consumer_delete_with_numbers(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20501, "invalid phone number"
 
-        # 连接redis，检查该用户是否已经创建
-        connection = get_redis_connection(numbers)
-        if not connection:
-            g_log.error("connect to redis failed")
-            return 20502, "connect to redis failed"
+        # # 连接redis，检查该用户是否已经创建
+        # connection = get_redis_connection(numbers)
+        # if not connection:
+        #     g_log.error("connect to redis failed")
+        #     return 20502, "connect to redis failed"
+        #
+        # # 检查账号是否存在
+        # key = "user:%s" % numbers
+        # if not connection.exists(key):
+        #     g_log.warning("consumer %s not exist", key)
+        #     return 20503, "consumer not exist"
+        # value = connection.hget(key, "deleted")
+        # g_log.debug("get %s#deleted %s", key, value)
+        # if value == "1":
+        #     g_log.warning("consumer %s deleted already", key)
+        #     return 20504, "consumer not exist"
+        #
+        # # 删除consumer
+        # connection.hset(key, "deleted", 1)
 
-        # 检查账号是否存在
-        key = "user:%s" % numbers
-        if not connection.exists(key):
-            g_log.warning("consumer %s not exist", key)
+        collection = get_mongo_collection(numbers, "consumer")
+        if not collection:
+            g_log.error("get collection consumer failed")
+            return 20502, "get collection consumer failed"
+        consumer = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, {"$set": {"deleted": 1}})
+        if not consumer:
+            g_log.error("consumer %s not exist", numbers)
             return 20503, "consumer not exist"
-        value = connection.hget(key, "deleted")
-        g_log.debug("get %s#deleted %s", key, value)
-        if value == "1":
-            g_log.warning("consumer %s deleted already", key)
-            return 20504, "consumer not exist"
-
-        # 删除consumer
-        connection.hset(key, "deleted", 1)
         return 20500, "yes"
-    except (redis.ConnectionError, redis.TimeoutError) as e:
-        g_log.error("connect to redis failed")
-        return 20505, "connect to redis failed"
+    # except (redis.ConnectionError, redis.TimeoutError) as e:
+    #     g_log.error("connect to redis failed")
+    #     return 20505, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
         return 20506, "exception"
