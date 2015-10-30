@@ -25,7 +25,7 @@ message ConsumerRetrieveResponse {
 
 // 批量读取用户
 message ConsumerBatchRetrieveRequest {
-    repeated string numberss = 1;
+    repeated string numbers = 1;
     repeated uint64 identities = 2;
 }
 
@@ -66,5 +66,5 @@ message ConsumerMaterial {
     string country = 8;
     string location = 9;    //地区，省市
     string qrcode = 10;     //二维码
-    string create_time = 11;    //创建时间
+    string create_time = 11;    //创建时间，response使用
 }

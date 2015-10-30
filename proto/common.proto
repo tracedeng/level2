@@ -5,6 +5,7 @@ import "login.proto";
 import "vip.proto";
 import "consumer.proto";
 import "merchant.proto";
+import "credit.proto";
 
 message Request {
     RequestHead head = 1;
@@ -36,6 +37,13 @@ message Request {
     MerchantDelegateManagerRequest merchant_delegate_manager_request = 208;
     MerchantDeleteManagerRequest merchant_delete_manager_request = 209;
 
+    // 积分，[301, 400]
+    ConsumptionCreateRequest consumption_create_request = 301;
+    MerchantCreditRetrieveRequest merchant_credit_retrieve_request = 302;
+    ConfirmConsumptionRequest confirm_consumption_request = 303;
+    RefuseConsumptionRequest refuse_consumption_request = 304;
+    CreditFreeRequest credit_free_request = 305;
+    ConsumerCreditRetrieveRequest consumer_credit_retrieve_request = 306;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -69,6 +77,14 @@ message Response {
     MerchantUpdateVerifiedResponse merchant_update_verified_response = 207;
     MerchantDelegateManagerResponse merchant_delegate_manager_response = 208;
     MerchantDeleteManagerResponse merchant_delete_manager_response = 209;
+
+    // 积分，[301, 400]
+    ConsumptionCreateResponse consumption_create_response = 301;
+    MerchantCreditRetrieveResponse merchant_credit_retrieve_response = 302;
+    ConfirmConsumptionResponse confirm_consumption_response = 303;
+    RefuseConsumptionResponse refuse_consumption_response = 304;
+    CreditFreeResponse credit_free_response = 305;
+    ConsumerCreditRetrieveResponse consumer_credit_retrieve_response = 306;
 
     // 旁路
     VipResponse vip = 10000;

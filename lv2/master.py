@@ -14,7 +14,7 @@ import package
 import login
 import consumer
 import merchant
-import exchange
+import credit
 
 __all__ = ['Master']
 
@@ -67,7 +67,7 @@ class Master():
                 response = merchant.enter(request)
             elif head.cmd < 400:
                 # 积分兑换模块
-                response = exchange.enter(request)
+                response = credit.enter(request)
             else:
                 # 非法请求，无效命令，不回包
                 return 0

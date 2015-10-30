@@ -14,7 +14,7 @@ from branch_socket import send_to_sock
 
 def consumer_create_test(numbers='18688982240'):
     req = common_pb2.Request()
-    req.head.cmd = 100
+    req.head.cmd = 101
     req.head.seq = 2
     req.head.numbers = numbers
     material = req.consumer_create_request.material
@@ -32,7 +32,7 @@ def consumer_create_test(numbers='18688982240'):
 
 def consumer_retrieve_test(numbers='18688982240'):
     req = common_pb2.Request()
-    req.head.cmd = 101
+    req.head.cmd = 102
     req.head.seq = 2
     req.head.numbers = numbers
     req.consumer_retrieve_request.numbers = numbers
@@ -42,7 +42,7 @@ def consumer_retrieve_test(numbers='18688982240'):
 
 def consumer_update_test(numbers='18688982240'):
     req = common_pb2.Request()
-    req.head.cmd = 103
+    req.head.cmd = 104
     req.head.seq = 2
     req.head.numbers = numbers
     req.consumer_update_request.numbers = numbers
@@ -54,7 +54,7 @@ def consumer_update_test(numbers='18688982240'):
 
 def consumer_delete_test(numbers='18688982240'):
     req = common_pb2.Request()
-    req.head.cmd = 104
+    req.head.cmd = 105
     req.head.seq = 2
     req.head.numbers = numbers
     req.consumer_delete_request.numbers = numbers
@@ -109,9 +109,9 @@ def batch_test_retrieve():
 
 
 if "__main__" == __name__:
-    consumer_delete_test()
-    consumer_create_test()
-    consumer_retrieve_test()
+    # consumer_delete_test()
+    consumer_create_test(numbers="18688988888")
+    # consumer_retrieve_test()
     # consumer_update_test()
     # consumer_retrieve_test()
     # batch_test_create()

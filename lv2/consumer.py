@@ -3,6 +3,7 @@ __author__ = 'tracedeng'
 
 # import redis
 # from redis_connection import get_redis_connection
+from datetime import datetime
 from mongo_connection import get_mongo_collection
 import common_pb2
 import package
@@ -32,8 +33,8 @@ class Consumer():
         """
         # TODO... 验证登录态
         try:
-            command_handle = {100: self.consumer_create, 101: self.consumer_retrieve, 102: self.consumer_batch_retrieve,
-                              103: self.consumer_update, 104: self.consumer_delete}
+            command_handle = {101: self.consumer_create, 102: self.consumer_retrieve, 103: self.consumer_batch_retrieve,
+                              104: self.consumer_update, 105: self.consumer_delete}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -352,7 +353,6 @@ def consumer_create(**kwargs):
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
 
-        from datetime import datetime
         value = {"numbers": numbers, "name": nickname, "avatar": avatar, "email": email, "introduce": introduce,
                  "sexy": sexy, "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0,
                  "create_time": datetime.now()}
@@ -382,7 +382,7 @@ def consumer_retrieve_with_numbers(numbers):
     """
     读取用户资料
     :param numbers: 用户电话号码
-    :return: (20200, "yes")/成功，(>20200, "errmsg")/失败
+    :return: (20200, consumer)/成功，(>20200, "errmsg")/失败
     """
     try:
         # 检查合法账号
@@ -661,3 +661,16 @@ def consumer_delete(numbers=None, identity=None):
     except Exception as e:
         g_log.error("%s", e)
         return 20509, "exception"
+
+
+def consumer_material_copy_from_document(material, value):
+    material.sexy = sexy_number_2_string(value["sexy"])  # 从redis取出来的值都是字符串
+    material.age = int(value["age"])
+    material.introduce = value["introduce"]
+    material.email = value["email"]
+    material.nickname = value["name"]
+    material.location = value["location"]
+    material.country = value["country"]
+    material.qrcode = value["qrcode"]
+    material.avatar = value["avatar"]
+    material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")

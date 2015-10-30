@@ -3,6 +3,7 @@ __author__ = 'tracedeng'
 
 import string
 import random
+from datetime import datetime
 from bson.objectid import ObjectId
 from pymongo.collection import ReturnDocument
 import common_pb2
@@ -556,7 +557,7 @@ def merchant_create(**kwargs):
         value = {"name": name, "name_en": name_en, "verified": verified, "logo": logo, "email": email,
                  "introduce": introduce, "latitude": latitude, "qrcode": qrcode, "contract": contract,
                  "longitude": longitude, "country": country, "location": location, 
-                 "contact_numbers": contact_numbers, "deleted": 0, "numbers": numbers}
+                 "contact_numbers": contact_numbers, "deleted": 0, "numbers": numbers, "create_time": datetime.now()}
         
         # 创建商家资料，商家和资料关联，TODO... 事务
         collection = get_mongo_collection(numbers, "merchant")
@@ -1249,3 +1250,65 @@ def generate_merchant_identity(numbers):
         g_log.critical("%s", e)
         return numbers[-5:]
 
+
+def merchant_exist(merchant_identity):
+    """
+    查找商家是否存在
+    :param merchant_identity: 商家ID
+    :return: None/不存在，商家/存在
+    """
+    try:
+        collection = get_mongo_collection("", "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 31001, "get collection merchant failed"
+        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "deleted": 0})
+        return merchant
+    except Exception as e:
+        g_log.critical("%s", e)
+        return None
+
+
+def user_is_merchant_manager(manager, merchant_identity):
+    """
+    是否商家管理员
+    :param manager: 管理员号码
+    :param merchant_identity: 商家ID
+    :return: None/否，商家管理员关系/是
+    """
+    try:
+        collection = get_mongo_collection(manager, "numbers_merchant")
+        if not collection:
+            g_log.error("get collection numbers merchant failed")
+            return 31101, "get collection numbers merchant failed"
+        merchant = collection.find_one({"merchant_identity": merchant_identity, "numbers": manager, "deleted": 0})
+        return merchant
+    except Exception as e:
+        g_log.critical("%s", e)
+        return None
+
+
+def merchant_material_copy_from_document(material, value):
+    """
+    mongo中的单条商家记录赋值给MerchantMaterial
+    :param material: MerchantMaterial
+    :param value: 单个商家资料document
+    :return:
+    """
+    material.name = value["name"]
+    material.name_en = value["name_en"]
+    material.numbers = value["numbers"]
+    material.verified = char_2_yes_no(value["verified"])
+    # g_log.debug(value["_id"])
+    # g_log.debug(value["_id"].__class__)
+    material.identity = str(value["_id"])
+    material.logo = value["logo"]
+    material.email = value["email"]
+    material.qrcode = value["qrcode"]
+    material.introduce = value["introduce"]
+    material.contact_numbers = value["contact_numbers"]
+    material.contract = value["contract"]
+    material.location = value["location"]
+    material.country = value["country"]
+    material.latitude = float(value["latitude"])
+    material.longitude = float(value["longitude"])

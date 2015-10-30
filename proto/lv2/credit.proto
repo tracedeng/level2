@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+import "consumer.proto";
+import "merchant.proto";
+
+//积分生成、消费、兑换、查询操作，可电话号码或者用户ID做KEY
+
+// 生成消费记录
+message ConsumptionCreateRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID
+    string merchant_identity = 3;   //商家ID
+
+    uint32 sums = 10;   //消费金额
+};
+
+message ConsumptionCreateResponse {
+    string credit_identity = 1;     // 消费ID or 积分ID，是同一个东西
+};
+
+// 商家查询用户拥有的积分
+message MerchantCreditRetrieveRequest {
+    string numbers = 1;     // 商家管理员
+    string identity = 2;    // 管理员ID
+    string merchant_identity = 3;   // 商家ID，不给出则查询管理员所有商家积分
+}
+
+message MerchantCreditRetrieveResponse {
+    repeated MerchantCredit merchant_credit = 1;    //商家积分详情
+}
+
+// 商家确认消费兑换成积分
+message ConfirmConsumptionRequest {
+    string manager_numbers = 1;     // 操作员
+    string manager_identity = 2;    // 操作员ID
+
+    string numbers = 3; // 用户手机号，为了路由
+    string identity = 4;    // 用户ID
+
+    string merchant_identity = 5;   // 商家ID
+    string credit_identity = 6; // 消费ID
+
+    uint64 credit = 10;      // 兑换成多少积分，不填则后台使用兑换比例计算
+}
+
+message ConfirmConsumptionResponse {
+
+}
+
+// 商家拒绝消费兑换成积分
+message RefuseConsumptionRequest {
+    string numbers = 1;     // 商家管理员
+    string identity = 2;    // 管理员ID
+    string reason = 3;      // 拒绝原因
+}
+
+message RefuseConsumptionResponse {
+
+}
+
+// 商家赠送积分
+message CreditFreeRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID
+    string merchant_identity = 3;   //商家ID
+    string manager_numbers = 4;     //操作员账号
+    string manager_identity = 5;     //操作员ID
+
+    uint64 credit = 10;   // 赠送的积分量
+}
+
+message CreditFreeResponse {
+    string credit_identity = 1;     // 消费ID or 积分ID，是同一个东西
+}
+
+// 用户查询拥有的积分
+message ConsumerCreditRetrieveRequest {
+    string numbers = 1;     // 用户手机号
+    string identity = 2;    // 用户ID
+}
+
+message ConsumerCreditRetrieveResponse {
+    ConsumerCredit consumer_credit = 1;
+}
+
+// TODO...商家赠送积分查询
+message CreditFreeRetrieveRequest {
+
+}
+
+message CreditFreeRetrieveResponse {
+
+}
+
+// TODO...消费记录查询
+message ConsumptionRetrieveRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID
+}
+
+//（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
+message ConsumptionRetrieveResponse {
+
+}
+
+// 使用积分消费
+message ConsumeCreditRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID;
+    string credit_identity = 3; // 积分ID
+    uint64 credit = 4;  // 消费的积分量
+}
+
+message ConsumeCreditResponse {
+
+}
+
+// 积分消费记录查询
+message ConsumeCreditRetrieveRequest {
+
+}
+
+message ConsumeCreditRetrieveResponse {
+
+}
+
+// 积分兑换
+message CreditExchangeRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID;
+    string credit_identity = 3; // 用户拥有的商家的积分
+    string merchant_identity = 4; // 商家ID
+    string credit = 5;      // 兑换量
+}
+
+message CreditExchangeResponse {
+    string credit = 1;      // 兑换成多少积分
+}
+
+// 积分兑换记录查询
+message CreditExchangeRetrieveRequest {
+
+}
+
+message CreditExchangeRetrieveResponse {
+
+}
+
+//（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
+message CreditMaterial {
+    uint32 gift = 1;        // 是否赠送
+
+    uint32 sums = 2;
+    string consumption_time = 3;
+
+    uint32 exchanged = 4;   // 是否兑换成积分
+    uint64 credit = 5;
+    string manager_numbers = 6;
+    string exchange_time = 7;
+
+    uint64 credit_rest = 8; // 还剩多少积分
+
+    string identity = 9;    // 回包带上
+    string numbers = 10;    // 回包带上，给前端再次拉去用户资料的机会
+}
+
+// 商家积分
+message MerchantAggregationCredit {
+    MerchantMaterial merchant = 1;
+    repeated CreditMaterial credit = 2;
+}
+
+// 用户拥有某商家积分
+message ConsumerAggregationCredit {
+    ConsumerMaterial consumer = 1;
+    repeated CreditMaterial credit = 2;
+}
+
+// 商家发放的积分，按用户聚集操作
+message MerchantCredit {
+    MerchantMaterial merchant = 1;
+    repeated ConsumerAggregationCredit aggressive_credit = 2;
+}
+
+// 用户拥有的积分，按商家聚集操作
+message ConsumerCredit {
+    ConsumerMaterial consumer = 1;
+    repeated MerchantAggregationCredit aggressive_credit = 2;
+}
