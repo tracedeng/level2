@@ -11,7 +11,8 @@ import package
 from account_valid import user_is_valid_consumer, user_is_valid_merchant
 from mongo_connection import get_mongo_collection
 from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_merchant_manager, \
-    merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document
+    merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
+    merchant_retrieve_with_merchant_identity_only
 from consumer import consumer_retrieve_with_numbers, consumer_material_copy_from_document
 
 
@@ -37,10 +38,10 @@ class Credit():
         # TODO... 验证登录态
         try:
             command_handle = {301: self.consumption_create, 302: self.merchant_credit_retrieve,
-                              303: self.confirm_consumption, 304: self.refuse_consumption, 305: self.credit_free}
-                              # 304: self.merchant_update, 305: self.merchant_delete, 306: self.merchant_create_manager,
-                              # 307: self.merchant_create_manager, 308: self.merchant_delegate_manager,
-                              # 309: self.merchant_delete_manager}
+                              303: self.confirm_consumption, 304: self.refuse_consumption,
+                              305: self.credit_free, 306: self.consumer_credit_retrieve,
+                              307: self.consume_credit, 308: self.consume_credit_retrieve,
+                              309: self.credit_exchange, 310: self.credit_exchange_retrieve}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -215,7 +216,51 @@ class Credit():
             return 0
 
     def refuse_consumption(self):
-        pass
+        """
+        商家拒绝消费兑换成积分
+        """
+        try:
+            body = self.request.confirm_consumption_request
+            numbers = body.numbers
+            manager_numbers = body.manager_numbers
+            merchant_identity = body.merchant_identity
+            credit_identity = body.credit_identity
+            reason = body.reason
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            if not manager_numbers:
+                # TODO... 根据包体中的manager_identity获取numbers
+                pass
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != manager_numbers:
+                g_log.warning("%s is not manager %s", self.numbers, manager_numbers)
+                self.code = 40408
+                self.message = "no privilege to gift credit"
+                return 1
+
+            kwargs = {"numbers": numbers, "credit_identity": credit_identity, "merchant_identity": merchant_identity,
+                      "manager": manager_numbers, "reason": reason}
+            g_log.debug("confirm consumption: %s", kwargs)
+            self.code, self.message = refuse_consumption(**kwargs)
+
+            if 40400 == self.code:
+                # 成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "refuse consumption done"
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
 
     def credit_free(self):
         """
@@ -264,45 +309,126 @@ class Credit():
             g_log.error("%s", e)
             return 0
 
-    # def enter(self):
-    #     """
-    #     处理具体业务
-    #     :return: 0/不回包给前端，pb/正确返回，timeout/超时
-    #     """
-    #     if self.cmd == 1:
-    #         # 注册
-    #
-    #         # 模拟旁路
-    #         vip = common_pb2.Request()
-    #         vip.head.cmd = 1000
-    #         vip.head.seq = 10
-    #         vip.head.phone_number = self.head.phone_number
-    #
-    #         response = branch_socket.send_to_branch("vip", vip)
-    #         if response == 0:
-    #             # 旁路错误逻辑，用户根据业务情况自己决定返回结果
-    #             pass
-    #         elif response == "timeout":
-    #             # 旁路超时逻辑，用户根据业务情况自己决定返回结果
-    #             # return "timeout"
-    #             # g_log.debug("vip timeoutttttttt")
-    #             pass
-    #         else:
-    #             g_log.debug("branch vip check ok")
-    #             # g_log.debug("get response from branch vip")
-    #             # g_log.debug("%s", response)
-    #
-    #         # 返回结果
-    #         response = common_pb2.Response()
-    #         response.head.cmd = self.head.cmd
-    #         response.head.seq = self.head.seq
-    #         response.head.code = 1
-    #         response.head.message = "register succeed"
-    #         g_log.debug("%s", response)
-    #         return response
-    #     else:
-    #         # 错误的命令
-    #         return 0
+    def consumer_credit_retrieve(self):
+        """
+        用户查询拥有的所有积分
+        """
+        try:
+            body = self.request.consumer_credit_retrieve_request
+            numbers = body.numbers
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            # 发起请求的用户和要创建的消费记录用户不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve credit %s", self.numbers, numbers)
+                self.code = 40605
+                self.message = "no privilege to retrieve credit"
+                return 1
+
+            # kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "sums": sums}
+            g_log.debug("retrieve credit: %s", numbers)
+            self.code, self.message = consumer_credit_retrieve(numbers)
+
+            if 40600 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "retrieve credit done"
+
+                value = self.message
+                consumer_credit = response.consumer_credit_retrieve_response.consumer_credit
+
+                # 用户资料
+                consumer_material_copy_from_document(consumer_credit.consumer, value[0])
+                # 遍历用户所有积分
+                last_merchant = ""
+                aggressive_credit = consumer_credit.aggressive_credit
+                for value_credit in value[1]:
+                    if last_merchant != value_credit["merchant_identity"]:
+                        # 新用户的积分
+                        aggressive_credit_one = aggressive_credit.add()
+                        credit = aggressive_credit_one.credit
+                        # 商家资料
+                        code, merchants = merchant_retrieve_with_merchant_identity_only(value_credit["merchant_identity"])
+                        if code != 30200:
+                            g_log.error("retrieve merchant %s failed", value_credit["merchant_identity"])
+                            return 40605, "retrieve merchant failed"
+                        merchant_material_copy_from_document(aggressive_credit_one.merchant, merchants[0])
+                        last_merchant = value_credit["merchant_identity"]
+
+                    # 用户添加一条积分记录
+                    credit_one = credit.add()
+                    credit_copy_from_document(credit_one, value_credit)
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def consume_credit(self):
+        """
+        积分消费
+        """
+        try:
+            body = self.request.credit_free_request
+            numbers = body.numbers
+            credit_identity = body.credit_identity
+            credit = body.credit
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
+                self.code = 40708
+                self.message = "no privilege to consume credit"
+                return 1
+
+            kwargs = {"numbers": numbers, "credit_identity": credit_identity, "credit": credit}
+            g_log.debug("consume credit: %s", kwargs)
+            self.code, self.message = consume_credit(**kwargs)
+
+            if 40700 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "consume credit done"
+
+                response.credit_free_response.credit_identity = self.message
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def consume_credit_retrieve(self):
+        """
+        积分消费记录查询
+        """
+        pass
+
+    def credit_exchange(self):
+        """
+        积分兑换
+        """
+        pass
+
+    def credit_exchange_retrieve(self):
+        """
+        积分兑记录查询
+        """
+        pass
 
     def dummy_command(self):
         # 无效的命令，不回包
@@ -539,6 +665,68 @@ def confirm_consumption(**kwargs):
         return 40307, "exception"
 
 
+def refuse_consumption(**kwargs):
+    """
+    商家确认消费兑换成积分
+    :param kwargs: {"numbers": "18688982240", "credit_identity": "", "manager": "118688982241", "credit": 350}
+    :return:
+    """
+    try:
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 40401, "invalid customer"
+
+        manager = kwargs.get("manager", "")
+        if not user_is_valid_merchant(manager):
+            g_log.warning("invalid manager %s", manager)
+            return 40402, "invalid manager"
+
+        credit_identity = kwargs.get("credit_identity")
+        if not credit_identity:
+            g_log.warning("no credit identity")
+            return 40403, "illegal argument"
+        credit_identity = ObjectId(credit_identity)
+
+        merchant_identity = kwargs.get("merchant_identity")
+        if not merchant_identity:
+            g_log.warning("no merchant identity")
+            return 40404, "illegal argument"
+
+        # 检查商家管理员
+        if not user_is_merchant_manager(manager, merchant_identity):
+            g_log.error("manager %s is not merchant %s manager", manager, merchant_identity)
+            return 40408, "manager is not merchant manager"
+
+        credit = kwargs.get("credit")
+        if not credit:
+            g_log.info("no credit argument")
+            # TODO... 平台根据兑换比例计算
+        else:
+            # TODO... 检查credit是否符合兑换比例
+            pass
+
+        collection = get_mongo_collection(numbers, "credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40305, "get collection credit failed"
+
+        credit = collection.find_one_and_update({"numbers": numbers, "_id": credit_identity, "exchanged": 0,
+                                                 "gift": 0, "merchant_identity": merchant_identity},
+                                                {"$set": {"exchanged": 1, "manager_numbers": manager, "credit": credit,
+                                                          "exchange_time": datetime.now(), "credit_rest": credit}},
+                                                return_document=ReturnDocument.AFTER)
+        g_log.debug(credit)
+        if not credit or not credit["exchanged"]:
+            g_log.error("confirm consumption failed")
+            return 40306, "confirm consumption failed"
+
+        return 40300, "yes"
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40307, "exception"
+
+
 def credit_free(**kwargs):
     """
     商家赠送积分
@@ -598,6 +786,34 @@ def credit_free(**kwargs):
         g_log.error("%s %s", e.__class__, e)
         return 40508, "exception"
 
+
+def consumer_credit_retrieve(numbers):
+    """
+    获取用户的积分
+    :param numbers: 用户号码
+    :return: (40600, (consumer, credit)/成功，(>40600, "errmsg")/失败
+    """
+    try:
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid merchant manager %s", numbers)
+            return 40601, "invalid merchant manager"
+
+        code, consumer = consumer_retrieve_with_numbers(numbers)
+        if code != 20200:
+            g_log.error("retrieve consumer %s failed", numbers)
+            return 40602, "retrieve consumer failed"
+
+        collection = get_mongo_collection(numbers, "credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40603, "get collection credit failed"
+        credit = collection.find({"numbers": numbers}).sort("merchant_identity")
+        g_log.debug("consumer has %s credit", credit.count())
+
+        return 40600, (consumer, credit)
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40604, "exception"
 
 def credit_copy_from_document(material, value):
     """

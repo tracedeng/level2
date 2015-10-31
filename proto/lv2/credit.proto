@@ -47,11 +47,18 @@ message ConfirmConsumptionResponse {
 
 }
 
-// 商家拒绝消费兑换成积分
+// TODO... 商家拒绝消费兑换成积分
 message RefuseConsumptionRequest {
-    string numbers = 1;     // 商家管理员
-    string identity = 2;    // 管理员ID
-    string reason = 3;      // 拒绝原因
+    string manager_numbers = 1;     // 操作员
+    string manager_identity = 2;    // 操作员ID
+
+    string numbers = 3; // 用户手机号，为了路由
+    string identity = 4;    // 用户ID
+
+    string merchant_identity = 5;   // 商家ID
+    string credit_identity = 6; // 消费ID
+
+    string reason = 10;      // 拒绝原因
 }
 
 message RefuseConsumptionResponse {
@@ -153,7 +160,7 @@ message CreditMaterial {
     uint32 sums = 2;
     string consumption_time = 3;
 
-    uint32 exchanged = 4;   // 是否兑换成积分
+    uint32 exchanged = 4;   // 是否兑换成积分，yes、no、refuse
     uint64 credit = 5;
     string manager_numbers = 6;
     string exchange_time = 7;

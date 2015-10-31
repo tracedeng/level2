@@ -128,7 +128,7 @@ class Merchant():
             # 发起请求的商家和要获取的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to retrieve merchant %s", self.numbers, numbers)
-                self.code = 30208
+                self.code = 30216
                 self.message = "no privilege to retrieve merchant"
                 return 1
             if merchant_identity:
@@ -673,7 +673,7 @@ def merchant_retrieve_with_merchant_identity(numbers, merchant_identity):
     获取指定商家管理员ID的商家资料
     :param numbers: 商家管理员
     :param merchant_identity: 商家ID
-    :return: (30200, merchant)/成功，(>30200, "errmsg")/失败
+    :return: (30200, [merchant])/成功，(>30200, "errmsg")/失败
     """
     try:
         # 找到商家创建人numbers
@@ -703,6 +703,28 @@ def merchant_retrieve_with_merchant_identity(numbers, merchant_identity):
         g_log.error("%s %s", e.__class__, e)
         return 30212, "exception"
 
+
+def merchant_retrieve_with_merchant_identity_only(merchant_identity):
+    """
+    获取指定商家ID的商家资料
+    :param merchant_identity: 商家ID
+    :return: (30200, [merchant])/成功，(>30200, "errmsg")/失败
+    """
+    try:
+        # TODO... 需要广播，待数据层独立后处理，当前认为只有一个数据库
+        collection = get_mongo_collection("", "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 30213, "get collection merchant failed"
+        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "deleted": 0})
+        if not merchant:
+            g_log.warning("merchant %s not exist", merchant_identity)
+            return 30214, "merchant not exist"
+        g_log.debug("get %s %s", merchant_identity, merchant)
+        return 30200, [merchant]    # 返回的要是一个list和merchant_retrieve_with_numbers一致
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 30215, "exception"
 
 # pragma 更新商家资料API
 def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):

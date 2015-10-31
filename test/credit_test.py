@@ -65,6 +65,17 @@ def confirm_consumption_test(numbers='118688982240'):
     pack_send_receive(req)
 
 
+def consumer_credit_retrieve_test(numbers='18688982240'):
+    req = common_pb2.Request()
+    req.head.cmd = 306
+    req.head.seq = 2
+    req.head.numbers = numbers
+    material = req.consumer_credit_retrieve_request
+    material.numbers = numbers
+
+    pack_send_receive(req)
+
+
 def pack_send_receive(req):
     address = ('127.0.0.1', 9527)
     request = package.serial_pb(req)
@@ -96,5 +107,6 @@ if "__main__" == __name__:
     # batch_test_create()
     # batch_test_retrieve()
     # merchant_credit_retrieve_test()
-    confirm_consumption_test()
+    # confirm_consumption_test()
+    consumer_credit_retrieve_test()
     pass
