@@ -115,7 +115,8 @@ message ConsumeCreditRequest {
     string numbers = 1; // 用户手机号
     string identity = 2;    // 用户ID;
     string credit_identity = 3; // 积分ID
-    uint64 credit = 4;  // 消费的积分量
+    //string merchant_identity = 4;   //商家ID
+    uint64 credit = 10;  // 消费的积分量
 }
 
 message ConsumeCreditResponse {
@@ -124,11 +125,16 @@ message ConsumeCreditResponse {
 
 // 积分消费记录查询
 message ConsumeCreditRetrieveRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID;
 
+    string begin_time = 3;  // [begin_time, end_time]
+    string end_time = 4;    // [2000-10-23, 2015-10-23]
+    uint32 limit = 5;       // 最多查询条数
 }
 
 message ConsumeCreditRetrieveResponse {
-
+    repeated ConsumeRecord consume_record = 1;
 }
 
 // 积分兑换
@@ -136,7 +142,7 @@ message CreditExchangeRequest {
     string numbers = 1; // 用户手机号
     string identity = 2;    // 用户ID;
     string credit_identity = 3; // 用户拥有的商家的积分
-    string merchant_identity = 4; // 商家ID
+    string to_merchant = 4; // 兑换至商家ID
     string credit = 5;      // 兑换量
 }
 
@@ -146,11 +152,16 @@ message CreditExchangeResponse {
 
 // 积分兑换记录查询
 message CreditExchangeRetrieveRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID;
 
+    string begin_time = 3;  // [begin_time, end_time]
+    string end_time = 4;    // [2000-10-23, 2015-10-23]
+    uint32 limit = 5;       // 最多查询条数
 }
 
 message CreditExchangeRetrieveResponse {
-
+    repeated ExchangeRecord exchange_record = 1;
 }
 
 //（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
@@ -160,7 +171,7 @@ message CreditMaterial {
     uint32 sums = 2;
     string consumption_time = 3;
 
-    uint32 exchanged = 4;   // 是否兑换成积分，yes、no、refuse
+    uint32 exchanged = 4;   // 是否兑换成积分，yes、no、exchange、refuse
     uint64 credit = 5;
     string manager_numbers = 6;
     string exchange_time = 7;
@@ -193,4 +204,33 @@ message MerchantCredit {
 message ConsumerCredit {
     ConsumerMaterial consumer = 1;
     repeated MerchantAggregationCredit aggressive_credit = 2;
+}
+
+// 消费记录详情
+message ConsumeMaterial {
+    string consume_time = 1;    //消费时间
+    string credit_identity = 2;
+    uint64 credit = 3;          //积分量
+    string identity = 4;    // 消费记录ID
+}
+
+// 用户消费记录
+message ConsumeRecord {
+    MerchantMaterial merchant = 1;
+    repeated ConsumeMaterial consume = 2;
+}
+
+// 兑换记录详情
+message ExchangeMaterial {
+    string exchange_time = 1;    // 消费时间
+    uint64 from_credit = 4;      // 积分量
+    uint64 to_credit = 5;        // 积分量
+    string identity = 6;         // 兑换记录ID
+}
+
+// 用户积分兑换记录
+message ExchangeRecord {
+    MerchantMaterial from_merchant = 1;
+    MerchantMaterial to_merchant = 2;
+    repeated ExchangeMaterial exchange = 3;
 }

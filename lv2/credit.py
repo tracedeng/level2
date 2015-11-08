@@ -376,9 +376,10 @@ class Credit():
         积分消费
         """
         try:
-            body = self.request.credit_free_request
+            body = self.request.consume_credit_request
             numbers = body.numbers
             credit_identity = body.credit_identity
+            # merchant_identity = body.merchant_identity
             credit = body.credit
 
             if not numbers:
@@ -388,7 +389,7 @@ class Credit():
             # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s is not manager %s", self.numbers, numbers)
-                self.code = 40708
+                self.code = 40709
                 self.message = "no privilege to consume credit"
                 return 1
 
@@ -404,7 +405,6 @@ class Credit():
                 response.head.code = 1
                 response.head.message = "consume credit done"
 
-                response.credit_free_response.credit_identity = self.message
                 return response
             else:
                 return 1
@@ -416,19 +416,155 @@ class Credit():
         """
         积分消费记录查询
         """
-        pass
+        try:
+            body = self.request.consume_credit_retrieve_request
+            numbers = body.numbers
+            begin_time = body.begin_time
+            end_time = body.end_time
+            limit = body.limit
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
+                self.code = 40804
+                self.message = "no privilege to consume credit"
+                return 1
+
+            kwargs = {"numbers": numbers, "begin_time": begin_time, "end_time": end_time, "limit": limit}
+            g_log.debug("consume credit: %s", kwargs)
+            self.code, self.message = consume_credit_retrieve(**kwargs)
+
+            if 40800 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "consume credit done"
+
+                consume_record = response.consume_credit_retrieve_response.consume_record
+                last_merchant = ""      # 是否是一个用户的积分
+                # 遍历管理员所有商家
+                for value in self.message:
+                    if last_merchant != value["merchant_identity"]:
+                        consume_record_one = consume_record.add()
+                        # 商家资料
+                        code, merchants = merchant_retrieve_with_merchant_identity_only(value["merchant_identity"])
+                        merchant_material_copy_from_document(consume_record_one.merchant, merchants[0])
+                        consume = consume_record_one.consume
+                    consume_one = consume.add()
+                    last_merchant = value["merchant_identity"]
+                    consume_copy_from_document(consume_one, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
 
     def credit_exchange(self):
         """
         积分兑换
         """
-        pass
+        try:
+            body = self.request.credit_exchange_request
+            numbers = body.numbers
+            credit_identity = body.credit_identity
+            to_merchant = body.to_merchant
+            credit = body.credit
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
+                self.code = 40709
+                self.message = "no privilege to consume credit"
+                return 1
+
+            kwargs = {"numbers": numbers, "credit_identity": credit_identity, "to_merchant": to_merchant, "credit": credit}
+            g_log.debug("exchange credit: %s", kwargs)
+            self.code, self.message = credit_exchange(**kwargs)
+
+            if 40900 == self.code:
+                # 成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "consume credit done"
+
+                response.credit_exchange_response.credit = self.message
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
 
     def credit_exchange_retrieve(self):
         """
         积分兑记录查询
         """
-        pass
+        try:
+            body = self.request.credit_exchange_retrieve_request
+            numbers = body.numbers
+            begin_time = body.begin_time
+            end_time = body.end_time
+            limit = body.limit
+
+            if not numbers:
+                # TODO... 根据包体中的identity获取numbers
+                pass
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
+                self.code = 41004
+                self.message = "no privilege to exchange record"
+                return 1
+
+            kwargs = {"numbers": numbers, "begin_time": begin_time, "end_time": end_time, "limit": limit}
+            g_log.debug("exchange record: %s", kwargs)
+            self.code, self.message = credit_exchange_retrieve(**kwargs)
+
+            if 41000 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "retrieve exchange record done"
+
+                exchange_record = response.credit_exchange_retrieve_response.exchange_record
+                last_merchant = [("", "")]      # 是否是一个用户的积分
+                # 遍历管理员所有商家
+                for value in self.message:
+                    if last_merchant[0] != (value["from_merchant"], value["to_merchant"]):
+                        exchange_record_one = exchange_record.add()
+                        # 商家资料
+                        code, merchants = merchant_retrieve_with_merchant_identity_only(value["from_merchant"])
+                        merchant_material_copy_from_document(exchange_record_one.from_merchant, merchants[0])
+                        code, merchants = merchant_retrieve_with_merchant_identity_only(value["to_merchant"])
+                        merchant_material_copy_from_document(exchange_record_one.to_merchant, merchants[0])
+                        exchange = exchange_record_one.exchange
+                    exchange_one = exchange.add()
+                    last_merchant[0] = (value["from_merchant"], value["to_merchant"])
+                    exchange_copy_from_document(exchange_one, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
 
     def dummy_command(self):
         # 无效的命令，不回包
@@ -768,7 +904,7 @@ def credit_free(**kwargs):
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime(1970, 1, 1),
                  "sums": 0, "exchanged": 1, "credit": credit, "manager_numbers": manager, "gift": 1,
-                 "exchange_time": datetime.now(), "credit_rest": 0}
+                 "exchange_time": datetime.now(), "credit_rest": credit}
 
         collection = get_mongo_collection(numbers, "credit")
         if not collection:
@@ -779,9 +915,6 @@ def credit_free(**kwargs):
         g_log.debug("insert consumption %s", value)
 
         return 40500, credit_identity
-    # except (mongo.ConnectionError, mongo.TimeoutError) as e:
-    #     g_log.error("connect to mongo failed")
-    #     return 30102, "connect to mongo failed"
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 40508, "exception"
@@ -815,6 +948,255 @@ def consumer_credit_retrieve(numbers):
         g_log.error("%s %s", e.__class__, e)
         return 40604, "exception"
 
+
+def consume_credit(**kwargs):
+    """
+    用户消费
+    :param numbers: 用户号码
+    :return: (40700, (consumer, credit)/成功，(>40700, "errmsg")/失败
+    """
+    try:
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 40701, "invalid phone number"
+
+        credit_identity = kwargs.get("credit_identity")
+        if not credit_identity:
+            g_log.error("lost credit identity")
+            return 40702, "illegal argument"
+
+        # merchant_identity = kwargs.get("merchant_identity")
+        # if not merchant_identity:
+        #     g_log.error("lost merchant identity")
+        #     return 40703, "illegal argument"
+
+        credit = kwargs.get("credit")
+        if not credit or credit < 0:
+            g_log.error("credit %s illegal", credit)
+            return 40704, "illegal argument"
+
+        collection = get_mongo_collection(numbers, "credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40705, "get collection credit failed"
+
+        # # 更新积分总量
+        # result = collection.find_one({"numbers": numbers, "_id": ObjectId(credit_identity),
+        #                                           "exchanged": 1, "credit_rest": {"$gte": credit}})
+        result = collection.find_one_and_update({"numbers": numbers, "_id": ObjectId(credit_identity), "exchanged": 1,
+                                                 "credit_rest": {"$gte": credit}},
+                                                {"$inc": {"credit_rest": -credit}},
+                                                return_document=ReturnDocument.AFTER)
+        if not result:
+            # g_log.warning("match count:%s, modified count:%s", result.matched_count, result.modified_count)
+            g_log.warning("consume credit failed")
+            return 40706, "consume credit failed"
+        merchant_identity = result["merchant_identity"]
+
+        # 保存积分消费记录
+        collection = get_mongo_collection(numbers, "credit_record")
+        if not collection:
+            g_log.error("get collection credit record failed")
+            return 40707, "get collection credit record failed"
+        value = {"numbers": numbers, "credit_identity": credit_identity, "merchant_identity": merchant_identity,
+                 "consume_time": datetime.now(), "credit": credit}
+        credit_record_identity = collection.insert_one(value).inserted_id
+        credit_record_identity = str(credit_record_identity)
+        g_log.debug("insert credit record %s", credit_record_identity)
+
+        return 40700, credit_record_identity
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40708, "exception"
+
+
+def consume_credit_retrieve(**kwargs):
+    """
+    积分消费查询
+    :param numbers: 用户号码
+    :return: (40800, (consumer, credit)/成功，(>40800, "errmsg")/失败
+    """
+    try:
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 40801, "invalid phone number"
+
+        begin_time = kwargs.get("begin_time", datetime(1970, 1, 1))
+        end_time = kwargs.get("end_time", datetime.now())
+        limit = kwargs.get("limit", 0)
+
+        collection = get_mongo_collection(numbers, "credit_record")
+        if not collection:
+            g_log.error("get collection credit record failed")
+            return 40802, "get collection credit record failed"
+
+        records = collection.find({"numbers": numbers, "consume_time": {"$gte": begin_time},
+                                   "consume_time": {"$lte": end_time}}, limit=limit).sort("merchant_identity")
+        g_log.debug("consumer has %s credit record", records.count())
+
+        return 40800, records
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40803, "exception"
+
+
+def exchange_credit_create(**kwargs):
+    """
+    兑换后新积分
+    gift 消费记录/0，赠送积分/1
+    :param kwargs: {"numbers": "18688982240", "merchant_identity": "", "credit": 350}
+    :return: (40520, credit_identity)/成功，(>40520, "errmsg")/失败
+    """
+    try:
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 40521, "invalid phone number"
+
+        merchant_identity = kwargs.get("merchant_identity")
+        if not merchant_identity:
+            g_log.error("lost merchant")
+            return 40522, "illegal argument"
+
+        credit = kwargs.get("credit")
+        if not credit or credit < 0:
+            g_log.error("credit %s illegal", credit)
+            return 40523, "illegal argument"
+
+        # 检查商家是否存在，TODO... user_is_merchant_manager包含该检查
+        if not merchant_exist(merchant_identity):
+            g_log.error("merchant %s not exit", merchant_identity)
+            return 40524, "illegal argument"
+
+        # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
+        value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime(1970, 1, 1),
+                 "sums": 0, "exchanged": 2, "credit": credit, "manager_numbers": "", "gift": 0,
+                 "exchange_time": datetime.now(), "credit_rest": credit}
+
+        collection = get_mongo_collection(numbers, "credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40527, "get collection credit failed"
+        credit_identity = collection.insert_one(value).inserted_id
+        credit_identity = str(credit_identity)
+        g_log.debug("insert consumption %s", value)
+
+        return 40520, credit_identity
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40528, "exception"
+
+
+def credit_exchange(**kwargs):
+    """
+    用户兑换积分
+    :param numbers: 用户号码
+    :return: (40700, (consumer, credit)/成功，(>40700, "errmsg")/失败
+    """
+    try:
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 40901, "invalid phone number"
+
+        credit_identity = kwargs.get("credit_identity")
+        if not credit_identity:
+            g_log.error("lost credit identity")
+            return 40902, "illegal argument"
+
+        to_merchant = kwargs.get("to_merchant")
+        if not to_merchant:
+            g_log.error("lost to merchant")
+            return 40903, "illegal argument"
+
+        credit = kwargs.get("credit")
+        if not credit or credit < 0:
+            g_log.error("credit %s illegal", credit)
+            return 40904, "illegal argument"
+        from_credit = credit
+
+        collection = get_mongo_collection(numbers, "credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40905, "get collection credit failed"
+
+        # TODO...检查to_merchant是否允许兑换
+        # TODO...计算to_credit
+        to_credit = 0
+
+        # 更新积分总量
+        result = collection.find_one_and_update({"numbers": numbers, "_id": ObjectId(credit_identity), "exchanged": 1,
+                                                 "credit_rest": {"$gte": credit}},
+                                                {"$inc": {"credit_rest": -credit}},
+                                                return_document=ReturnDocument.AFTER)
+        if not result:
+            g_log.warning("exchange credit failed")
+            return 40906, "exchange credit failed"
+        from_merchant = result["merchant_identity"]
+
+        # 创建兑换成的新积分
+        code, credit_new = exchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant, "credit": to_credit})
+        if code != 40520:
+            g_log.error("create exchange credit failed")
+            return 40907, "create exchange credit failed"
+
+        # 保存积分兑换记录
+        collection = get_mongo_collection(numbers, "exchange_record")
+        if not collection:
+            g_log.error("get collection credit record failed")
+            return 40908, "get collection credit record failed"
+        value = {"numbers": numbers, "credit_identity": credit_identity, "from_merchant": from_merchant, "to_merchant": to_merchant
+                 "exchange_time": datetime.now(), "from_credit": from_credit, "to_credit": to_credit}
+        exchange_record_identity = collection.insert_one(value).inserted_id
+        exchange_record_identity = str(exchange_record_identity)
+        g_log.debug("insert credit record %s", exchange_record_identity)
+
+        # TODO... 考虑返回(兑换后的原积分， 兑换后的新积分)
+        return 40900, exchange_record_identity
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40909, "exception"
+
+
+def credit_exchange_retrieve(**kwargs):
+    """
+    积分兑换查询
+    :param numbers: 用户号码
+    :return: (40800, (consumer, credit)/成功，(>40800, "errmsg")/失败
+    """
+    try:
+        # 检查要创建者numbers
+        numbers = kwargs.get("numbers", "")
+        if not user_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 41001, "invalid phone number"
+
+        begin_time = kwargs.get("begin_time", datetime(1970, 1, 1))
+        end_time = kwargs.get("end_time", datetime.now())
+        limit = kwargs.get("limit", 0)
+
+        collection = get_mongo_collection(numbers, "exchange_record")
+        if not collection:
+            g_log.error("get collection exchange record failed")
+            return 41002, "get collection exchange record failed"
+
+        records = collection.find({"numbers": numbers, "exchange_time": {"$gte": begin_time},
+                                   "exchange_time": {"$lte": end_time}},
+                                  limit=limit).sort(["from_merchant", "to_merchant"])
+        g_log.debug("consumer has %s exchange record", records.count())
+
+        return 41000, records
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 41003, "exception"
+
+
 def credit_copy_from_document(material, value):
     """
     mongo中的单条积分记录赋值给CreditMaterial
@@ -836,3 +1218,32 @@ def credit_copy_from_document(material, value):
 
     material.identity = str(value["_id"])
     # material.numbers = value["numbers"]
+
+
+def consume_copy_from_document(material, value):
+    """
+    mongo中的单条积分记录赋值给ConsumeMaterial
+    :param material: ConsumeMaterial
+    :param value: 单个积分document
+    :return:
+    """
+    material.consume_time = value["consume_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.credit_identity = value["credit_identity"]
+    material.credit = value["credit"]
+
+    material.identity = str(value["_id"])
+
+
+def exchange_copy_from_document(material, value):
+    """
+    mongo中的单条积分记录赋值给ExchangeMaterial
+    :param material: ExchangeMaterial
+    :param value: 单个积分document
+    :return:
+    """
+    material.exchange_time = value["exchange_time"].strftime("%Y-%m-%d %H:%M:%S")
+    # material.credit_identity = value["credit_identity"]
+    material.from_credit = value["credit"]
+    material.to_credit = value["credit"]
+
+    material.identity = str(value["_id"])

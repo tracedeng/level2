@@ -89,7 +89,7 @@ message Response {
     RefuseConsumptionResponse refuse_consumption_response = 304;
     CreditFreeResponse credit_free_response = 305;
     ConsumerCreditRetrieveResponse consumer_credit_retrieve_response = 306;
-    ConsumeCreditResponse consume_credit_response = 307
+    ConsumeCreditResponse consume_credit_response = 307;
     ConsumeCreditRetrieveResponse consume_credit_retrieve_response = 308;
     CreditExchangeResponse credit_exchange_response = 309;
     CreditExchangeRetrieveResponse credit_exchange_retrieve_response = 310;

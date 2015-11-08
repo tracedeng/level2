@@ -726,6 +726,7 @@ def merchant_retrieve_with_merchant_identity_only(merchant_identity):
         g_log.error("%s %s", e.__class__, e)
         return 30215, "exception"
 
+
 # pragma 更新商家资料API
 def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
     """
