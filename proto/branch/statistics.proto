@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+
+message PerMinuteStatisticsRequest {
+    uint64 number = 1;      // 上报编号
+    string minute = 2;      // 统计时间
+	uint64 quantity = 3;    // 请求量
+	repeated PerSecondStatistics second_statistics= 4;  // 每分钟内60秒的详细数据
+};
+
+message PerSecondStatistics {
+    uint32 second = 1;      // 秒 % 60
+    uint64 quantity = 2;    // 每秒的请求量
+};
+
+message PerMinuteStatisticsResponse {
+};
