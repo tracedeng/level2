@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+import "merchant.proto";
+
+// 商家经营参数CRUD操作，
+// 为了安全，只有平台可修改保证金、账户余额换积分比率
+// 商家管理员可修改消费换积分比率
+
+// 平台修改商家保证金、账户余额换积分比率
+message PlatformUpdateParametersRequest {
+    string numbers = 1;             // 平台
+    uint64 bond = 2;                // 商家保证金
+    uint64 balance_ratio = 3;       // 账户余额换积分比率，积分量 = 账户余额 * 比率
+
+    string merchant_identity = 4;   // 商家ID
+    string manager = 5;             // 商家管理员
+};
+
+message PlatformUpdateParametersResponse {
+
+};
+
+// 读取商家经营参数
+message BusinessParametersRetrieveRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message BusinessParametersRetrieveResponse {
+    BusinessParametersMaterial material = 1;
+}
+
+// 读取商家经营参数
+message BusinessParametersBatchRetrieveRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message BusinessParametersBatchRetrieveResponse {
+    BusinessParametersMaterial material = 1;
+}
+
+// 更新商家经营参数消费换积分比率
+message ConsumptionRatioUpdateRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 consumption_ratio = 4;
+}
+
+message ConsumptionRatioUpdateResponse {
+
+}
+
+// 读取商家经营参数操作纪录
+message ParametersRecordRetrieveRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message ParametersRecordRetrieveResponse {
+    repeated ParametersRecord parameters_record = 1;
+}
+
+// 商家充值
+message MerchantRechargeRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 money = 4;               // 充值金额
+}
+
+message MerchantRechargeResponse {
+
+}
+
+// 商家充值纪录查询
+message MerchantRechargeRecordRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message MerchantRechargeRecordResponse {
+    repeated RechargeRecord recharge_record = 1;
+}
+
+message BusinessParametersMaterial {
+    uint64 bond = 1;        // 保证金
+    uint64 balance = 2;     // 账户余额
+    uint64 balance_ratio = 3;             // 账户余额换积分比率，积分量 = 账户余额 * 比率
+    uint64 consumption_ratio = 4;         // 消费换积分比率，消费额 = 积分量 * 比率，TODO...待修改，最好用乘法
+    string identity = 5;    //商家ID，response使用
+}
+
+message ParametersRecordAggressive {
+    string operator = 1;
+    string quantization = 2;
+    string time = 3;
+    string identity = 4;    //ID，response使用
+}
+
+message ParametersRecord {
+    MerchantMaterial merchant = 1;
+    repeated ParametersRecordAggressive aggressive_record = 2;
+}
+
+message RechargeRecordAggressive {
+    string operator = 1;
+    uint64 money = 2;
+    string time = 3;
+    string identity = 4;    //ID，response使用
+}
+
+message RechargeRecord {
+    MerchantMaterial merchant = 1;
+    repeated RechargeRecordAggressive aggressive_record = 2;
+}

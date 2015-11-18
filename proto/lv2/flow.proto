@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+import "merchant.proto";
+
+//积分生成、消费、兑换、查询操作，可电话号码或者用户ID做KEY
+
+// 生成消费记录
+message MerchantCreditFlowRetrieveRequest {
+    string numbers = 1;     // 管理员手机号
+    string identity = 2;    // 管理员ID
+    string merchant_identity = 3;   //商家ID
+};
+
+message MerchantCreditFlowRetrieveResponse {
+    repeated FlowRecord flow_record = 1;
+};
+
+message FlowRecord {
+    MerchantMaterial merchant = 1;
+    FlowMaterial material = 2;
+}
+
+message FlowMaterial {
+    string identity = 1;    //response 使用
+    uint64 upper_bound = 2;
+    uint64 may_issued = 3;
+    uint64 issued = 4;
+    uint64 interchange_in = 5;
+    uint64 interchange_out = 6;
+    uint64 interchange_consumption = 7;
+}

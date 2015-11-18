@@ -287,7 +287,7 @@ class Consumer():
 
 def enter(request):
     """
-    登录模块入口
+    客户模块入口
     :param request: 解析后的pb格式
     :return: 0/不回包给前端，pb/正确返回，timeout/超时
     """

@@ -15,6 +15,8 @@ import login
 import consumer
 import merchant
 import credit
+import business
+import flow
 
 __all__ = ['Master']
 
@@ -68,9 +70,14 @@ class Master():
             elif head.cmd < 400:
                 # 积分兑换模块
                 response = credit.enter(request)
+            elif head.cmd < 500:
+                response = business.enter(request)
+            elif head.cmd < 600:
+                response = flow.enter(request)
             else:
                 # 非法请求，无效命令，不回包
-                return 0
+                # return 0
+                response = 0
             if response == "timeout":
                 response = package.timeout_response(head.cmd, head.seq)
         except Timeout as e:

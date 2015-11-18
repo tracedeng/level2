@@ -25,6 +25,10 @@ def user_is_valid_merchant(user):
     return user_is_valid(user, UserMode.MERCHANT)
 
 
+def user_is_platform(user):
+    return 1
+
+
 def phone_number_is_valid(user):
     return 1
 

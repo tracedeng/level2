@@ -6,6 +6,8 @@ import "vip.proto";
 import "consumer.proto";
 import "merchant.proto";
 import "credit.proto";
+import "business.proto";
+import "flow.proto";
 
 message Request {
     RequestHead head = 1;
@@ -48,6 +50,19 @@ message Request {
     ConsumeCreditRetrieveRequest consume_credit_retrieve_request = 308;
     CreditExchangeRequest credit_exchange_request = 309;
     CreditExchangeRetrieveRequest credit_exchange_retrieve_request = 310;
+
+    // 商家经营参数，[401, 500]
+    PlatformUpdateParametersRequest platform_update_parameters_request = 401;
+    BusinessParametersRetrieveRequest business_parameters_retrieve_request = 402;
+    BusinessParametersBatchRetrieveRequest business_parameters_batch_retrieve_request = 403;
+    ConsumptionRatioUpdateRequest consumption_ratio_update_request = 404;
+    // 405留给删除
+    ParametersRecordRetrieveRequest parameters_record_retrieve_request = 406;
+    MerchantRechargeRequest merchant_recharge_request = 407;
+    MerchantRechargeRecordRequest merchant_recharge_record_request = 408;
+
+    // 商家积分，[501, 600]
+    MerchantCreditFlowRetrieveRequest merchant_credit_flow_retrieve_request = 501;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -93,6 +108,18 @@ message Response {
     ConsumeCreditRetrieveResponse consume_credit_retrieve_response = 308;
     CreditExchangeResponse credit_exchange_response = 309;
     CreditExchangeRetrieveResponse credit_exchange_retrieve_response = 310;
+
+    // 商家经营参数，[401, 500]
+    PlatformUpdateParametersResponse platform_update_parameters_response = 401;
+    BusinessParametersRetrieveResponse business_parameters_retrieve_response = 402;
+    BusinessParametersBatchRetrieveResponse business_parameters_batch_retrieve_response = 403;
+    ConsumptionRatioUpdateResponse consumption_ratio_update_response = 404;
+    ParametersRecordRetrieveResponse parameters_record_retrieve_response = 406;
+    MerchantRechargeResponse merchant_recharge_response = 407;
+    MerchantRechargeRecordResponse merchant_recharge_record_response = 408;
+
+    // 商家积分，[501, 600]
+    MerchantCreditFlowRetrieveResponse merchant_credit_flow_retrieve_response = 501;
 
     // 旁路
     VipResponse vip = 10000;

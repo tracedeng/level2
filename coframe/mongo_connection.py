@@ -144,6 +144,6 @@ if "__main__" == __name__:
     for i in xrange(0, mongo_connection2.count):
         g_log.debug("%s: %s", i, mongo_connection2.get_mongo_connection(i))
 
-    collection = mongo_connection1.get_mongo_collection(0, "merchant")
-    g_log.debug(collection.__class__)
+    collection3 = mongo_connection1.get_mongo_collection(0, "merchant")
+    g_log.debug(collection3.__class__)
     # g_log.debug("asdf")

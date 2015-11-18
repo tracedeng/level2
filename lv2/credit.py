@@ -489,7 +489,8 @@ class Credit():
                 self.message = "no privilege to consume credit"
                 return 1
 
-            kwargs = {"numbers": numbers, "credit_identity": credit_identity, "to_merchant": to_merchant, "credit": credit}
+            kwargs = {"numbers": numbers, "credit_identity": credit_identity, "to_merchant": to_merchant,
+                      "credit": credit}
             g_log.debug("exchange credit: %s", kwargs)
             self.code, self.message = credit_exchange(**kwargs)
 
@@ -630,9 +631,6 @@ def consumption_create(**kwargs):
         g_log.debug("insert consumption %s", value)
 
         return 40100, credit_identity
-    # except (mongo.ConnectionError, mongo.TimeoutError) as e:
-    #     g_log.error("connect to mongo failed")
-    #     return 30102, "connect to mongo failed"
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 40107, "exception"
@@ -1151,8 +1149,9 @@ def credit_exchange(**kwargs):
         if not collection:
             g_log.error("get collection credit record failed")
             return 40908, "get collection credit record failed"
-        value = {"numbers": numbers, "credit_identity": credit_identity, "from_merchant": from_merchant, "to_merchant": to_merchant
-                 "exchange_time": datetime.now(), "from_credit": from_credit, "to_credit": to_credit}
+        value = {"numbers": numbers, "credit_identity": credit_identity, "from_merchant": from_merchant,
+                 "to_merchant": to_merchant, "exchange_time": datetime.now(), "from_credit": from_credit,
+                 "to_credit": to_credit}
         exchange_record_identity = collection.insert_one(value).inserted_id
         exchange_record_identity = str(exchange_record_identity)
         g_log.debug("insert credit record %s", exchange_record_identity)

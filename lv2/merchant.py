@@ -1311,6 +1311,25 @@ def user_is_merchant_manager(manager, merchant_identity):
         return None
 
 
+def merchant_is_verified(founder, merchant_identity):
+    """
+    检查商家是否认证
+    :param founder: 管理员号码
+    :param merchant_identity: 商家ID
+    :return: 0/否，1/是
+    """
+    try:
+        collection = get_mongo_collection(founder, "merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 31101, "get collection merchant failed"
+        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "numbers": founder, "deleted": 0})
+        return merchant["verified"]
+    except Exception as e:
+        g_log.critical("%s", e)
+        return 0
+
+
 def merchant_material_copy_from_document(material, value):
     """
     mongo中的单条商家记录赋值给MerchantMaterial
