@@ -11,7 +11,7 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 
-import login
+import account
 import consumer
 import merchant
 import credit
@@ -60,7 +60,7 @@ class Master():
 
             if head.cmd < 100:
                 # 注册登录模块
-                response = login.enter(request)
+                response = account.enter(request)
             elif head.cmd < 200:
                 # 用户资料模块
                 response = consumer.enter(request)

@@ -33,6 +33,12 @@ def phone_number_is_valid(user):
     return 1
 
 
+def account_is_valid(account):
+    if account[0] == "1":
+        return user_is_valid_consumer(account)
+    elif account[0] == "2":
+        return user_is_valid_merchant(account)
+
 class UserMode():
     CONSUMER = 1
     MERCHANT = 2
@@ -42,6 +48,11 @@ class UserMode():
 
 
 def sexy_string_2_number(sexy):
+    """
+    性别转对应的数字
+    :param sexy:
+    :return:
+    """
     string2number = {'female': 1, 'male': 2}
     return string2number.get(sexy, 0)
 

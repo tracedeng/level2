@@ -1,7 +1,7 @@
 //package calculus.proto;
 syntax = "proto3";
 
-import "login.proto";
+import "account.proto";
 import "vip.proto";
 import "consumer.proto";
 import "merchant.proto";
@@ -14,11 +14,11 @@ message Request {
 
     // ------------------------具体业务包体---------------------------
     // 注册登录，[2, 100)
-    RegisterRequest register_request = 2;
-    LoginRequest login_request = 3;
-    PasswordRequest password_request = 5;
-    VerifyRequest verify_request = 7;
-    PhoneNumberRequest phone_number_request = 8;
+    LoginRequest login_request = 2;
+    RegisterRequest register_request = 3;
+    ChangePasswordRequest change_password_request = 4;
+    GetSMSCodeRequest get_sms_code_request = 5;
+    VerifySMSCodeRequest verify_sms_code_request = 6;
 
 
     // 普通用户，[101, 200]
@@ -72,11 +72,11 @@ message Response {
     ResponseHead head = 1;
 
     // 注册登录，[2, 100)
-    RegisterResponse register_response = 2;
-    LoginResponse login_response = 3;
-    PasswordResponse password_response = 5;
-    VerifyResponse verify_response = 7;
-    PhoneNumberResponse phone_number_response = 8;
+    LoginResponse login_response = 2;
+    RegisterResponse register_response = 3;
+    ChangePasswordResponse change_password_response = 4;
+    GetSMSCodeResponse get_sms_code_response = 5;
+    VerifySMSCodeResponse verify_sms_code_response = 6;
 
 
     // 普通用户，[101, 200]
@@ -129,11 +129,11 @@ message RequestHead {
 	uint32 cmd = 1;
 	uint64 seq = 2;
 
-	string numbers = 3;         //发起请求的号码
+	string numbers = 3;         // 发起请求的号码
 	string to_numbers = 4;      //
 	string session_key = 5;
 
-	string coroutine_uuid = 6;  //旁路使用
+	string coroutine_uuid = 6;  // 协程ID，透传，旁路使用
 }
 
 message ResponseHead {
@@ -142,4 +142,6 @@ message ResponseHead {
 
 	int32 code = 3;
 	string message = 4;
+
+	string coroutine_uuid = 5;  // 协程ID，透传，旁路使用
 }

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
-# import redis
-# from redis_connection import get_redis_connection
 from datetime import datetime
 from mongo_connection import get_mongo_collection
 import common_pb2
