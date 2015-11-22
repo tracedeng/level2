@@ -596,5 +596,5 @@ def verify_session_key(session_key, account):
 
 
 if "__main__" == __name__:
-    result = verify_session_key("7KiWrPOQgmvMpjsIVIVmr0ulNYFN4vSfWCKjGg==", "18688982240")
-    g_log.debug(result)
+    result1 = verify_session_key("7KiWrPOQgmvMpjsIVIVmr0ulNYFN4vSfWCKjGg==", "18688982240")
+    g_log.debug(result1)
