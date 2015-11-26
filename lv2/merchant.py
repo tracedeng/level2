@@ -10,8 +10,8 @@ import common_pb2
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
-from mongo_connection import get_mongo_connection, get_mongo_collection
-from account_valid import user_is_valid_merchant, phone_number_is_valid, yes_no_2_char, char_2_yes_no
+from mongo_connection import get_mongo_collection
+from account_valid import account_is_valid_merchant, phone_number_is_valid, yes_no_2_char, char_2_yes_no
 
 
 class Merchant():
@@ -506,7 +506,7 @@ def merchant_create(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 30101, "invalid phone number"
 
@@ -594,7 +594,7 @@ def merchant_retrieve_with_numbers(numbers):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant account %s", numbers)
             return 30201, "invalid phone number"
 
@@ -738,7 +738,7 @@ def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid manager number %s", numbers)
             return 30401, "invalid phone number"
 
@@ -891,7 +891,7 @@ def merchant_update_verified_with_numbers(numbers, merchant_identity, verified):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 30501, "invalid phone number"
 
@@ -976,13 +976,13 @@ def merchant_create_manager(**kwargs):
     try:
         # 检查管理员numbers
         manager_numbers = kwargs.get("manager_numbers", "")
-        if not user_is_valid_merchant(manager_numbers):
+        if not account_is_valid_merchant(manager_numbers):
             g_log.error("invalid merchant account %s", manager_numbers)
             return 30701, "invalid merchant account"
 
         # 检查创建者numbers
         merchant_founder = kwargs.get("merchant_founder", "")
-        if not user_is_valid_merchant(merchant_founder):
+        if not account_is_valid_merchant(merchant_founder):
             g_log.error("invalid merchant account %s", merchant_founder)
             return 30702, "invalid merchant account"
 
@@ -1040,13 +1040,13 @@ def merchant_delegate_manager(**kwargs):
     try:
         # 检查管理员numbers
         delegate_numbers = kwargs.get("delegate_numbers", "")
-        if not user_is_valid_merchant(delegate_numbers):
+        if not account_is_valid_merchant(delegate_numbers):
             g_log.error("invalid merchant account %s", delegate_numbers)
             return 30801, "invalid merchant account"
 
         # 检查创建者numbers
         merchant_founder = kwargs.get("merchant_founder", "")
-        if not user_is_valid_merchant(merchant_founder):
+        if not account_is_valid_merchant(merchant_founder):
             g_log.error("invalid merchant account %s", merchant_founder)
             return 30802, "invalid merchant account"
 
@@ -1128,7 +1128,7 @@ def merchant_delete_manager_with_numbers(numbers):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid manager %s", numbers)
             return 30901, "invalid manager"
         

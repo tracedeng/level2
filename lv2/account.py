@@ -135,7 +135,7 @@ class Account():
         except Exception as e:
             g_log.error("%s", e)
             return 0
-        
+
     def dummy_command(self):
         # 无效的命令，不回包
         g_log.debug("unknow command %s", self.cmd)
@@ -296,7 +296,7 @@ def register_request(**kwargs):
             return 10202, "invalid password"
 
         value = {"phone_numbers": numbers, "password": password, "password_md5": password_md5,
-                 "deleted": 0, "time": datetime.now()}
+                 "deleted": 0, "time": datetime.now(), "update_time": datetime.now()}
         # 存入数据库
         collection = get_mongo_collection(numbers, "account")
         if not collection:

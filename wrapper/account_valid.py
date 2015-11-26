@@ -2,44 +2,99 @@
 __author__ = 'tracedeng'
 
 
-def user_is_valid(user, mode):
+def _account_is_valid(account, mode):
     """
-    商家用户phoneNumber = 10000000000 + phoneNumber，区分个人用户
-    :param user:
+    商家用户phoneNumber = 20000000000 + phoneNumber
+    个人用户phoneNumber = 10000000000 + phoneNumber
+    :param account:
     :param mode: 账号类型，1/普通用户，2/商家用户
     :return: 0/无效，1/有效
     """
-    if mode == UserMode.MERCHANT:
-        if user[0] != "1":
+    if mode == AccountMode.MERCHANT:
+        if account[0] != "2":
             return 0
-        user = int(user) - 10000000000
+        account = int(account) - 200000000000
+    elif mode == AccountMode.CONSUMER:
+        if account[0] != "1":
+            return 0
+        account = int(account) - 100000000000
+    else:
+        return 0
 
-    return phone_number_is_valid(user)
-
-
-def user_is_valid_consumer(user):
-    return user_is_valid(user, UserMode.CONSUMER)
-
-
-def user_is_valid_merchant(user):
-    return user_is_valid(user, UserMode.MERCHANT)
+    return phone_number_is_valid(str(account))
 
 
-def user_is_platform(user):
+def account_is_valid_consumer(account):
+    """
+    是否有效的客户账号
+    :param account: 账号
+    :return: 0/无效，1/有效
+    """
+    return _account_is_valid(account, AccountMode.CONSUMER)
+
+
+def account_is_valid_merchant(account):
+    """
+    是否有效的商家账号
+    :param account: 账号
+    :return: 0/无效，1/有效
+    """
+    return _account_is_valid(account, AccountMode.MERCHANT)
+
+
+def account_is_platform(account):
+    """
+    是否有效的平台账号
+    :param account: 账号
+    :return: 0/无效，1/有效
+    """
     return 1
 
 
-def phone_number_is_valid(user):
+def phone_number_is_valid(phone_number):
+    """
+    检查是否有效手机号
+    :param phone_number: 手机号 
+    :return: 0/无效，1/有效
+    """
+    if len(phone_number) != 11:
+        return 0
     return 1
 
 
 def account_is_valid(account):
+    """
+    账号是否有效
+    :param account: 账号 
+    :return: 0/无效，1/有效
+    """
     if account[0] == "1":
-        return user_is_valid_consumer(account)
+        return account_is_valid_consumer(account)
     elif account[0] == "2":
-        return user_is_valid_merchant(account)
+        return account_is_valid_merchant(account)
 
-class UserMode():
+
+def phone_number_to_account(phone_number, mode):
+    """
+    电话号码按照类型转换成账号
+    :param phone_number: 手机号
+    :param mode: 账号类型
+    :return: 有效账号/成功，None/失败
+    """
+    if 1 != phone_number_is_valid(phone_number):
+        return None
+
+    if mode == AccountMode.MERCHANT:
+        account = int(phone_number) + 200000000000
+    elif mode == AccountMode.CONSUMER:
+        account = int(phone_number) + 100000000000
+    else:
+        return None
+
+    return str(account)
+
+
+class AccountMode():
     CONSUMER = 1
     MERCHANT = 2
 

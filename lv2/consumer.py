@@ -7,7 +7,7 @@ import common_pb2
 import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import user_is_valid_consumer, sexy_number_2_string, sexy_string_2_number
+from account_valid import account_is_valid_consumer, sexy_number_2_string, sexy_string_2_number
 
 
 class Consumer():
@@ -309,7 +309,7 @@ def consumer_create(**kwargs):
     try:
         # 检查要创建的用户numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20101, "invalid phone number"
 
@@ -384,7 +384,7 @@ def consumer_retrieve_with_numbers(numbers):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20201, "invalid phone number"
 
@@ -465,7 +465,7 @@ def consumer_update_with_numbers(numbers, **kwargs):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20401, "invalid phone number"
 
@@ -586,7 +586,7 @@ def consumer_delete_with_numbers(numbers):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 20501, "invalid phone number"
 

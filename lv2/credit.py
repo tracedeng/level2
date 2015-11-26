@@ -8,7 +8,7 @@ from pymongo.collection import ReturnDocument
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
-from account_valid import user_is_valid_consumer, user_is_valid_merchant
+from account_valid import account_is_valid_consumer, account_is_valid_merchant
 from mongo_connection import get_mongo_collection
 from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_merchant_manager, \
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
@@ -598,7 +598,7 @@ def consumption_create(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40101, "invalid phone number"
 
@@ -643,7 +643,7 @@ def merchant_credit_retrieve_with_numbers(numbers):
     :return: (40200, [(merchant, credit),...])/成功，(>40200, "errmsg")/失败
     """
     try:
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
             return 40201, "invalid merchant manager"
 
@@ -712,7 +712,7 @@ def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
     :return: (40200, [(merchant, credit),...])/成功，(>40200, "errmsg")/失败
     """
     try:
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
             return 40208, "invalid merchant manager"
 
@@ -745,12 +745,12 @@ def confirm_consumption(**kwargs):
     """
     try:
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40301, "invalid customer"
 
         manager = kwargs.get("manager", "")
-        if not user_is_valid_merchant(manager):
+        if not account_is_valid_merchant(manager):
             g_log.warning("invalid manager %s", manager)
             return 40302, "invalid manager"
 
@@ -807,12 +807,12 @@ def refuse_consumption(**kwargs):
     """
     try:
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40401, "invalid customer"
 
         manager = kwargs.get("manager", "")
-        if not user_is_valid_merchant(manager):
+        if not account_is_valid_merchant(manager):
             g_log.warning("invalid manager %s", manager)
             return 40402, "invalid manager"
 
@@ -871,7 +871,7 @@ def credit_free(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40501, "invalid phone number"
 
@@ -892,7 +892,7 @@ def credit_free(**kwargs):
 
         # 检查是否商家管理员
         manager = kwargs.get("manager")
-        if not user_is_valid_merchant(manager):
+        if not account_is_valid_merchant(manager):
             g_log.error("manager %s is illegal", manager)
             return 40505, "illegal manager"
         if not user_is_merchant_manager(manager, merchant_identity):
@@ -925,7 +925,7 @@ def consumer_credit_retrieve(numbers):
     :return: (40600, (consumer, credit)/成功，(>40600, "errmsg")/失败
     """
     try:
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
             return 40601, "invalid merchant manager"
 
@@ -956,7 +956,7 @@ def consume_credit(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40701, "invalid phone number"
 
@@ -1019,7 +1019,7 @@ def consume_credit_retrieve(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40801, "invalid phone number"
 
@@ -1052,7 +1052,7 @@ def exchange_credit_create(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40521, "invalid phone number"
 
@@ -1099,7 +1099,7 @@ def credit_exchange(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 40901, "invalid phone number"
 
@@ -1172,7 +1172,7 @@ def credit_exchange_retrieve(**kwargs):
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_consumer(numbers):
+        if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 41001, "invalid phone number"
 

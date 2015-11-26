@@ -8,7 +8,7 @@ import common_pb2
 import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import user_is_valid_merchant, user_is_platform
+from account_valid import account_is_valid_merchant, account_is_platform
 from merchant import user_is_merchant_manager, merchant_is_verified, merchant_retrieve_with_merchant_identity_only, \
     merchant_material_copy_from_document
 
@@ -326,7 +326,7 @@ def platform_update_parameters(**kwargs):
     try:
         # 检查请求用户numbers必须是平台管理员
         numbers = kwargs.get("numbers", "")
-        if not user_is_platform(numbers):
+        if not account_is_platform(numbers):
             g_log.warning("not platform %s", numbers)
             return 50101, "no privilege"
 
@@ -462,7 +462,7 @@ def consumption_ratio_update(**kwargs):
     try:
         # 检查要请求用户numbers必须是平台管理员
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("not manager %s", numbers)
             return 50401, "not manager"
 
@@ -529,7 +529,7 @@ def business_parameters_delete_with_numbers(numbers, merchant_identity):
     """
     try:
         # 检查合法账号
-        # if not user_is_valid_merchant(numbers):
+        # if not account_is_valid_merchant(numbers):
         #     g_log.warning("invalid customer account %s", numbers)
         #     return 50501, "invalid phone number"
 
@@ -614,7 +614,7 @@ def business_parameters_delete_by_platform(numbers, merchant_identity):
     """
     try:
         # 检查合法账号
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("invalid customer account %s", numbers)
             return 50510, "invalid phone number"
 
@@ -686,7 +686,7 @@ def parameters_record_retrieve_all(numbers):
     :return:
     """
     try:
-        if not user_is_platform(numbers):
+        if not account_is_platform(numbers):
             g_log.error("%s not platform", numbers)
             return 50605, "no privilege"
 
@@ -715,7 +715,7 @@ def merchant_recharge(**kwargs):
     try:
         # 检查要请求用户numbers必须是平台管理员
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("not manager %s", numbers)
             return 50701, "not manager"
 
@@ -806,7 +806,7 @@ def recharge_record_retrieve_all(numbers):
     :return:
     """
     try:
-        if not user_is_platform(numbers):
+        if not account_is_platform(numbers):
             g_log.error("%s not platform", numbers)
             return 50805, "no privilege"
 

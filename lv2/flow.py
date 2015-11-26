@@ -8,7 +8,7 @@ import common_pb2
 import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import user_is_valid_merchant, user_is_platform
+from account_valid import account_is_valid_merchant, account_is_platform
 from merchant import user_is_merchant_manager, merchant_is_verified, merchant_retrieve_with_merchant_identity_only, \
     merchant_material_copy_from_document
 
@@ -141,7 +141,7 @@ def upper_bound_update(**kwargs):
     try:
         # 检查请求用户numbers必须是平台管理员
         numbers = kwargs.get("numbers", "")
-        if not user_is_platform(numbers):
+        if not account_is_platform(numbers):
             g_log.warning("not platform %s", numbers)
             return 60101, "no privilege"
         # 必须是已认证商家，在更新保证金已经做过验证，此处省略
@@ -185,7 +185,7 @@ def upper_bound_update(**kwargs):
 #     try:
 #         # 检查请求用户numbers必须是平台管理员
 #         numbers = kwargs.get("numbers", "")
-#         if not user_is_valid_merchant(numbers):
+#         if not account_is_valid_merchant(numbers):
 #             g_log.warning("not manager %s", numbers)
 #             return 60101, "no privilege"
 #         # 必须是已认证商家，在补充可发行积分总量时已经做过验证，此处省略
@@ -236,7 +236,7 @@ def merchant_credit_update(**kwargs):
     try:
         # 检查请求用户numbers必须是平台管理员
         numbers = kwargs.get("numbers", "")
-        if not user_is_valid_merchant(numbers):
+        if not account_is_valid_merchant(numbers):
             g_log.warning("not manager %s", numbers)
             return 60101, "no privilege"
         # 必须是已认证商家，在补充可发行积分总量时已经做过验证，此处省略
@@ -319,7 +319,7 @@ def merchant_credit_flow_retrieve_all(numbers):
     :return:
     """
     try:
-        if not user_is_platform(numbers):
+        if not account_is_platform(numbers):
             g_log.error("%s not platform", numbers)
             return 60106, "no privilege"
 
