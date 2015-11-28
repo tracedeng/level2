@@ -82,7 +82,7 @@ class MongoConnection():
             connection = 0
         return connection
 
-    def get_mongo_collection(self, index, collection):
+    def get_mongo_collection(self, collection, index=0):
         """
         返回第index的mongo连接的collection
         :param index: mongo连接序号
@@ -122,7 +122,7 @@ def get_mongo_connection(route):
         return 0
 
 
-def get_mongo_collection(route, collection):
+def get_mongo_collection(collection, route=""):
     """
     返回第index的mongo连接对应数据库的collection
     :param route: 路由key
@@ -131,7 +131,7 @@ def get_mongo_collection(route, collection):
     """
     try:
         mongo_connection = MongoConnection()
-        return mongo_connection.get_mongo_collection(mongo_connection.__class__.route_to_index(route), collection)
+        return mongo_connection.get_mongo_collection(collection, mongo_connection.__class__.route_to_index(route))
     except Exception as e:
         g_log.debug("%s", e)
         return 0
@@ -144,6 +144,6 @@ if "__main__" == __name__:
     for i in xrange(0, mongo_connection2.count):
         g_log.debug("%s: %s", i, mongo_connection2.get_mongo_connection(i))
 
-    collection3 = mongo_connection1.get_mongo_collection(0, "merchant")
+    collection3 = mongo_connection1.get_mongo_collection("merchant")
     g_log.debug(collection3.__class__)
     # g_log.debug("asdf")

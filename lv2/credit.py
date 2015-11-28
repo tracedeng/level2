@@ -316,6 +316,7 @@ class Credit():
         try:
             body = self.request.consumer_credit_retrieve_request
             numbers = body.numbers
+            merchant_identity = body.merchant_identity
 
             if not numbers:
                 # TODO... 根据包体中的identity获取numbers
@@ -330,7 +331,7 @@ class Credit():
 
             # kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "sums": sums}
             g_log.debug("retrieve credit: %s", numbers)
-            self.code, self.message = consumer_credit_retrieve(numbers)
+            self.code, self.message = consumer_credit_retrieve(numbers, merchant_identity)
 
             if 40600 == self.code:
                 # 创建成功
@@ -622,7 +623,7 @@ def consumption_create(**kwargs):
                  "sums": sums, "exchanged": 0, "credit": 0, "manager_numbers": "", "gift": 0,
                  "exchange_time": datetime(1970, 1, 1), "credit_rest": 0}
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40106, "get collection credit failed"
@@ -656,7 +657,7 @@ def merchant_credit_retrieve_with_numbers(numbers):
         for merchant in merchants:
             # TODO... 广播查询所有积分
             # TODO...待数据层独立时处理，目前只考虑单机，逻辑层数据层合并
-            collection = get_mongo_collection("", "credit")
+            collection = get_mongo_collection("credit")
             if not collection:
                 g_log.error("get collection credit failed")
                 return 40203, "get collection credit failed"
@@ -723,7 +724,7 @@ def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
 
         # TODO... 广播查询所有积分
         # TODO...待数据层独立时处理，目前只考虑单机，逻辑层数据层合并
-        collection = get_mongo_collection("", "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40210, "get collection credit failed"
@@ -778,7 +779,7 @@ def confirm_consumption(**kwargs):
             # TODO... 检查credit是否符合兑换比例
             pass
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40305, "get collection credit failed"
@@ -840,7 +841,7 @@ def refuse_consumption(**kwargs):
             # TODO... 检查credit是否符合兑换比例
             pass
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40305, "get collection credit failed"
@@ -904,7 +905,7 @@ def credit_free(**kwargs):
                  "sums": 0, "exchanged": 1, "credit": credit, "manager_numbers": manager, "gift": 1,
                  "exchange_time": datetime.now(), "credit_rest": credit}
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40507, "get collection credit failed"
@@ -918,7 +919,7 @@ def credit_free(**kwargs):
         return 40508, "exception"
 
 
-def consumer_credit_retrieve(numbers):
+def consumer_credit_retrieve(numbers, merchant_identity):
     """
     获取用户的积分
     :param numbers: 用户号码
@@ -929,12 +930,16 @@ def consumer_credit_retrieve(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
             return 40601, "invalid merchant manager"
 
+        if merchant_identity:
+            # 平台读取所有操作纪录
+            return consumer_credit_retrieve_one(numbers, merchant_identity)
+
         code, consumer = consumer_retrieve_with_numbers(numbers)
         if code != 20200:
             g_log.error("retrieve consumer %s failed", numbers)
             return 40602, "retrieve consumer failed"
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40603, "get collection credit failed"
@@ -945,6 +950,26 @@ def consumer_credit_retrieve(numbers):
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 40604, "exception"
+
+
+def consumer_credit_retrieve_one(numbers, merchant_identity):
+    try:
+        code, consumer = consumer_retrieve_with_numbers(numbers)
+        if code != 20200:
+            g_log.error("retrieve consumer %s failed", numbers)
+            return 40610, "retrieve consumer failed"
+
+        collection = get_mongo_collection("credit")
+        if not collection:
+            g_log.error("get collection credit failed")
+            return 40611, "get collection credit failed"
+        credit = collection.find({"numbers": numbers, "merchant_identity": merchant_identity})
+        g_log.debug("consumer has %s credit", credit.count())
+
+        return 40600, (consumer, credit)
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 40612, "exception"
 
 
 def consume_credit(**kwargs):
@@ -975,7 +1000,7 @@ def consume_credit(**kwargs):
             g_log.error("credit %s illegal", credit)
             return 40704, "illegal argument"
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40705, "get collection credit failed"
@@ -994,7 +1019,7 @@ def consume_credit(**kwargs):
         merchant_identity = result["merchant_identity"]
 
         # 保存积分消费记录
-        collection = get_mongo_collection(numbers, "credit_record")
+        collection = get_mongo_collection("credit_record")
         if not collection:
             g_log.error("get collection credit record failed")
             return 40707, "get collection credit record failed"
@@ -1027,7 +1052,7 @@ def consume_credit_retrieve(**kwargs):
         end_time = kwargs.get("end_time", datetime.now())
         limit = kwargs.get("limit", 0)
 
-        collection = get_mongo_collection(numbers, "credit_record")
+        collection = get_mongo_collection("credit_record")
         if not collection:
             g_log.error("get collection credit record failed")
             return 40802, "get collection credit record failed"
@@ -1076,7 +1101,7 @@ def exchange_credit_create(**kwargs):
                  "sums": 0, "exchanged": 2, "credit": credit, "manager_numbers": "", "gift": 0,
                  "exchange_time": datetime.now(), "credit_rest": credit}
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40527, "get collection credit failed"
@@ -1119,7 +1144,7 @@ def credit_exchange(**kwargs):
             return 40904, "illegal argument"
         from_credit = credit
 
-        collection = get_mongo_collection(numbers, "credit")
+        collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40905, "get collection credit failed"
@@ -1145,7 +1170,7 @@ def credit_exchange(**kwargs):
             return 40907, "create exchange credit failed"
 
         # 保存积分兑换记录
-        collection = get_mongo_collection(numbers, "exchange_record")
+        collection = get_mongo_collection("exchange_record")
         if not collection:
             g_log.error("get collection credit record failed")
             return 40908, "get collection credit record failed"
@@ -1180,7 +1205,7 @@ def credit_exchange_retrieve(**kwargs):
         end_time = kwargs.get("end_time", datetime.now())
         limit = kwargs.get("limit", 0)
 
-        collection = get_mongo_collection(numbers, "exchange_record")
+        collection = get_mongo_collection("exchange_record")
         if not collection:
             g_log.error("get collection exchange record failed")
             return 41002, "get collection exchange record failed"

@@ -84,6 +84,7 @@ message CreditFreeResponse {
 message ConsumerCreditRetrieveRequest {
     string numbers = 1;     // 用户手机号
     string identity = 2;    // 用户ID
+    string merchant_identity = 3;   // 如果没有则查询用户拥有的所有商家的积分
 }
 
 message ConsumerCreditRetrieveResponse {

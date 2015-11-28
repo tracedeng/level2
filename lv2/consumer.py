@@ -8,6 +8,7 @@ import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 from account_valid import account_is_valid_consumer, sexy_number_2_string, sexy_string_2_number
+from account import identity_to_numbers
 
 
 class Consumer():
@@ -60,19 +61,24 @@ class Consumer():
         try:
             body = self.request.consumer_create_request
             numbers = body.numbers
+            identity = body.identity
             material = body.material
 
             if not numbers:
                 if not material.numbers:
-                    # TODO... 根据包体中的identity获取numbers
-                    pass
+                    # 根据包体中的identity获取numbers
+                    code, numbers = identity_to_numbers(identity)
+                    if code != 10500:
+                        self.code = 20101
+                        self.message = "missing argument"
+                        return 1
                 else:
                     numbers = material.numbers
 
             # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to create consumer %s", self.numbers, numbers)
-                self.code = 20105
+                self.code = 20102
                 self.message = "no privilege to create consumer"
                 return 1
 
@@ -112,8 +118,12 @@ class Consumer():
             identity = body.identity
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 20209
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的用户和要获取的用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
@@ -167,19 +177,24 @@ class Consumer():
         try:
             body = self.request.consumer_update_request
             numbers = body.numbers
+            identity = body.identity
             material = body.material
 
             if not numbers:
                 if not material.numbers:
-                    # TODO... 根据包体中的identity获取numbers
-                    pass
+                    # 根据包体中的identity获取numbers
+                    code, numbers = identity_to_numbers(identity)
+                    if code != 10500:
+                        self.code = 20401
+                        self.message = "missing argument"
+                        return 1
                 else:
                     numbers = material.numbers
 
             # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to update consumer %s", self.numbers, numbers)
-                self.code = 20410
+                self.code = 20402
                 self.message = "no privilege to update consumer"
                 return 1
 
@@ -251,13 +266,17 @@ class Consumer():
             identity = body.identity
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 20501
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to delete consumer %s", self.numbers, numbers)
-                self.code = 20510
+                self.code = 20502
                 self.message = "no privilege to delete consumer"
                 return 1
 
@@ -311,18 +330,7 @@ def consumer_create(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 20101, "invalid phone number"
-
-        # # 连接redis，检查该用户是否已经创建
-        # connection = get_redis_connection(numbers)
-        # if not connection:
-        #     g_log.error("connect to redis failed")
-        #     return 20102, "connect to redis failed"
-        #
-        # key = "user:%s" % numbers
-        # if connection.exists(key) and connection.hget(key, "deleted") == "0":
-        #     g_log.warning("duplicate create user %s", key)
-        #     return 20103, "duplicate create user"
+            return 20111, "invalid phone number"
 
         # 昵称不能超过16字节，超过要截取前16字节
         nickname = kwargs.get("nickname", numbers)
@@ -356,23 +364,19 @@ def consumer_create(**kwargs):
                  "create_time": datetime.now()}
 
         # 存入数据库
-        collection = get_mongo_collection(numbers, "consumer")
+        collection = get_mongo_collection("consumer")
         if not collection:
             g_log.error("get collection consumer failed")
-            return 20102, "get collection consumer failed"
+            return 20112, "get collection consumer failed"
         consumer = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True)
         if consumer and not consumer["deleted"]:
             g_log.error("consumer %s exist", numbers)
-            return 20103, "duplicate consumer"
-        # connection.hmset(key, value)
-        # g_log.debug("insert %s %s", key, value)
+            return 20113, "duplicate consumer"
+
         return 20100, "yes"
-    # except (redis.ConnectionError, redis.TimeoutError) as e:
-    #     g_log.error("connect to redis failed")
-    #     return 20102, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
-        return 20104, "exception"
+        return 20114, "exception"
 
 
 # pragma 读取用户资料API
@@ -386,37 +390,21 @@ def consumer_retrieve_with_numbers(numbers):
         # 检查合法账号
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 20201, "invalid phone number"
+            return 20211, "invalid phone number"
 
-        # # 连接redis，检查该用户是否已经创建
-        # connection = get_redis_connection(numbers)
-        # if not connection:
-        #     g_log.error("connect to redis failed")
-        #     return 20202, "connect to redis failed"
-        #
-        # key = "user:%s" % numbers
-        # if not connection.exists(key) or connection.hget(key, "deleted") == 1:
-        #     g_log.warning("consumer %s not exist", key)
-        #     return 20203, "consumer not exist"
-        #
-        # value = connection.hgetall(key)
-        # g_log.debug("get %s %s", key, value)
-        collection = get_mongo_collection(numbers, "consumer")
+        collection = get_mongo_collection("consumer")
         if not collection:
             g_log.error("get collection consumer failed")
-            return 20202, "get collection consumer failed"
+            return 20212, "get collection consumer failed"
         consumer = collection.find_one({"numbers": numbers, "deleted": 0})
         if not consumer:
             g_log.debug("consumer %s not exist", numbers)
-            return 20203, "consumer not exist"
+            return 20213, "consumer not exist"
 
         return 20200, consumer
-    # except (redis.ConnectionError, redis.TimeoutError) as e:
-    #     g_log.error("connect to redis failed")
-    #     return 20202, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
-        return 20204, "exception"
+        return 20214, "exception"
 
 
 def consumer_retrieve_with_identity(identity):
@@ -427,11 +415,13 @@ def consumer_retrieve_with_identity(identity):
     """
     try:
         # 根据用户id查找用户电话号码
-        numbers = ""
+        code, numbers = identity_to_numbers(identity)
+        if code != 10500:
+            return 20215, "illegal identity"
         return consumer_retrieve_with_numbers(numbers)
     except Exception as e:
         g_log.error("%s", e)
-        return 20205, "exception"
+        return 20216, "exception"
 
 
 def consumer_retrieve(numbers=None, identity=None):
@@ -447,10 +437,10 @@ def consumer_retrieve(numbers=None, identity=None):
         elif identity:
             return consumer_retrieve_with_identity(identity)
         else:
-            return 20206, "bad arguments"
+            return 20217, "bad arguments"
     except Exception as e:
         g_log.error("%s", e)
-        return 20207, "exception"
+        return 20218, "exception"
 
 
 # pragma 更新用户资料API
@@ -467,19 +457,7 @@ def consumer_update_with_numbers(numbers, **kwargs):
         # 检查合法账号
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 20401, "invalid phone number"
-
-        # 连接redis，检查该用户是否已经创建
-        connection = get_redis_connection(numbers)
-        if not connection:
-            g_log.error("connect to redis failed")
-            return 20402, "connect to redis failed"
-
-        # 检查账号是否存在
-        key = "user:%s" % numbers
-        if not connection.exists(key) or connection.hget(key, "deleted") == 1:
-            g_log.warning("consumer %s not exist", key)
-            return 20403, "consumer not exist"
+            return 20411, "invalid phone number"
 
         value = {}
         # 昵称不能超过16字节，超过要截取前16字节
@@ -526,15 +504,18 @@ def consumer_update_with_numbers(numbers, **kwargs):
             value["qrcode"] = qrcode
 
         # 存入数据库
-        connection.hmset(key, value)
-        g_log.debug("insert %s %s", key, value)
+        collection = get_mongo_collection("consumer")
+        if not collection:
+            g_log.error("get collection consumer failed")
+            return 20412, "get collection consumer failed"
+        consumer = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, value)
+        if not consumer:
+            g_log.error("consumer %s exist", numbers)
+            return 20413, "consumer not exist"
         return 20400, "yes"
-    except (redis.ConnectionError, redis.TimeoutError) as e:
-        g_log.error("connect to redis failed")
-        return 20405, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
-        return 20406, "exception"
+        return 20415, "exception"
 
 
 def consumer_update_with_identity(identity, **kwargs):
@@ -548,11 +529,13 @@ def consumer_update_with_identity(identity, **kwargs):
     """
     try:
         # 根据用户id查找用户电话号码
-        numbers = ""
+        code, numbers = identity_to_numbers(identity)
+        if code != 10500:
+            return 20416, "illegal identity"
         return consumer_update_with_numbers(numbers, **kwargs)
     except Exception as e:
         g_log.error("%s", e)
-        return 20407, "exception"
+        return 20417, "exception"
 
 
 def consumer_update(numbers=None, identity=None, **kwargs):
@@ -571,10 +554,10 @@ def consumer_update(numbers=None, identity=None, **kwargs):
         elif identity:
             return consumer_update_with_identity(identity, **kwargs)
         else:
-            return 20408, "bad arguments"
+            return 20418, "bad arguments"
     except Exception as e:
         g_log.error("%s", e)
-        return 20409, "exception"
+        return 20419, "exception"
 
 
 # pragma 删除用户资料API
@@ -588,43 +571,20 @@ def consumer_delete_with_numbers(numbers):
         # 检查合法账号
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 20501, "invalid phone number"
+            return 20511, "invalid phone number"
 
-        # # 连接redis，检查该用户是否已经创建
-        # connection = get_redis_connection(numbers)
-        # if not connection:
-        #     g_log.error("connect to redis failed")
-        #     return 20502, "connect to redis failed"
-        #
-        # # 检查账号是否存在
-        # key = "user:%s" % numbers
-        # if not connection.exists(key):
-        #     g_log.warning("consumer %s not exist", key)
-        #     return 20503, "consumer not exist"
-        # value = connection.hget(key, "deleted")
-        # g_log.debug("get %s#deleted %s", key, value)
-        # if value == "1":
-        #     g_log.warning("consumer %s deleted already", key)
-        #     return 20504, "consumer not exist"
-        #
-        # # 删除consumer
-        # connection.hset(key, "deleted", 1)
-
-        collection = get_mongo_collection(numbers, "consumer")
+        collection = get_mongo_collection("consumer")
         if not collection:
             g_log.error("get collection consumer failed")
-            return 20502, "get collection consumer failed"
+            return 20512, "get collection consumer failed"
         consumer = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, {"$set": {"deleted": 1}})
         if not consumer:
             g_log.error("consumer %s not exist", numbers)
-            return 20503, "consumer not exist"
+            return 20513, "consumer not exist"
         return 20500, "yes"
-    # except (redis.ConnectionError, redis.TimeoutError) as e:
-    #     g_log.error("connect to redis failed")
-    #     return 20505, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
-        return 20506, "exception"
+        return 20514, "exception"
 
 
 def consumer_delete_with_identity(identity):
@@ -635,11 +595,13 @@ def consumer_delete_with_identity(identity):
     """
     try:
         # 根据用户id查找用户电话号码
-        numbers = ""
+        code, numbers = identity_to_numbers(identity)
+        if code != 10500:
+            return 20515, "illegal identity"
         return consumer_delete_with_numbers(numbers)
     except Exception as e:
         g_log.error("%s", e)
-        return 20507, "exception"
+        return 20516, "exception"
 
 
 def consumer_delete(numbers=None, identity=None):
@@ -655,14 +617,14 @@ def consumer_delete(numbers=None, identity=None):
         elif identity:
             return consumer_delete_with_identity(identity)
         else:
-            return 20508, "bad arguments"
+            return 20518, "bad arguments"
     except Exception as e:
         g_log.error("%s", e)
-        return 20509, "exception"
+        return 20519, "exception"
 
 
 def consumer_material_copy_from_document(material, value):
-    material.sexy = sexy_number_2_string(value["sexy"])  # 从redis取出来的值都是字符串
+    material.sexy = sexy_number_2_string(value["sexy"])
     material.age = int(value["age"])
     material.introduce = value["introduce"]
     material.email = value["email"]

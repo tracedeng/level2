@@ -2,6 +2,7 @@
 __author__ = 'tracedeng'
 
 from mongo_connection import get_mongo_collection
+from bson.objectid import ObjectId
 import time
 from datetime import datetime
 import base64
@@ -210,7 +211,7 @@ def login_request(**kwargs):
         password_md5 = kwargs.get("password_md5", "")
 
         # 验证密码
-        collection = get_mongo_collection(numbers, "account")
+        collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
             return 10103, "get collection account failed"
@@ -230,7 +231,7 @@ def login_request(**kwargs):
                  "active_time": datetime.fromtimestamp(timestamp)}
         # session 入库
         # TODO... 如果登录模块分离，则考虑session存入redis
-        collection = get_mongo_collection(numbers, "session")
+        collection = get_mongo_collection("session")
         if not collection:
             g_log.error("get collection session failed")
             return 10106, "get collection session failed"
@@ -298,7 +299,7 @@ def register_request(**kwargs):
         value = {"phone_numbers": numbers, "password": password, "password_md5": password_md5,
                  "deleted": 0, "time": datetime.now(), "update_time": datetime.now()}
         # 存入数据库
-        collection = get_mongo_collection(numbers, "account")
+        collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
             return 10204, "get collection account failed"
@@ -344,7 +345,7 @@ def change_password_request(**kwargs):
         value = {"phone_numbers": numbers, "password": password, "password_md5": password_md5,
                  "deleted": 0, "update_time": datetime.now()}
         # 更新数据库
-        collection = get_mongo_collection(numbers, "account")
+        collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
             return 10304, "get collection account failed"
@@ -380,7 +381,7 @@ def verify_session_key(session_key, account):
             return 10402, "account not match"
 
         # session 落地验证
-        collection = get_mongo_collection(numbers, "session")
+        collection = get_mongo_collection("session")
         if not collection:
             g_log.error("get collection session failed")
             return 10403, "get collection session failed"
@@ -403,6 +404,52 @@ def verify_session_key(session_key, account):
     except Exception as e:
         g_log.error("%s", e)
         return 10405, "exception"
+
+
+def identity_to_numbers(identity):
+    """
+    账号ID转换成账号
+    :param identity: 账号ID
+    :return:
+    """
+    try:
+        if not identity:
+            return 10504, "illegal identity"
+        collection = get_mongo_collection("account")
+        if not collection:
+            g_log.error("get collection account failed")
+            return 10501, "get collection account failed"
+        account = collection.find_one({"_id": ObjectId(identity), "deleted": 0})
+        if not account:
+            g_log.debug("account %s not exist", identity)
+            return 10502, "account not exist"
+        numbers = account["phone_numbers"]
+        return 10500, numbers
+    except Exception as e:
+        g_log.error("%s", e)
+        return 10503, "exception"
+
+
+def numbers_to_identity(numbers):
+    """
+    账号转换成账号ID
+    :param numbers: 账号
+    :return:
+    """
+    try:
+        collection = get_mongo_collection("account")
+        if not collection:
+            g_log.error("get collection account failed")
+            return 10504, "get collection account failed"
+        account = collection.find_one({"phone_numbers": numbers, "deleted": 0})
+        if not account:
+            g_log.debug("account %s not exist", numbers)
+            return 10505, "account not exist"
+        identity = str(account["identity"])
+        return 10500, identity
+    except Exception as e:
+        g_log.error("%s", e)
+        return 10506, "exception"
 
 
 if "__main__" == __name__:

@@ -349,7 +349,7 @@ def platform_update_parameters(**kwargs):
         value = {"merchant_identity": merchant_identity, "bond": bond, "balance_ratio": balance_ratio, "deleted": 0}
 
         # 存入数据库
-        collection = get_mongo_collection(merchant_founder, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
             return 50103, "get collection parameters failed"
@@ -369,7 +369,7 @@ def platform_update_parameters(**kwargs):
         g_log.debug("update parameter succeed")
 
         # 更新记录入库
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50105, "get collection parameters record failed"
@@ -402,7 +402,7 @@ def business_parameters_retrieve_with_numbers(numbers, merchant_identity):
         founder = merchant["merchant_founder"]
         g_log.debug("merchant %s founder %s", merchant_identity, founder)
 
-        collection = get_mongo_collection(founder, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
             return 50202, "get collection parameters failed"
@@ -484,7 +484,7 @@ def consumption_ratio_update(**kwargs):
         value = {"merchant_identity": merchant_identity, "consumption_ratio": consumption_ratio, "deleted": 0}
 
         # 存入数据库
-        collection = get_mongo_collection(merchant_founder, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
             return 50403, "get collection parameters failed"
@@ -503,7 +503,7 @@ def consumption_ratio_update(**kwargs):
         g_log.debug("update consumption done")
 
         # 更新记录入库
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50405, "get collection parameters record failed"
@@ -541,7 +541,7 @@ def business_parameters_delete_with_numbers(numbers, merchant_identity):
         merchant_founder = merchant["merchant_founder"]
         g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
 
-        collection = get_mongo_collection(numbers, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection business_parameters failed")
             return 50502, "get collection business_parameters failed"
@@ -552,7 +552,7 @@ def business_parameters_delete_with_numbers(numbers, merchant_identity):
             return 50503, "merchant parameters not exist"
 
         # 更新记录入库
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50504, "get collection parameters record failed"
@@ -618,7 +618,7 @@ def business_parameters_delete_by_platform(numbers, merchant_identity):
             g_log.warning("invalid customer account %s", numbers)
             return 50510, "invalid phone number"
 
-        collection = get_mongo_collection(numbers, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection business parameters failed")
             return 50511, "get collection business parameters failed"
@@ -629,7 +629,7 @@ def business_parameters_delete_by_platform(numbers, merchant_identity):
             return 50512, "merchant parameters not exist"
 
         # 更新记录入库
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50513, "get collection parameters record failed"
@@ -665,7 +665,7 @@ def parameters_record_retrieve(numbers, merchant_identity):
             return 50602, "not manager"
 
         # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50603, "get collection parameters record failed"
@@ -691,7 +691,7 @@ def parameters_record_retrieve_all(numbers):
             return 50605, "no privilege"
 
         # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection(numbers, "parameters_record")
+        collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
             return 50606, "get collection parameters record failed"
@@ -737,7 +737,7 @@ def merchant_recharge(**kwargs):
         money = kwargs.get("money", 0)
 
         # 存入数据库
-        collection = get_mongo_collection(merchant_founder, "parameters")
+        collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
             return 50703, "get collection parameters failed"
@@ -751,7 +751,7 @@ def merchant_recharge(**kwargs):
         g_log.debug("recharge done, money: %s", business_parameters["balance"])
 
         # 更新记录入库
-        collection = get_mongo_collection(numbers, "recharge_record")
+        collection = get_mongo_collection("recharge_record")
         if not collection:
             g_log.error("get collection recharge record failed")
             return 50705, "get collection recharge record failed"
@@ -785,7 +785,7 @@ def recharge_record_retrieve(numbers, merchant_identity):
             return 50802, "not manager"
 
         # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection(numbers, "recharge_record")
+        collection = get_mongo_collection("recharge_record")
         if not collection:
             g_log.error("get collection recharge record failed")
             return 50803, "get collection recharge record failed"
@@ -811,7 +811,7 @@ def recharge_record_retrieve_all(numbers):
             return 50805, "no privilege"
 
         # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection(numbers, "recharge_record")
+        collection = get_mongo_collection("recharge_record")
         if not collection:
             g_log.error("get collection recharge record failed")
             return 50806, "get collection recharge record failed"

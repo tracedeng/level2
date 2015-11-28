@@ -153,7 +153,7 @@ def upper_bound_update(**kwargs):
         value = {"merchant_identity": merchant_identity, "upper_bound": upper_bound, "deleted": 0}
 
         # 存入数据库
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60103, "get collection flow failed"
@@ -203,7 +203,7 @@ def upper_bound_update(**kwargs):
 #         value = {"merchant_identity": merchant_identity, "supplement": supplement, "deleted": 0}
 #
 #         # 存入数据库
-#         collection = get_mongo_collection(numbers, "flow")
+#         collection = get_mongo_collection("flow")
 #         if not collection:
 #             g_log.error("get collection flow failed")
 #             return 60103, "get collection flow failed"
@@ -259,7 +259,7 @@ def merchant_credit_update(**kwargs):
         value = {"merchant_identity": merchant_identity, mode: supplement, "deleted": 0}
 
         # 存入数据库
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60403, "get collection flow failed"
@@ -297,7 +297,7 @@ def merchant_credit_flow_retrieve(numbers, merchant_identity):
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
             return 60102, "not manager"
 
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60103, "get collection flow failed"
@@ -324,7 +324,7 @@ def merchant_credit_flow_retrieve_all(numbers):
             return 60106, "no privilege"
 
         # 广播查找所有商家的积分详情
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60107, "get collection flow failed"
@@ -356,7 +356,7 @@ def calculate_settlement(numbers, merchant_identity):
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
             return 60102, "not manager"
 
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60103, "get collection flow failed"
@@ -389,7 +389,7 @@ def exec_settlement(numbers, merchant_identity):
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
             return 60102, "not manager"
 
-        collection = get_mongo_collection(numbers, "flow")
+        collection = get_mongo_collection("flow")
         if not collection:
             g_log.error("get collection flow failed")
             return 60103, "get collection flow failed"
