@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+// 7牛云存储token
+
+// 上传token
+message UploadTokenRequest {
+    string numbers = 1;
+    string identity = 2;        // 客户ID或商家管理员ID
+    string resource_kind = 3;    // 上传的资源类型，用户头像c_avatar, 商家logo m_logo, 商家活动海报ma_poster
+    string debug = 4;           // 测试填"debug"，不填则online
+    string merchant_identity = 5;   // 如果时商家，需要同时提供商家ID
+};
+
+message UploadTokenResponse {
+    string upload_token = 1;   // 上传Token
+}
+
+// 下载token
+message DownloadTokenRequest {
+    string numbers = 1;
+    string identity = 2;        // 客户ID或商家管理员ID
+    string resource_kind = 3;    // 上传的资源类型，用户头像c_avatar, 商家logo m_logo, 商家活动海报ma_poster
+    string debug = 4;           // 测试填"debug"，不填则online
+};
+
+message DownloadTokenResponse {
+    string download_token = 1;   // 下载Token
+}
+
+// 管理token
+message AccessTokenRequest {
+    string numbers = 1;
+    string identity = 2;        // 客户ID或商家管理员ID
+    string resource_kind = 3;    // 上传的资源类型，用户头像c_avatar, 商家logo m_logo, 商家活动海报ma_poster
+    string debug = 4;           // 测试填"debug"，不填则online
+};
+
+message AccessTokenResponse {
+    string access_token = 1;   // 资源管理Token
+}

@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 import time
 from datetime import datetime
 import base64
+import binascii
 import hashlib
 import common_pb2
 import log
@@ -58,10 +59,10 @@ class Account():
         """
         try:
             body = self.request.login_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             password_md5 = body.password_md5
 
-            kwargs = {"numbers": phone_number, "password_md5": password_md5}
+            kwargs = {"numbers": numbers, "password_md5": password_md5}
             g_log.debug("login request: %s", kwargs)
             self.code, self.message = login_request(**kwargs)
             if 10100 == self.code:
@@ -87,11 +88,11 @@ class Account():
         """
         try:
             body = self.request.register_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             password = body.password
             password_md5 = body.password_md5
 
-            kwargs = {"numbers": phone_number, "password": password, "password_md5": password_md5}
+            kwargs = {"numbers": numbers, "password": password, "password_md5": password_md5}
             g_log.debug("register request: %s", kwargs)
             self.code, self.message = register_request(**kwargs)
             if 10200 == self.code:
@@ -116,11 +117,11 @@ class Account():
         """
         try:
             body = self.request.change_password_request
-            phone_number = body.phone_number
+            numbers = body.numbers
             password = body.password
             password_md5 = body.password_md5
 
-            kwargs = {"numbers": phone_number, "password": password, "password_md5": password_md5}
+            kwargs = {"numbers": numbers, "password": password, "password_md5": password_md5}
             self.code, self.message = change_password_request(**kwargs)
             if 10300 == self.code:
                 # 重置成功
@@ -199,14 +200,14 @@ def login_request(**kwargs):
     """
     账号登录
     :param kwargs: {"numbers": "18688982240", "password_md5": "c56d0e9a7ccec67b4ea131655038d604"}
-    :return: (10100, "yes")/成功，(>10100, "errmsg")/失败
+    :return: (10100, "yes")/成功，(>10110, "errmsg")/失败
     """
     try:
         # 检查要创建的用户numbers
         numbers = kwargs.get("numbers", "")
         if not account_is_valid(numbers):
             g_log.warning("invalid account %s", numbers)
-            return 10101, "invalid account"
+            return 10111, "invalid account"
 
         password_md5 = kwargs.get("password_md5", "")
 
@@ -214,18 +215,18 @@ def login_request(**kwargs):
         collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
-            return 10103, "get collection account failed"
-        account = collection.find_one({"phone_numbers": numbers, "password_md5": password_md5, "deleted": 0})
+            return 10113, "get collection account failed"
+        account = collection.find_one({"numbers": numbers, "password_md5": password_md5, "deleted": 0})
         if not account:
             g_log.debug("account %s not exist or illegal password", numbers)
-            return 10104, "illegal password"
+            return 10114, "illegal password"
 
         # 生成session key
         timestamp = int(time.time())
         session_key = generate_session_key(str(timestamp), numbers)
         if not session_key:
             g_log.error("generate session key failed")
-            return 10105, "gen session key failed"
+            return 10115, "gen session key failed"
 
         value = {"numbers": numbers, "session_key": session_key, "create_time": datetime.fromtimestamp(timestamp),
                  "active_time": datetime.fromtimestamp(timestamp)}
@@ -234,7 +235,7 @@ def login_request(**kwargs):
         collection = get_mongo_collection("session")
         if not collection:
             g_log.error("get collection session failed")
-            return 10106, "get collection session failed"
+            return 10116, "get collection session failed"
         session = collection.find_one_and_update({"numbers": numbers}, {"$set": value})
         # 第一次更新，则插入一条
         if not session:
@@ -242,28 +243,39 @@ def login_request(**kwargs):
             session = collection.insert_one(value)
         if not session:
             g_log.error("%s login failed", numbers)
-            return 10107, "login failed"
+            return 10117, "login failed"
         g_log.debug("login succeed")
 
         return 10100, session_key
     except Exception as e:
         g_log.error("%s", e)
-        return 10108, "exception"
+        return 10118, "exception"
 
 
-def check_md5(plain, cipher, times):
+def check_md5(plain, salt, cipher, times):
     """
-    检查 cipher = md5(plain) * times，
+    检查
+    cipher = md5(plain) * times － 1
+    cipher = md5(cipher + salt)
+    cipher = base64_encode(a2b(cipher))
     :param plain: 明文
     :param cipher: 密文
     :param times: 几次md5
     :return:
     """
     try:
-        for i in xrange(0, times):
+        for i in xrange(0, times - 1):
             m = hashlib.md5()
             m.update(plain)
             plain = m.hexdigest()
+
+        # 加盐
+        m = hashlib.md5()
+        m.update(plain + salt)
+        plain = m.hexdigest()
+
+        # base64压缩
+        plain = binascii.a2b_base64(plain)
 
         if plain == cipher:
             return 0
@@ -278,14 +290,14 @@ def register_request(**kwargs):
     """
     账号注册
     :param kwargs: {"numbers": "18688982240", "password": "123456", "password_md5": "c56d0e9a7ccec67b4ea131655038d604"}
-    :return: (10200, "yes")/成功，(>10200, "errmsg")/失败
+    :return: (10200, "yes")/成功，(>10210, "errmsg")/失败
     """
     try:
         # 检查要创建的用户numbers
         numbers = kwargs.get("numbers", "")
         if not account_is_valid(numbers):
             g_log.warning("invalid account %s", numbers)
-            return 10201, "invalid account"
+            return 10211, "invalid account"
 
         # TODO... 检查密码字符
         password = kwargs.get("password", "")
@@ -294,16 +306,16 @@ def register_request(**kwargs):
         # password_md5 = md5(md5(md5(password)))
         if 1 == check_md5(password, password_md5, 3):
             g_log.warning("password_md5 != md5(md5(md5(password)))")
-            return 10202, "invalid password"
+            return 10212, "invalid password"
 
-        value = {"phone_numbers": numbers, "password": password, "password_md5": password_md5,
+        value = {"numbers": numbers, "password": password, "password_md5": password_md5,
                  "deleted": 0, "time": datetime.now(), "update_time": datetime.now()}
         # 存入数据库
         collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
-            return 10204, "get collection account failed"
-        account = collection.find_one_and_update({"phone_numbers": numbers}, {"$set": value})
+            return 10214, "get collection account failed"
+        account = collection.find_one_and_update({"numbers": numbers}, {"$set": value})
 
         # 第一次更新，则插入一条
         if not account:
@@ -311,54 +323,53 @@ def register_request(**kwargs):
             account = collection.insert_one(value)
         if not account:
             g_log.error("register account %s failed", numbers)
-            return 10205, "register account failed"
+            return 10215, "register account failed"
         g_log.debug("register succeed")
 
         return 10200, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 10206, "exception"
+        return 10216, "exception"
 
 
 def change_password_request(**kwargs):
     """
     重置密码
     :param kwargs: {"numbers": "18688982240", "password": "123456", "password_md5": "c56d0e9a7ccec67b4ea131655038d604"}
-    :return: (10300, "yes")/成功，(>10300, "errmsg")/失败
+    :return: (10300, "yes")/成功，(>10310, "errmsg")/失败
     """
     try:
         # 检查要创建的用户numbers
         numbers = kwargs.get("numbers", "")
         if not account_is_valid(numbers):
             g_log.warning("invalid account %s", numbers)
-            return 10301, "invalid account"
+            return 10311, "invalid account"
 
-        # TODO... 检查密码字符
         password = kwargs.get("password", "")
         password_md5 = kwargs.get("password_md5", "")
 
         # password_md5 = md5(md5(md5(password)))
         if 1 == check_md5(password, password_md5, 3):
             g_log.warning("password_md5 != md5(md5(md5(password)))")
-            return 10302, "invalid password"
+            return 10312, "invalid password"
 
-        value = {"phone_numbers": numbers, "password": password, "password_md5": password_md5,
+        value = {"numbers": numbers, "password": password, "password_md5": password_md5,
                  "deleted": 0, "update_time": datetime.now()}
         # 更新数据库
         collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
-            return 10304, "get collection account failed"
-        account = collection.find_one_and_update({"phone_numbers": numbers}, {"$set": value})
+            return 10314, "get collection account failed"
+        account = collection.find_one_and_update({"numbers": numbers}, {"$set": value})
         if not account:
             g_log.error("account %s change password failed", numbers)
-            return 10305, "change password failed"
+            return 10315, "change password failed"
         g_log.debug("change password succeed")
 
         return 10300, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 10306, "exception"
+        return 10316, "exception"
 
 
 def verify_session_key(session_key, account):
@@ -374,22 +385,22 @@ def verify_session_key(session_key, account):
         g_log.debug(plain)
         if not plain:
             g_log.error("illegal session key %s", session_key)
-            return 10401, "illegal session key"
+            return 10411, "illegal session key"
         (timestamp, numbers) = plain
         if account != numbers:
             g_log.error("not account %s session", account)
-            return 10402, "account not match"
+            return 10412, "account not match"
 
         # session 落地验证
         collection = get_mongo_collection("session")
         if not collection:
             g_log.error("get collection session failed")
-            return 10403, "get collection session failed"
+            return 10413, "get collection session failed"
         create_time = datetime.fromtimestamp(timestamp)
         session = collection.find_one({"numbers": numbers, "session_key": session_key, "create_time": create_time})
         if not session:
             g_log.debug("session %s not exist", session_key)
-            return 10404, "session not exist"
+            return 10414, "session not exist"
 
         # TODO... 比较活跃时间
         g_log.debug("last active time %s", session["active_time"])
@@ -403,7 +414,7 @@ def verify_session_key(session_key, account):
         return 10400, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 10405, "exception"
+        return 10415, "exception"
 
 
 def identity_to_numbers(identity):
@@ -414,20 +425,20 @@ def identity_to_numbers(identity):
     """
     try:
         if not identity:
-            return 10504, "illegal identity"
+            return 10514, "illegal identity"
         collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
-            return 10501, "get collection account failed"
+            return 10511, "get collection account failed"
         account = collection.find_one({"_id": ObjectId(identity), "deleted": 0})
         if not account:
             g_log.debug("account %s not exist", identity)
-            return 10502, "account not exist"
-        numbers = account["phone_numbers"]
+            return 10512, "account not exist"
+        numbers = account["numbers"]
         return 10500, numbers
     except Exception as e:
         g_log.error("%s", e)
-        return 10503, "exception"
+        return 10513, "exception"
 
 
 def numbers_to_identity(numbers):
@@ -440,16 +451,16 @@ def numbers_to_identity(numbers):
         collection = get_mongo_collection("account")
         if not collection:
             g_log.error("get collection account failed")
-            return 10504, "get collection account failed"
-        account = collection.find_one({"phone_numbers": numbers, "deleted": 0})
+            return 10514, "get collection account failed"
+        account = collection.find_one({"numbers": numbers, "deleted": 0})
         if not account:
             g_log.debug("account %s not exist", numbers)
-            return 10505, "account not exist"
+            return 10515, "account not exist"
         identity = str(account["identity"])
         return 10500, identity
     except Exception as e:
         g_log.error("%s", e)
-        return 10506, "exception"
+        return 10516, "exception"
 
 
 if "__main__" == __name__:

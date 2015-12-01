@@ -11,7 +11,7 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 from mongo_connection import get_mongo_collection
-from account_valid import account_is_valid_merchant, phone_number_is_valid, yes_no_2_char, char_2_yes_no
+from account_valid import account_is_valid_merchant, numbers_is_valid, yes_no_2_char, char_2_yes_no
 
 
 class Merchant():
@@ -534,7 +534,7 @@ def merchant_create(**kwargs):
             introduce = introduce[0:512]
             
         contact_numbers = kwargs.get("contact_numbers")
-        if not phone_number_is_valid(contact_numbers):
+        if not numbers_is_valid(contact_numbers):
             contact_numbers = numbers
             
         # TODO... qrcode、email、logo、国家、地区、合同编号检查
@@ -577,9 +577,6 @@ def merchant_create(**kwargs):
                                "merchant_identity": merchant_identity, "deleted": 0})
         g_log.debug("insert merchant numbers many-many relation, %s:%s", merchant_identity, numbers)
         return 30100, merchant_identity
-    # except (mongo.ConnectionError, mongo.TimeoutError) as e:
-    #     g_log.error("connect to mongo failed")
-    #     return 30102, "connect to mongo failed"
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 30105, "exception"
@@ -747,13 +744,13 @@ def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
         if not collection:
             g_log.error("get collection number merchant failed")
             return 30402, "get collection number merchant failed"
-        merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
-                                       {"merchant_founder": 1})
-        if not merchant:
-            g_log.warn("merchant %s not exist", merchant_identity)
-            return 30403, "merchant not exist"
-        merchant_founder = merchant["merchant_founder"]
-        g_log.debug("merchant founder %s", merchant_founder)
+        # merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
+        #                                {"merchant_founder": 1})
+        # if not merchant:
+        #     g_log.warn("merchant %s not exist", merchant_identity)
+        #     return 30403, "merchant not exist"
+        # merchant_founder = merchant["merchant_founder"]
+        # g_log.debug("merchant founder %s", merchant_founder)
 
         value = {}
         # 名称不能超过64字节，超过要截取前64字节
@@ -829,14 +826,11 @@ def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
                 return 30405, "update name of verified merchant is forbidden"
         else:
             merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity), "deleted": 0},
-                                                      {"$set", value})
-        if not merchant or merchant.modified_count != 1:
+                                                      {"$set": value})
+        if not merchant:
             g_log.warning("match count:%s, modified count:%s", merchant.match_count, merchant.modified_count)
             return 30406, "update failed"
         return 30400, "yes"
-    # except (redis.ConnectionError, redis.TimeoutError) as e:
-    #     g_log.error("connect to redis failed")
-    #     return 20405, "connect to redis failed"
     except Exception as e:
         g_log.error("%s", e)
         return 30407, "exception"

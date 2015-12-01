@@ -8,6 +8,7 @@ import "merchant.proto";
 import "credit.proto";
 import "business.proto";
 import "flow.proto";
+import "qiniu_token.proto";
 
 message Request {
     RequestHead head = 1;
@@ -63,6 +64,11 @@ message Request {
 
     // 商家积分，[501, 600]
     MerchantCreditFlowRetrieveRequest merchant_credit_flow_retrieve_request = 501;
+
+    // 七牛云存储token，[601, 700]
+    UploadTokenRequest upload_token_request = 601;
+    DownloadTokenRequest download_token_request = 602;
+    AccessTokenRequest access_token_request = 603;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -120,6 +126,11 @@ message Response {
 
     // 商家积分，[501, 600]
     MerchantCreditFlowRetrieveResponse merchant_credit_flow_retrieve_response = 501;
+
+    // 七牛云存储token，[601, 700]
+    UploadTokenResponse upload_token_response = 601;
+    DownloadTokenResponse download_token_response = 602;
+    AccessTokenResponse access_token_response = 603;
 
     // 旁路
     VipResponse vip = 10000;

@@ -13,9 +13,9 @@ req = common_pb2.Request()
 # print(dir(register_req))
 req.head.cmd = 1
 req.head.seq = 2
-req.head.phone_number = "18688982240"
+req.head.numbers = "18688982240"
 
-req.register.phone_number = "18688982240"
+req.register.numbers = "18688982240"
 req.register.password = "123456"
 req.register.password_md5 = "asdasfkjakwjef"
 req_serial = req.SerializeToString()

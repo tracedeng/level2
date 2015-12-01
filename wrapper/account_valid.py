@@ -21,7 +21,7 @@ def _account_is_valid(account, mode):
     else:
         return 0
 
-    return phone_number_is_valid(str(account))
+    return numbers_is_valid(str(account))
 
 
 def account_is_valid_consumer(account):
@@ -51,13 +51,13 @@ def account_is_platform(account):
     return 1
 
 
-def phone_number_is_valid(phone_number):
+def numbers_is_valid(numbers):
     """
     检查是否有效手机号
-    :param phone_number: 手机号 
+    :param numbers: 手机号
     :return: 0/无效，1/有效
     """
-    if len(phone_number) != 11:
+    if len(numbers) != 11:
         return 0
     return 1
 
@@ -74,20 +74,20 @@ def account_is_valid(account):
         return account_is_valid_merchant(account)
 
 
-def phone_number_to_account(phone_number, mode):
+def numbers_to_account(numbers, mode):
     """
     电话号码按照类型转换成账号
-    :param phone_number: 手机号
+    :param numbers: 手机号
     :param mode: 账号类型
     :return: 有效账号/成功，None/失败
     """
-    if 1 != phone_number_is_valid(phone_number):
+    if 1 != numbers_is_valid(numbers):
         return None
 
     if mode == AccountMode.MERCHANT:
-        account = int(phone_number) + 200000000000
+        account = int(numbers) + 200000000000
     elif mode == AccountMode.CONSUMER:
-        account = int(phone_number) + 100000000000
+        account = int(numbers) + 100000000000
     else:
         return None
 

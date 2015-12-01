@@ -503,12 +503,13 @@ def consumer_update_with_numbers(numbers, **kwargs):
         if qrcode:
             value["qrcode"] = qrcode
 
+        g_log.debug("update consumer material: %s", value)
         # 存入数据库
         collection = get_mongo_collection("consumer")
         if not collection:
             g_log.error("get collection consumer failed")
             return 20412, "get collection consumer failed"
-        consumer = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, value)
+        consumer = collection.find_one_and_update({"numbers": numbers, "deleted": 0}, {"$set": value})
         if not consumer:
             g_log.error("consumer %s exist", numbers)
             return 20413, "consumer not exist"

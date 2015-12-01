@@ -17,6 +17,7 @@ import merchant
 import credit
 import business
 import flow
+import qiniu_token
 
 __all__ = ['Master']
 
@@ -74,6 +75,8 @@ class Master():
                 response = business.enter(request)
             elif head.cmd < 600:
                 response = flow.enter(request)
+            elif head.cmd < 700:
+                response = qiniu_token.enter(request)
             else:
                 # 非法请求，无效命令，不回包
                 # return 0

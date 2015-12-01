@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-// kind可不填，平台根据phone_number区分账号类型
+// kind可不填，平台根据numbers区分账号类型
 
 // 登录验证
 message LoginRequest {
-    string phone_number = 1;
+    string numbers = 1;
     string password_md5 = 2;
     string kind = 3;    // consumer-客户, merchant-商家
 };
@@ -17,7 +17,7 @@ message LoginResponse {
 
 // 注册
 message RegisterRequest {
-    string phone_number = 1;
+    string numbers = 1;
     string password = 2;
     string password_md5 = 3;
     string kind = 4;    // consumer-客户, merchant-商家
@@ -29,7 +29,7 @@ message RegisterResponse {
 
 // 重置密码
 message ChangePasswordRequest {
-    string phone_number = 1;
+    string numbers = 1;
     string password = 2;
     string password_md5 = 3;
     string kind = 4;    // consumer-客户, merchant-商家
@@ -43,7 +43,7 @@ message ChangePasswordResponse {
 //////////////////////////短信验证码在level1处理//////////////////
 // 获取短信验证码
 message GetSMSCodeRequest {
-    string phone_number = 1;
+    string numbers = 1;
     string kind = 2;        // consumer-客户, merchant-商家
 };
 
@@ -54,7 +54,7 @@ message GetSMSCodeResponse {
 
 // 验证短信验证码
 message VerifySMSCodeRequest {
-    string phone_number = 1;
+    string numbers = 1;
     string kind = 2;        // consumer-客户, merchant-商家
     string sms_code = 3;    // 短信验证码
 }

@@ -18,7 +18,7 @@ def register_request_test(numbers='18688982240'):
     req.head.seq = 2
     req.head.numbers = numbers
     material = req.register_request
-    material.phone_number = "18688982240"
+    material.numbers = "18688982240"
     material.password = "123456"
     material.password_md5 = "c56d0e9a7ccec67b4ea131655038d604"
 
@@ -31,7 +31,7 @@ def login_request_test(numbers='18688982240'):
     req.head.seq = 2
     req.head.numbers = numbers
     material = req.login_request
-    material.phone_number = "18688982240"
+    material.numbers = "18688982240"
     material.password_md5 = "7a9e4b5025a8adc7d3208fd66806d685"
 
     pack_send_receive(req)
@@ -43,7 +43,7 @@ def change_password_request_test(numbers='18688982240'):
     req.head.seq = 2
     req.head.numbers = numbers
     material = req.change_password_request
-    material.phone_number = "18688982240"
+    material.numbers = "18688982240"
     material.password = "654321"
     material.password_md5 = "7a9e4b5025a8adc7d3208fd66806d685"
 
