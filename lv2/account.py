@@ -257,7 +257,7 @@ def check_md5(plain, salt, cipher, times):
     检查
     cipher = md5(plain) * times － 1
     cipher = md5(cipher + salt)
-    cipher = base64_encode(a2b(cipher))
+    cipher = base64_encode(a2b_hex(cipher))
     :param plain: 明文
     :param cipher: 密文
     :param times: 几次md5
@@ -275,7 +275,9 @@ def check_md5(plain, salt, cipher, times):
         plain = m.hexdigest()
 
         # base64压缩
-        plain = binascii.a2b_base64(plain)
+        # TODO... 等前端搞定时使用
+        # plain = binascii.a2b_hex(plain)
+        plain = base64.b64encode(plain)
 
         if plain == cipher:
             return 0
@@ -285,6 +287,33 @@ def check_md5(plain, salt, cipher, times):
         g_log.error("<%s> %s", e.__class__, e)
         return 1
 
+
+def generate_md5(plain, salt, times):
+    try:
+        for i in xrange(0, times - 1):
+            m = hashlib.md5()
+            m.update(plain)
+            plain = m.hexdigest()
+            # g_log.debug(plain)
+
+        # 加盐
+        m = hashlib.md5()
+        # g_log.debug(plain + salt)
+        m.update(plain + salt)
+        plain = m.hexdigest()
+
+        # base64压缩
+        # g_log.debug(plain)
+        cipher = binascii.b2a_base64(plain)
+        # g_log.debug(cipher)
+        # TODO... 等前端搞定时使用
+        # plain = binascii.a2b_hex(plain)
+        # cipher = binascii.b2a_base64(plain)
+
+        return cipher
+    except Exception as e:
+        g_log.error("<%s> %s", e.__class__, e)
+        return ""
 
 def register_request(**kwargs):
     """
@@ -304,7 +333,7 @@ def register_request(**kwargs):
         password_md5 = kwargs.get("password_md5", "")
 
         # password_md5 = md5(md5(md5(password)))
-        if 1 == check_md5(password, password_md5, 3):
+        if 1 == check_md5(password, numbers, password_md5, 3):
             g_log.warning("password_md5 != md5(md5(md5(password)))")
             return 10212, "invalid password"
 
@@ -326,6 +355,7 @@ def register_request(**kwargs):
             return 10215, "register account failed"
         g_log.debug("register succeed")
 
+        # TODO... 增加客户或商家资料信息
         return 10200, "yes"
     except Exception as e:
         g_log.error("%s", e)
@@ -372,7 +402,7 @@ def change_password_request(**kwargs):
         return 10316, "exception"
 
 
-def verify_session_key(session_key, account):
+def verify_session_key(account, session_key):
     """
     验证session key
     :param session_key: session key
@@ -464,5 +494,6 @@ def numbers_to_identity(numbers):
 
 
 if "__main__" == __name__:
-    result1 = verify_session_key("7KiWrPOQgmvMpjsIVIVmr0ulNYFN4vSfWCKjGg==", "18688982240")
-    g_log.debug(result1)
+    # result1 = verify_session_key("18688982240", "7KiWrPOQgmvMpjsIVIVmr0ulNYFN4vSfWCKjGg==")
+    # g_log.debug(result1)
+    g_log.debug("%s", generate_md5("123456", "118688982241", 3))

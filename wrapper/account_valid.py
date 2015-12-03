@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
+import re
 
 def _account_is_valid(account, mode):
     """
@@ -125,3 +126,15 @@ def yes_no_2_char(yes_no):
 def char_2_yes_no(yes_no):
     char2yesno = {"y": "yes", "n": "no"}
     return char2yesno.get(yes_no.lower(), 'no')
+
+
+def email_is_valid(email):
+    """
+    email是否有效
+    :param email: 账号
+    :return: 0/无效，1/有效
+    """
+    if len(email) > 7:
+        if re.match("\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*", email):
+            return 1
+    return 0

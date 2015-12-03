@@ -144,7 +144,7 @@ message RequestHead {
 	string to_numbers = 4;      //
 	string session_key = 5;
 
-	string coroutine_uuid = 6;  // 协程ID，透传，旁路使用
+	string coroutine_uuid = 10;  // 协程ID，透传，旁路使用
 }
 
 message ResponseHead {
@@ -154,5 +154,5 @@ message ResponseHead {
 	int32 code = 3;
 	string message = 4;
 
-	string coroutine_uuid = 5;  // 协程ID，透传，旁路使用
+	string coroutine_uuid = 10;  // 协程ID，透传，旁路使用
 }

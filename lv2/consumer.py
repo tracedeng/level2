@@ -2,13 +2,14 @@
 __author__ = 'tracedeng'
 
 from datetime import datetime
+from pymongo.collection import ReturnDocument
 from mongo_connection import get_mongo_collection
 import common_pb2
 import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import account_is_valid_consumer, sexy_number_2_string, sexy_string_2_number
-from account import identity_to_numbers
+from account_valid import account_is_valid_consumer, sexy_number_2_string, sexy_string_2_number, email_is_valid
+from account import identity_to_numbers, verify_session_key
 
 
 class Consumer():
@@ -22,6 +23,8 @@ class Consumer():
         self.cmd = self.head.cmd
         self.seq = self.head.seq
         self.numbers = self.head.numbers
+        self.session_key = self.head.session_key
+
         self.code = 1   # 模块号(2位) + 功能号(2位) + 错误号(2位)
         self.message = ""
 
@@ -30,8 +33,13 @@ class Consumer():
         处理具体业务
         :return: 0/不回包给前端，pb/正确返回，timeout/超时
         """
-        # TODO... 验证登录态
         try:
+            # 验证登录态，某些命令可能不需要登录态，此处做判断
+            code, message = verify_session_key(self.numbers, self.session_key)
+            if 10400 != code:
+                g_log.debug("verify session key failed, %s, %s", code, message)
+                return package.error_response(self.cmd, self.seq, 20001, "invalid session key")
+
             command_handle = {101: self.consumer_create, 102: self.consumer_retrieve, 103: self.consumer_batch_retrieve,
                               104: self.consumer_update, 105: self.consumer_delete}
             result = command_handle.get(self.cmd, self.dummy_command)()
@@ -52,10 +60,6 @@ class Consumer():
     def consumer_create(self):
         """
         创建consumer资料
-        1 请求字段有效性检查
-        2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
@@ -106,10 +110,6 @@ class Consumer():
     def consumer_retrieve(self):
         """
         获取consumer资料
-        1 请求字段有效性检查
-        2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
@@ -144,17 +144,7 @@ class Consumer():
 
                 material = response.consumer_retrieve_response.material
                 material.numbers = numbers
-                value = self.message
-                material.sexy = sexy_number_2_string(value["sexy"])  # 从redis取出来的值都是字符串
-                material.age = int(value["age"])
-                material.introduce = value["introduce"]
-                material.email = value["email"]
-                material.nickname = value["name"]
-                material.location = value["location"]
-                material.country = value["country"]
-                material.qrcode = value["qrcode"]
-                material.avatar = value["avatar"]
-                material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
+                consumer_material_copy_from_document(material, self.message)
                 return response
             else:
                 return 1
@@ -165,13 +155,23 @@ class Consumer():
     def consumer_batch_retrieve(self):
         pass
 
+    def _has_field(self, message, field):
+        """
+        message是否有field，解决"Protocol message has no non-repeated submessage field" 问题
+        :param message: pb中定义的message
+        :param field: message中的某个field
+        :return: 0/没有，1/有
+        """
+        fields = []
+        for descriptor in message.ListFields():
+            fields.append(descriptor[0].name)
+        if field in fields:
+            return 1
+        return 0
+
     def consumer_update(self):
         """
         修改consumer资料
-        1 请求字段有效性检查
-        2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
@@ -201,40 +201,68 @@ class Consumer():
             value = {}
             # TODO... HasField 问题
             # g_log.debug(dir(material))
-            g_log.debug(body.HasField('material'))
+            # g_log.debug(body.HasField('material'))
             # g_log.debug(body.HasField('numbers'))
             # g_log.debug(material.HasField(material.nickname))
-            g_log.debug(material.ListFields()[0][0].name)
-            g_log.debug(material.ListFields()[1][0].name)
-            g_log.debug("%s", material.ListFields())
-            g_log.debug("%s", body.ListFields())
-            if material.HasField('nickname'):
+            # g_log.debug(material.ListFields()[0][0].name)
+            # g_log.debug(material.ListFields()[1][0].name)
+            # g_log.debug("%s", material.ListFields())
+            # g_log.debug("%s", body.ListFields())
+            # if material.HasField('nickname'):
+            #     value["nickname"] = material.nickname
+            #
+            # if material.HasField("sexy"):
+            #     value["sexy"] = material.sexy
+            #
+            # if material.HasField("age"):
+            #     value["age"] = material.age
+            #
+            # if material.HasField("email"):
+            #     value["email"] = material.email
+            #
+            # if material.HasField("introduce"):
+            #     value["introduce"] = material.introduce
+            #
+            # if material.HasField("country"):
+            #     value["country"] = material.country
+            #
+            # if material.HasField("location"):
+            #     value["location"] = material.location
+            #
+            # if material.HasField("avatar"):
+            #     value["avatar"] = material.avatar
+            #
+            # if material.HasField("qrcode"):
+            #     value["qrcode"] = material.qrcode
+
+            if self._has_field(material, 'nickname'):
                 value["nickname"] = material.nickname
 
-            if material.HasField("sexy"):
+            if self._has_field(material, "sexy"):
                 value["sexy"] = material.sexy
 
-            if material.HasField("age"):
+            if self._has_field(material, "age"):
                 value["age"] = material.age
 
-            if material.HasField("email"):
+            if self._has_field(material, "email"):
                 value["email"] = material.email
 
-            if material.HasField("introduce"):
+            if self._has_field(material, "introduce"):
                 value["introduce"] = material.introduce
 
-            if material.HasField("country"):
+            if self._has_field(material, "country"):
                 value["country"] = material.country
 
-            if material.HasField("location"):
+            if self._has_field(material, "location"):
                 value["location"] = material.location
 
-            if material.HasField("avatar"):
+            if self._has_field(material, "avatar"):
                 value["avatar"] = material.avatar
 
-            if material.HasField("qrcode"):
+            if self._has_field(material, "qrcode"):
                 value["qrcode"] = material.qrcode
-            g_log.debug("create consumer: %s", value)
+
+            g_log.debug("update consumer: %s", value)
             self.code, self.message = consumer_update_with_numbers(numbers, **value)
 
             if 20400 == self.code:
@@ -254,10 +282,6 @@ class Consumer():
     def consumer_delete(self):
         """
         删除consumer资料
-        1 请求字段有效性检查
-        2 验证登录态
-        3 检查是否已创建的consumer
-        4 consumer写入数据库
         :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
         """
         try:
@@ -269,6 +293,7 @@ class Consumer():
                 # 根据包体中的identity获取numbers
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
+                    g_log.debug("missing argument numbers")
                     self.code = 20501
                     self.message = "missing argument"
                     return 1
@@ -352,9 +377,12 @@ def consumer_create(**kwargs):
             g_log.warning("too long introduce %s", introduce)
             introduce = introduce[0:512]
 
-        # TODO... 头像、email、logo、国家、地区检查
         avatar = kwargs.get("avatar", "")
         email = kwargs.get("email", "")
+        if 0 == email_is_valid(email):
+            email = ""
+
+        # TODO... logo、国家、地区检查
         country = kwargs.get("country", "")
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
@@ -368,10 +396,11 @@ def consumer_create(**kwargs):
         if not collection:
             g_log.error("get collection consumer failed")
             return 20112, "get collection consumer failed"
-        consumer = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True)
-        if consumer and not consumer["deleted"]:
-            g_log.error("consumer %s exist", numbers)
-            return 20113, "duplicate consumer"
+        consumer = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True,
+                                                   return_document=ReturnDocument.AFTER)
+        if not consumer:
+            g_log.error("create consumer %s failed", numbers)
+            return 20113, "create consumer failed"
 
         return 20100, "yes"
     except Exception as e:
@@ -390,7 +419,7 @@ def consumer_retrieve_with_numbers(numbers):
         # 检查合法账号
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 20211, "invalid phone number"
+            return 20211, "invalid account"
 
         collection = get_mongo_collection("consumer")
         if not collection:
@@ -462,9 +491,10 @@ def consumer_update_with_numbers(numbers, **kwargs):
         value = {}
         # 昵称不能超过16字节，超过要截取前16字节
         nickname = kwargs.get("nickname")
-        if nickname and len(nickname) > 32:
-            g_log.warning("too long nickname %s", nickname)
-            nickname = nickname[0:16]
+        if nickname:
+            if len(nickname) > 32:
+                g_log.warning("too long nickname %s", nickname)
+                nickname = nickname[0:16]
             value["nickname"] = nickname
 
         # 不合理的性别当作未知处理
@@ -481,17 +511,18 @@ def consumer_update_with_numbers(numbers, **kwargs):
 
         # 个人介绍不能超过512字节，超过要截取前512字节
         introduce = kwargs.get("introduce")
-        if introduce and len(introduce) > 512:
-            g_log.warning("too long introduce %s", introduce)
-            introduce = introduce[0:512]
+        if introduce:
+            if len(introduce) > 512:
+                g_log.warning("too long introduce %s", introduce)
+                introduce = introduce[0:512]
             value["introduce"] = introduce
 
-        # TODO... 头像、email、logo、国家、地区检查
+        # TODO... 头像、logo、国家、地区检查
         avatar = kwargs.get("avatar")
         if avatar:
             value["avatar"] = avatar
         email = kwargs.get("email")
-        if email:
+        if email and email_is_valid(email):
             value["email"] = email
         country = kwargs.get("country")
         if country:

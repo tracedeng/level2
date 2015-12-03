@@ -10,7 +10,6 @@ message ConsumerCreateRequest {
 };
 
 message ConsumerCreateResponse {
-
 };
 
 // 读取用户
