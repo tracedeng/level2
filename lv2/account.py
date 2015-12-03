@@ -270,14 +270,19 @@ def check_md5(plain, salt, cipher, times):
             plain = m.hexdigest()
 
         # 加盐
+        g_log.debug(salt[1:])
+        g_log.debug(plain)
         m = hashlib.md5()
-        m.update(plain + salt)
+        m.update(plain + salt[1:])
         plain = m.hexdigest()
+        g_log.debug(plain)
 
         # base64压缩
         # TODO... 等前端搞定时使用
-        # plain = binascii.a2b_hex(plain)
-        plain = base64.b64encode(plain)
+        plain = binascii.b2a_base64(plain)
+        plain = plain.strip()
+        g_log.debug(plain)
+        g_log.debug(cipher)
 
         if plain == cipher:
             return 0
@@ -379,7 +384,7 @@ def change_password_request(**kwargs):
         password_md5 = kwargs.get("password_md5", "")
 
         # password_md5 = md5(md5(md5(password)))
-        if 1 == check_md5(password, password_md5, 3):
+        if 1 == check_md5(password, numbers, password_md5, 3):
             g_log.warning("password_md5 != md5(md5(md5(password)))")
             return 10312, "invalid password"
 
