@@ -330,11 +330,11 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         code, message = merchant_update_with_numbers(numbers, merchant_identity, logo=key)
         if code != 30400:
             g_log.warning("update merchant logo %s failed", key)
-            return 70114, "update merchant logo failed"
+            return 70115, "update merchant logo failed"
     elif kind == "m_activity_poster":
         # 平台修改活动图片资料
         if not account_is_valid_merchant(numbers):
-            return 70115, "invalid merchant account"
+            return 70116, "invalid merchant account"
         pass
     else:
         g_log.debug("unsupported resource kind %s", kind)

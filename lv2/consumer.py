@@ -235,9 +235,10 @@ class Consumer():
             # if material.HasField("qrcode"):
             #     value["qrcode"] = material.qrcode
 
+            g_log.debug("i am here")
             if self._has_field(material, 'nickname'):
                 value["nickname"] = material.nickname
-
+            g_log.debug("i am here2")
             if self._has_field(material, "sexy"):
                 value["sexy"] = material.sexy
 

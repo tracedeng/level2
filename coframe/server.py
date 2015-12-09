@@ -158,6 +158,7 @@ class Server():
             # g_log.debug("%s", dir(master_module))
             self.master_class = getattr(master_module, self.master[3])
         except Exception as e:
+        # except ValueError as e:
             g_log.critical("%s", e)
             sys.exit(-1)
         g_log.debug("import master handler done...")

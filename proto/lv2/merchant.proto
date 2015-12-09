@@ -82,7 +82,6 @@ message MerchantCreateManagerResponse {
 
 }
 
-
 // 创建人将商家委托给其它管理员
 message MerchantDelegateManagerRequest {
     string numbers = 1;             //创建者
@@ -96,15 +95,17 @@ message MerchantDelegateManagerResponse {
 
 }
 
-// 删除商家
+// 删除商家管理员
 message MerchantDeleteManagerRequest {
     string numbers = 1;
     string identity = 2;
     string merchant_identity = 3;   //要删除的商家资料ID，如果有值则删除指定ID的商家关联，否则该管理员全部商家关联
+    repeated string manager_numbers = 4;     // 要删除的管理员
 }
 
 message MerchantDeleteManagerResponse {
-
+    repeated string success_managers = 1;    // 删除成功的管理员
+    repeated string failed_managers = 2;    // 删除失败的管理员
 }
 
 // 商家资料

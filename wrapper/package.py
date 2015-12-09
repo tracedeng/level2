@@ -74,7 +74,7 @@ def error_response(cmd, seq, code, message):
     response.head.cmd = cmd
     response.head.seq = seq
     response.head.code = code
-    response.head.message = message
+    response.head.message = str(message)
     return response
 
 

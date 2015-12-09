@@ -14,6 +14,7 @@ g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动�
 import package
 from account_valid import *
 from xxtea import decrypt, encrypt
+# from consumer import consumer_create
 
 
 class Account():
@@ -268,10 +269,10 @@ def check_md5(plain, salt, cipher, times):
             m = hashlib.md5()
             m.update(plain)
             plain = m.hexdigest()
+            g_log.debug(plain)
 
         # 加盐
-        g_log.debug(salt[1:])
-        g_log.debug(plain)
+        g_log.debug(plain + salt[1:])
         m = hashlib.md5()
         m.update(plain + salt[1:])
         plain = m.hexdigest()
@@ -320,6 +321,7 @@ def generate_md5(plain, salt, times):
         g_log.error("<%s> %s", e.__class__, e)
         return ""
 
+
 def register_request(**kwargs):
     """
     账号注册
@@ -360,7 +362,9 @@ def register_request(**kwargs):
             return 10215, "register account failed"
         g_log.debug("register succeed")
 
-        # TODO... 增加客户或商家资料信息
+        # 增加客户资料信息
+        # consumer_create(numbers=numbers)
+
         return 10200, "yes"
     except Exception as e:
         g_log.error("%s", e)
