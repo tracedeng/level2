@@ -3,7 +3,7 @@ __author__ = 'tracedeng'
 
 
 import common_pb2
-import calculus.wrapper.log as log
+import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import coroutine_manage
 

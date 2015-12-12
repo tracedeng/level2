@@ -9,6 +9,7 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 from account_valid import account_is_valid_consumer, account_is_valid_merchant
+from account import identity_to_numbers, verify_session_key
 from mongo_connection import get_mongo_collection
 from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_merchant_manager, \
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
@@ -27,6 +28,8 @@ class Credit():
         self.cmd = self.head.cmd
         self.seq = self.head.seq
         self.numbers = self.head.numbers
+        self.session_key = self.head.session_key
+
         self.code = 1    # 模块号(2位) + 功能号(2位) + 错误号(2位)
         self.message = ""
 
@@ -35,8 +38,13 @@ class Credit():
         处理具体业务
         :return: 0/不回包给前端，pb/正确返回，timeout/超时
         """
-        # TODO... 验证登录态
         try:
+            # 验证登录态，某些命令可能不需要登录态，此处做判断
+            code, message = verify_session_key(self.numbers, self.session_key)
+            if 10400 != code:
+                g_log.debug("verify session key failed, %s, %s", code, message)
+                return package.error_response(self.cmd, self.seq, 40001, "invalid session key")
+
             command_handle = {301: self.consumption_create, 302: self.merchant_credit_retrieve,
                               303: self.confirm_consumption, 304: self.refuse_consumption,
                               305: self.credit_free, 306: self.consumer_credit_retrieve,
@@ -64,17 +72,23 @@ class Credit():
         try:
             body = self.request.consumption_create_request
             numbers = body.numbers
+            identity = body.identity
             merchant_identity = body.merchant_identity
             sums = body.sums
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    g_log.debug("missing argument numbers")
+                    self.code = 40101
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的用户和要创建的消费记录用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to create consumption %s", self.numbers, numbers)
-                self.code = 40108
+                self.code = 40102
                 self.message = "no privilege to create consumption"
                 return 1
 
@@ -105,23 +119,27 @@ class Credit():
         try:
             body = self.request.merchant_credit_retrieve_request
             numbers = body.numbers
+            identity = body.identity
             merchant_identity = body.merchant_identity
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    g_log.debug("missing argument numbers")
+                    self.code = 40201
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的用户和要创建的消费记录用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to retrieve credit", self.numbers)
-                self.code = 40212
+                self.code = 40202
                 self.message = "no privilege to retrieve credit"
                 return 1
 
             if not merchant_identity:
                 g_log.debug("retrieve manager %s all merchant credits", numbers)
                 self.code, self.message = merchant_credit_retrieve_with_numbers(numbers)
-                pass
             else:
                 g_log.debug("retrieve manage %s merchant %s credit", numbers, merchant_identity)
                 self.code, self.message = merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity)
@@ -153,7 +171,7 @@ class Credit():
                             code, consumer = consumer_retrieve_with_numbers(value_credit["numbers"])
                             if code != 20200:
                                 g_log.error("retrieve consumer %s failed", value_credit["numbers"])
-                                return 40213, "retrieve consumer failed"
+                                return 40203, "retrieve consumer failed"
                             consumer_material_copy_from_document(aggressive_credit_one.consumer, consumer)
                             last_customer = value_credit["numbers"]
 
@@ -601,32 +619,32 @@ def consumption_create(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 40101, "invalid phone number"
+            return 40111, "invalid phone number"
 
         merchant_identity = kwargs.get("merchant_identity")
         if not merchant_identity:
             g_log.error("lost merchant")
-            return 40102, "illegal argument"
+            return 40112, "illegal argument"
 
         sums = kwargs.get("sums")
         if not sums or sums < 0:
             g_log.error("sums %s illegal", sums)
-            return 40103, "illegal argument"
+            return 40113, "illegal argument"
 
         # 检查商家是否存在
         if not merchant_exist(merchant_identity):
             g_log.error("merchant %s not exit", merchant_identity)
-            return 40105, "illegal argument"
+            return 40115, "illegal argument"
 
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime.now(),
-                 "sums": sums, "exchanged": 0, "credit": 0, "manager_numbers": "", "gift": 0,
-                 "exchange_time": datetime(1970, 1, 1), "credit_rest": 0}
+                 "sums": sums, "exchanged": 0, "credit": 0, "manager_numbers": "", "type": "c",
+                 "exchange_time": datetime(1970, 1, 1), "expire_time": datetime(1970, 1, 1), "credit_rest": 0}
 
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40106, "get collection credit failed"
+            return 40116, "get collection credit failed"
         credit_identity = collection.insert_one(value).inserted_id
         credit_identity = str(credit_identity)
         g_log.debug("insert consumption %s", value)
@@ -634,7 +652,7 @@ def consumption_create(**kwargs):
         return 40100, credit_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40107, "exception"
+        return 40117, "exception"
 
 
 def merchant_credit_retrieve_with_numbers(numbers):
@@ -646,21 +664,19 @@ def merchant_credit_retrieve_with_numbers(numbers):
     try:
         if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
-            return 40201, "invalid merchant manager"
+            return 40211, "invalid merchant manager"
 
         code, merchants = merchant_retrieve_with_numbers(numbers)
         if code != 30200:
             g_log.debug("retrieve merchant material of manager %s failed", numbers)
-            return 40202, "retrieve merchant material failed"
+            return 40212, "retrieve merchant material failed"
 
         merchant_credit = []
         for merchant in merchants:
-            # TODO... 广播查询所有积分
-            # TODO...待数据层独立时处理，目前只考虑单机，逻辑层数据层合并
             collection = get_mongo_collection("credit")
             if not collection:
                 g_log.error("get collection credit failed")
-                return 40203, "get collection credit failed"
+                return 40213, "get collection credit failed"
             credit = collection.find({"merchant_identity": merchant["merchant_identity"]},
                                      {"merchant_identity": False}).sort("numbers")
             g_log.debug("merchant has %s credit", credit.count())
@@ -668,7 +684,7 @@ def merchant_credit_retrieve_with_numbers(numbers):
         return 40200, merchant_credit
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40204, "exception"
+        return 40214, "exception"
 
 
 def merchant_credit_retrieve_with_identity(identity):
@@ -679,11 +695,13 @@ def merchant_credit_retrieve_with_identity(identity):
     """
     try:
         # 根据商家id查找商家电话号码
-        numbers = ""
+        code, numbers = identity_to_numbers(identity)
+        if code != 10500:
+            return 40215, "illegal identity"
         return merchant_credit_retrieve_with_numbers(numbers)
     except Exception as e:
         g_log.error("%s", e)
-        return 40205, "exception"
+        return 40216, "exception"
 
 
 def merchant_credit_retrieve(numbers=None, identity=None):
@@ -699,10 +717,10 @@ def merchant_credit_retrieve(numbers=None, identity=None):
         elif identity:
             return merchant_credit_retrieve_with_identity(identity)
         else:
-            return 40206, "bad arguments"
+            return 40217, "bad arguments"
     except Exception as e:
         g_log.error("%s", e)
-        return 40207, "exception"
+        return 40218, "exception"
 
 
 def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
@@ -715,27 +733,24 @@ def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
     try:
         if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant manager %s", numbers)
-            return 40208, "invalid merchant manager"
+            return 40219, "invalid merchant manager"
 
         code, merchant_material = merchant_retrieve_with_merchant_identity(numbers, merchant_identity)
         if code != 30200:
             g_log.debug("retrieve merchant %s material failed", merchant_identity)
-            return 40209, "retrieve merchant material failed"
+            return 40220, "retrieve merchant material failed"
 
-        # TODO... 广播查询所有积分
-        # TODO...待数据层独立时处理，目前只考虑单机，逻辑层数据层合并
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40210, "get collection credit failed"
+            return 40221, "get collection credit failed"
         credit = collection.find({"merchant_identity": merchant_identity}, {"merchant_identity": False}).sort("numbers")
         g_log.debug("merchant has %s credit", credit.count())
-        # for credit in credit:
-        #     g_log.debug(credit)
+
         return 40200, [(merchant_material[0], credit)]
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40211, "exception"
+        return 40222, "exception"
 
 
 def confirm_consumption(**kwargs):
