@@ -69,10 +69,11 @@ def account_is_valid(account):
     :param account: 账号 
     :return: 0/无效，1/有效
     """
-    if account[0] == "1":
-        return account_is_valid_consumer(account)
-    elif account[0] == "2":
-        return account_is_valid_merchant(account)
+    return numbers_is_valid(account)
+    # if account[0] == "1":
+    #     return account_is_valid_consumer(account)
+    # elif account[0] == "2":
+    #     return account_is_valid_merchant(account)
 
 
 def numbers_to_account(numbers, mode):
