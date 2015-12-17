@@ -32,9 +32,9 @@ def check_md5(plain, salt, cipher, times):
             g_log.debug(plain)
 
         # 加盐
-        g_log.debug(plain + salt[1:])
+        g_log.debug(plain + salt)
         m = hashlib.md5()
-        m.update(plain + salt[1:])
+        m.update(plain + salt)
         plain = m.hexdigest()
         g_log.debug(plain)
 
