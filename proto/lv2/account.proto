@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-// kind可不填，平台根据numbers区分账号类型
+import "consumer.proto";
+
+// kind可不填
 
 // 登录验证
 message LoginRequest {
@@ -11,7 +13,9 @@ message LoginRequest {
 
 message LoginResponse {
     string session_key = 1;
+
     // TODO... 是否返回账号资料
+    ConsumerMaterial material = 2;
 };
 
 

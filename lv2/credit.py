@@ -9,7 +9,7 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 from account_valid import account_is_valid_consumer, account_is_valid_merchant
-from account import identity_to_numbers, verify_session_key
+from account_auxiliary import identity_to_numbers, verify_session_key
 from mongo_connection import get_mongo_collection
 from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_merchant_manager, \
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \

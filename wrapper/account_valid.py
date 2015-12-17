@@ -3,6 +3,7 @@ __author__ = 'tracedeng'
 
 import re
 
+
 def _account_is_valid(account, mode):
     """
     商家用户phoneNumber = 20000000000 + phoneNumber
@@ -31,7 +32,8 @@ def account_is_valid_consumer(account):
     :param account: 账号
     :return: 0/无效，1/有效
     """
-    return _account_is_valid(account, AccountMode.CONSUMER)
+    return numbers_is_valid(account)
+    # return _account_is_valid(account, AccountMode.CONSUMER)
 
 
 def account_is_valid_merchant(account):
@@ -40,7 +42,8 @@ def account_is_valid_merchant(account):
     :param account: 账号
     :return: 0/无效，1/有效
     """
-    return _account_is_valid(account, AccountMode.MERCHANT)
+    return numbers_is_valid(account)
+    # return _account_is_valid(account, AccountMode.MERCHANT)
 
 
 def account_is_platform(account):

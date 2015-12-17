@@ -13,6 +13,7 @@ message UploadTokenRequest {
 
 message UploadTokenResponse {
     string upload_token = 1;   // 上传Token
+    string key = 2;     // key
 }
 
 // 下载token

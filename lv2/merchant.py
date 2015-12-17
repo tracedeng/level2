@@ -13,7 +13,7 @@ import package
 from mongo_connection import get_mongo_collection
 from account_valid import account_is_valid_merchant, numbers_is_valid, yes_no_2_char, char_2_yes_no, \
     email_is_valid, account_is_platform
-from account import verify_session_key, identity_to_numbers
+from account_auxiliary import verify_session_key, identity_to_numbers
 from google_bug import message_has_field
 
 

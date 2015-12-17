@@ -9,7 +9,7 @@ import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 from account_valid import account_is_valid_consumer, sexy_number_2_string, sexy_string_2_number, email_is_valid
-from account import identity_to_numbers, verify_session_key
+from account_auxiliary import identity_to_numbers, verify_session_key
 
 
 class Consumer():

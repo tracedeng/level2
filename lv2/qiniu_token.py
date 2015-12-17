@@ -12,7 +12,7 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 import package
 from account_valid import account_is_valid_merchant, account_is_valid_consumer
-from account import identity_to_numbers
+from account_auxiliary import identity_to_numbers
 from consumer import consumer_update_with_numbers
 from merchant import merchant_update_with_numbers
 
@@ -100,7 +100,8 @@ class QiniuToken():
                 response.head.message = "retrieve upload token done"
 
                 body = response.upload_token_response
-                body.upload_token = self.message
+                body.upload_token = self.message[0]
+                body.key = self.message[1]
                 return response
             else:
                 return 1
@@ -306,8 +307,8 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
     q = Auth(g_access_key, g_secret_key)
 
     kind_to_key = {"c_avatar": "c/avatar", "m_logo": "m/logo", "ma_poster": "ma/poster"}
-    key = "%s/%s" % (kind_to_key.get(kind, "dummy"), numbers)
-    policy = {"mimeLimit": "image/*"}
+    key = "%s/%s/%s" % (kind_to_key.get(kind, "dummy"), numbers, datetime.now().strftime('%b%d%y%H%M%S'))
+    policy = {"scope": g_bucket_name_debug + ":" + key, "mimeLimit": "image/*"}
     upload_token = q.upload_token(g_bucket_name_debug, key=key, expires=3600, policy=policy)
     g_log.debug("debug upload token, [key:%s, policy:%s, token:%s]", key, policy, upload_token)
 
@@ -317,20 +318,20 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         if not account_is_valid_consumer(numbers):
             g_log.warning("%s invalid consumer account", numbers)
             return 70111, "invalid consumer account"
-        code, message = consumer_update_with_numbers(numbers, avatar=key)
-        if code != 20400:
-            g_log.warning("update consumer %s avatar %s failed", numbers, key)
-            return 70112, "update consumer avatar failed"
+        # code, message = consumer_update_with_numbers(numbers, avatar=key)
+        # if code != 20400:
+        #     g_log.warning("update consumer %s avatar %s failed", numbers, key)
+        #     return 70112, "update consumer avatar failed"
     elif kind == "m_logo":
         # 平台修改商家logo资料
         if not account_is_valid_merchant(numbers):
             return 70113, "invalid merchant account"
         if not merchant_identity:
             return 70114, "missing merchant identity"
-        code, message = merchant_update_with_numbers(numbers, merchant_identity, logo=key)
-        if code != 30400:
-            g_log.warning("update merchant logo %s failed", key)
-            return 70115, "update merchant logo failed"
+        # code, message = merchant_update_with_numbers(numbers, merchant_identity, logo=key)
+        # if code != 30400:
+        #     g_log.warning("update merchant logo %s failed", key)
+        #     return 70115, "update merchant logo failed"
     elif kind == "m_activity_poster":
         # 平台修改活动图片资料
         if not account_is_valid_merchant(numbers):
@@ -340,4 +341,4 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         g_log.debug("unsupported resource kind %s", kind)
         return 70116, "unsupported resource kind"
 
-    return 70100, upload_token
+    return 70100, (upload_token, key)
