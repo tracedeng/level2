@@ -257,8 +257,8 @@ class Merchant():
             # logo参考7牛
             # if message_has_field("verified"):
             #     value["verified"] = material.verified
-            # if message_has_field(material, "logo"):
-            #     value["logo"] = material.logo
+            if message_has_field(material, "logo"):
+                value["logo"] = material.logo
             if message_has_field(material, "name"):
                 value["name"] = material.name
             if message_has_field(material, "country"):
