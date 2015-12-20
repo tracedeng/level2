@@ -167,20 +167,23 @@ message CreditExchangeRetrieveResponse {
 
 //（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
 message CreditMaterial {
-    uint32 gift = 1;        // 是否赠送
+    string type = 1;        // 积分类型，consumption、gift、exchange、refuse
 
     uint32 sums = 2;
     string consumption_time = 3;
 
-    uint32 exchanged = 4;   // 是否兑换成积分，yes、no、exchange、refuse
+    uint32 exchanged = 4;   // 是否兑换成积分，1-yes、0-no
     uint64 credit = 5;
     string manager_numbers = 6;
     string exchange_time = 7;
 
     uint64 credit_rest = 8; // 还剩多少积分
 
-    string identity = 9;    // 回包带上
-    string numbers = 10;    // 回包带上，给前端再次拉去用户资料的机会
+    string expire_time = 9;
+    string merchant_identity = 10;
+
+    string identity = 11;    // 回包带上
+    string numbers = 12;    // 回包带上，给前端再次拉用户资料的机会
 }
 
 // 商家积分

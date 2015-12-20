@@ -156,6 +156,7 @@ class Credit():
                 merchant_credit = response.merchant_credit_retrieve_response.merchant_credit
                 # 遍历管理员所有商家
                 for value in self.message:
+                    g_log.debug(value)
                     merchant_credit_one = merchant_credit.add()
                     # 商家资料
                     merchant_material_copy_from_document(merchant_credit_one.merchant, value[0])
@@ -388,6 +389,8 @@ class Credit():
                 return 1
         except Exception as e:
             g_log.error("%s", e)
+            from print_exception import print_exception
+            print_exception()
             return 0
 
     def consume_credit(self):
@@ -1243,7 +1246,8 @@ def credit_copy_from_document(material, value):
     :param value: 单个积分document
     :return:
     """
-    material.gift = value["gift"]
+    g_log.debug(value)
+    material.type = value["type"]
     material.sums = value["sums"]
 
     material.consumption_time = value["consumption_time"].strftime("%Y-%m-%d %H:%M:%S")
@@ -1252,6 +1256,7 @@ def credit_copy_from_document(material, value):
     material.credit = value["credit"]
     material.manager_numbers = value["manager_numbers"]
     material.exchange_time = value["exchange_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
 
     material.credit_rest = value["credit_rest"]
 

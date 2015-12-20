@@ -387,7 +387,7 @@ def consumer_create(**kwargs):
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
 
-        value = {"numbers": numbers, "name": nickname, "avatar": avatar, "email": email, "introduce": introduce,
+        value = {"numbers": numbers, "nickname": nickname, "avatar": avatar, "email": email, "introduce": introduce,
                  "sexy": sexy, "age": age, "country": country, "location": location, "qrcode": qrcode, "deleted": 0,
                  "create_time": datetime.now()}
 
@@ -660,7 +660,7 @@ def consumer_material_copy_from_document(material, value):
     material.age = int(value["age"])
     material.introduce = value["introduce"]
     material.email = value["email"]
-    material.nickname = value["name"]
+    material.nickname = value["nickname"]
     material.location = value["location"]
     material.country = value["country"]
     material.qrcode = value["qrcode"]
