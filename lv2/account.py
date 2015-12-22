@@ -11,6 +11,7 @@ g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动�
 import package
 from account_valid import *
 from consumer import consumer_create, consumer_retrieve_with_numbers, consumer_material_copy_from_document
+from merchant import merchant_retrieve_with_numbers, merchant_material_copy_from_document
 from account_auxiliary import generate_session_key, check_md5
 
 
@@ -73,10 +74,13 @@ class Account():
 
                 response.login_response.session_key = self.message[0]
                 consumer_material_copy_from_document(response.login_response.material, self.message[1])
+                merchant_material_copy_from_document(response.login_response.merchant, self.message[2])
                 return response
             else:
                 return 1
         except Exception as e:
+            from print_exception import print_exception
+            print_exception()
             g_log.error("%s", e)
             return 0
 
@@ -194,6 +198,11 @@ def login_request(**kwargs):
             g_log.error("retrieve account material failed")
             return 10119, "retrieve material failed"
 
+        code, merchant = merchant_retrieve_with_numbers(numbers)
+        if code != 30200:
+            g_log.error("retrieve merchant material failed")
+            return 10120, "retrieve material failed"
+
         value = {"numbers": numbers, "session_key": session_key, "create_time": datetime.fromtimestamp(timestamp),
                  "active_time": datetime.fromtimestamp(timestamp)}
         # session 入库
@@ -212,7 +221,7 @@ def login_request(**kwargs):
             return 10117, "login failed"
         g_log.debug("login succeed")
 
-        return 10100, (session_key, material)
+        return 10100, (session_key, material, merchant[0])
     except Exception as e:
         g_log.error("%s", e)
         return 10118, "exception"

@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "consumer.proto";
+import "merchant.proto";
 
 // kind可不填
 
@@ -16,6 +17,7 @@ message LoginResponse {
 
     // TODO... 是否返回账号资料
     ConsumerMaterial material = 2;
+    MerchantMaterial merchant = 3;
 };
 
 

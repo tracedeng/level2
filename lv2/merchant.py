@@ -755,18 +755,18 @@ def merchant_retrieve_with_merchant_identity(numbers, merchant_identity):
     """
     try:
         # 找到商家创建人numbers
-        collection = get_mongo_collection("numbers_merchant")
-        if not collection:
-            g_log.error("get collection number merchant failed")
-            return 30221, "get collection number merchant failed"
-        merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
-                                       {"merchant_founder": 1})
-        if not merchant:
-            g_log.warn("merchant %s not exist", merchant_identity)
-            return 30222, "merchant not exist"
-
-        merchant_founder = merchant["merchant_founder"]
-        g_log.debug("merchant founder %s", merchant_founder)
+        # collection = get_mongo_collection("numbers_merchant")
+        # if not collection:
+        #     g_log.error("get collection number merchant failed")
+        #     return 30221, "get collection number merchant failed"
+        # merchant = collection.find_one({"numbers": numbers, "merchant_identity": merchant_identity, "deleted": 0},
+        #                                {"merchant_founder": 1})
+        # if not merchant:
+        #     g_log.warn("merchant %s not exist", merchant_identity)
+        #     return 30222, "merchant not exist"
+        #
+        # merchant_founder = merchant["merchant_founder"]
+        # g_log.debug("merchant founder %s", merchant_founder)
         collection = get_mongo_collection("merchant")
         if not collection:
             g_log.error("get collection merchant failed")
