@@ -74,7 +74,10 @@ class Account():
 
                 response.login_response.session_key = self.message[0]
                 consumer_material_copy_from_document(response.login_response.material, self.message[1])
-                merchant_material_copy_from_document(response.login_response.merchant, self.message[2])
+                if self.message[2]:
+                    merchant_material_copy_from_document(response.login_response.merchant, self.message[2])
+                else:
+                    response.login_response.merchant.identity = ""
                 return response
             else:
                 return 1
@@ -221,7 +224,8 @@ def login_request(**kwargs):
             return 10117, "login failed"
         g_log.debug("login succeed")
 
-        return 10100, (session_key, material, merchant[0])
+        g_log.debug(merchant)
+        return 10100, (session_key, material, merchant[0] if merchant else [])
     except Exception as e:
         g_log.error("%s", e)
         return 10118, "exception"
@@ -314,7 +318,6 @@ def change_password_request(**kwargs):
     except Exception as e:
         g_log.error("%s", e)
         return 10316, "exception"
-
 
 
 # def identity_to_numbers(identity):
