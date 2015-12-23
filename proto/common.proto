@@ -39,6 +39,7 @@ message Request {
     MerchantCreateManagerRequest merchant_create_manager_request = 207;
     MerchantDelegateManagerRequest merchant_delegate_manager_request = 208;
     MerchantDeleteManagerRequest merchant_delete_manager_request = 209;
+    RetrieveMerchantRequest retrieve_merchant_request = 210;
 
     // 积分，[301, 400]
     ConsumptionCreateRequest consumption_create_request = 301;
@@ -102,6 +103,7 @@ message Response {
     MerchantUpdateVerifiedResponse merchant_update_verified_response = 207;
     MerchantDelegateManagerResponse merchant_delegate_manager_response = 208;
     MerchantDeleteManagerResponse merchant_delete_manager_response = 209;
+    RetrieveMerchantResponse retrieve_merchant_response = 210;
 
     // 积分，[301, 400]
     ConsumptionCreateResponse consumption_create_response = 301;

@@ -47,7 +47,7 @@ class Merchant():
             command_handle = {201: self.merchant_create, 202: self.merchant_retrieve, 203: self.merchant_batch_retrieve,
                               204: self.merchant_update, 205: self.merchant_update_verified, 206: self.merchant_delete,
                               207: self.merchant_create_manager, 208: self.merchant_delegate_manager,
-                              209: self.merchant_delete_manager}
+                              209: self.merchant_delete_manager, 210: self.retrieve_merchant}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -540,6 +540,53 @@ class Merchant():
                 return 1
         except Exception as e:
             g_log.error("%s", e)
+            return 0
+
+    def retrieve_merchant(self):
+        """
+        获取merchant资料
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.retrieve_merchant_request
+            numbers = body.numbers
+            identity = body.identity
+            verified = body.verified
+
+            if not numbers:
+                # 根据包体中的merchant_identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 31001
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的商家和要获取的商家不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve merchant %s", self.numbers, numbers)
+                self.code = 31002
+                self.message = "no privilege to retrieve merchant"
+                return 1
+            self.code, self.message = retrieve_merchant(verified)
+
+            if 31000 == self.code:
+                # 获取成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "retrieve merchant list done"
+
+                materials = response.retrieve_merchant_response.materials
+                for value in self.message:
+                    material = materials.add()
+                    merchant_material_copy_from_document(material, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s %s", e.__class__, e)
             return 0
 
     def dummy_command(self):
@@ -1386,6 +1433,29 @@ def merchant_delete_all_managers(numbers, merchant_identity):
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 30923, "exception"
+
+
+def retrieve_merchant(verified="both"):
+    """
+    获取注册的商家列表
+    :param verified: yes|no|both
+    :return: (31000, "yes")/成功，(>31010, "errmsg")/失败
+    """
+    try:
+        collection = get_mongo_collection("merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 31011, "get collection merchant failed"
+
+        if verified == "yes" or verified == "no":
+            merchants = collection.find({"deleted": 0, "verified": yes_no_2_char(verified)})
+        else:
+            merchants = collection.find({"deleted": 0})
+
+        return 31000, merchants
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 31012, "exception"
 
 
 def generate_merchant_identity(numbers):
