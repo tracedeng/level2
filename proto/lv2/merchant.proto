@@ -108,6 +108,17 @@ message MerchantDeleteManagerResponse {
     repeated string failed_managers = 2;    // 删除失败的管理员
 }
 
+// 获取注册商家
+message RetrieveMerchantRequest {
+    string numbers = 1;
+    string identity = 2;
+    string verified = 3;    //商家是否通过验证，yes、no、both
+}
+
+message RetrieveMerchantResponse {
+    repeated MerchantMaterial materials = 1;
+}
+
 // 商家资料
 message MerchantMaterial {
     string name = 1;      //商家名称，认证后不可修改，must
