@@ -121,6 +121,7 @@ class Credit():
             numbers = body.numbers
             identity = body.identity
             merchant_identity = body.merchant_identity
+            consumer_numbers = body.consumer_numbers
 
             if not numbers:
                 code, numbers = identity_to_numbers(identity)
@@ -141,8 +142,14 @@ class Credit():
                 g_log.debug("retrieve manager %s all merchant credits", numbers)
                 self.code, self.message = merchant_credit_retrieve_with_numbers(numbers)
             else:
-                g_log.debug("retrieve manage %s merchant %s credit", numbers, merchant_identity)
-                self.code, self.message = merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity)
+                if not consumer_numbers:
+                    g_log.debug("retrieve manage %s merchant %s of %s credit", numbers, merchant_identity,
+                                consumer_numbers)
+                    self.code, self.message = merchant_credit_retrieve_with_merchant_identity(
+                        numbers, merchant_identity, consumer_numbers)
+                else:
+                    g_log.debug("retrieve manage %s merchant %s credit", numbers, merchant_identity)
+                    self.code, self.message = merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity)
 
             if 40200 == self.code:
                 # 创建成功
@@ -203,14 +210,14 @@ class Credit():
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
                     g_log.debug("missing argument numbers")
-                    self.code = 40201
+                    self.code = 40301
                     self.message = "missing argument"
                     return 1
 
             # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s is not manager %s", self.numbers, numbers)
-                self.code = 40308
+                self.code = 40302
                 self.message = "no privilege to gift credit"
                 return 1
 
@@ -239,31 +246,31 @@ class Credit():
         商家拒绝消费兑换成积分
         """
         try:
-            body = self.request.confirm_consumption_request
+            body = self.request.refuse_consumption_request
             numbers = body.numbers
-            manager_numbers = body.manager_numbers
+            identity = body.identity
             merchant_identity = body.merchant_identity
             credit_identity = body.credit_identity
             reason = body.reason
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
-
-            if not manager_numbers:
-                # TODO... 根据包体中的manager_identity获取numbers
-                pass
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    g_log.debug("missing argument numbers")
+                    self.code = 40401
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
-            if self.numbers != manager_numbers:
-                g_log.warning("%s is not manager %s", self.numbers, manager_numbers)
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
                 self.code = 40408
                 self.message = "no privilege to gift credit"
                 return 1
 
             kwargs = {"numbers": numbers, "credit_identity": credit_identity, "merchant_identity": merchant_identity,
-                      "manager": manager_numbers, "reason": reason}
-            g_log.debug("confirm consumption: %s", kwargs)
+                      "reason": reason}
+            g_log.debug("refuse consumption: %s", kwargs)
             self.code, self.message = refuse_consumption(**kwargs)
 
             if 40400 == self.code:
@@ -728,7 +735,7 @@ def merchant_credit_retrieve(numbers=None, identity=None):
         return 40218, "exception"
 
 
-def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
+def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity, consumer_numbers=""):
     """
     获取管理员指定商家积分详情
     :param numbers: 管理员账号
@@ -749,7 +756,12 @@ def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity):
         if not collection:
             g_log.error("get collection credit failed")
             return 40221, "get collection credit failed"
-        credit = collection.find({"merchant_identity": merchant_identity}, {"merchant_identity": False}).sort("numbers")
+        if consumer_numbers:
+            credit = collection.find({"merchant_identity": merchant_identity, "numbers": consumer_numbers},
+                                     {"merchant_identity": False}).sort("exchange_time")
+        else:
+            credit = collection.find({"merchant_identity": merchant_identity}, {"merchant_identity": False}).\
+                sort("numbers")
         g_log.debug("merchant has %s credit", credit.count())
 
         return 40200, [(merchant_material[0], credit)]
@@ -817,63 +829,54 @@ def confirm_consumption(**kwargs):
 def refuse_consumption(**kwargs):
     """
     商家确认消费兑换成积分
-    :param kwargs: {"numbers": "18688982240", "credit_identity": "", "manager": "118688982241", "credit": 350}
+    :param kwargs: {"numbers": "18688982240", "credit_identity": "", "manager": "118688982241", "reason": "xxxx"}
     :return:
     """
     try:
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 40401, "invalid customer"
+            return 40411, "invalid customer"
 
-        manager = kwargs.get("manager", "")
-        if not account_is_valid_merchant(manager):
-            g_log.warning("invalid manager %s", manager)
-            return 40402, "invalid manager"
+        reason = kwargs.get("reason", "")
+        if len(reason) > 16:
+            g_log.warning("too long introduce %s", reason)
+            reason = reason[0:16]
 
         credit_identity = kwargs.get("credit_identity")
         if not credit_identity:
             g_log.warning("no credit identity")
-            return 40403, "illegal argument"
+            return 40413, "illegal argument"
         credit_identity = ObjectId(credit_identity)
 
         merchant_identity = kwargs.get("merchant_identity")
         if not merchant_identity:
             g_log.warning("no merchant identity")
-            return 40404, "illegal argument"
+            return 40414, "illegal argument"
 
         # 检查商家管理员
-        if not user_is_merchant_manager(manager, merchant_identity):
-            g_log.error("manager %s is not merchant %s manager", manager, merchant_identity)
-            return 40408, "manager is not merchant manager"
-
-        credit = kwargs.get("credit")
-        if not credit:
-            g_log.info("no credit argument")
-            # TODO... 平台根据兑换比例计算
-        else:
-            # TODO... 检查credit是否符合兑换比例
-            pass
+        if not user_is_merchant_manager(numbers, merchant_identity):
+            g_log.error("manager %s is not merchant %s manager", numbers, merchant_identity)
+            return 40415, "manager is not merchant manager"
 
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40305, "get collection credit failed"
-
-        credit = collection.find_one_and_update({"numbers": numbers, "_id": credit_identity, "exchanged": 0,
-                                                 "gift": 0, "merchant_identity": merchant_identity},
-                                                {"$set": {"exchanged": 1, "manager_numbers": manager, "credit": credit,
-                                                          "exchange_time": datetime.now(), "credit_rest": credit}},
+            return 40416, "get collection credit failed"
+        credit = collection.find_one_and_update({"_id": credit_identity, "exchanged": 0,
+                                                 "merchant_identity": merchant_identity},
+                                                {"$set": {"manager_numbers": numbers, "reason": reason,
+                                                          "exchange_time": datetime.now(), "type": "r"}},
                                                 return_document=ReturnDocument.AFTER)
-        g_log.debug(credit)
-        if not credit or not credit["exchanged"]:
-            g_log.error("confirm consumption failed")
-            return 40306, "confirm consumption failed"
+        # g_log.debug(credit)
+        if not credit:
+            g_log.error("refuse consumption failed")
+            return 40417, "refuse consumption failed"
 
-        return 40300, "yes"
+        return 40400, "yes"
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40307, "exception"
+        return 40418, "exception"
 
 
 def credit_free(**kwargs):

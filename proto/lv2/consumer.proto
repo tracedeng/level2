@@ -66,4 +66,6 @@ message ConsumerMaterial {
     string location = 9;    //地区，省市
     string qrcode = 10;     //二维码
     string create_time = 11;    //创建时间，response使用
+
+    string identity = 20;    //商家ID，response使用
 }

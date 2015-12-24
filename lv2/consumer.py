@@ -656,6 +656,8 @@ def consumer_delete(numbers=None, identity=None):
 
 
 def consumer_material_copy_from_document(material, value):
+    material.numbers = value["numbers"]
+    material.identity = str(value["_id"])
     material.sexy = sexy_number_2_string(value["sexy"])
     material.age = int(value["age"])
     material.introduce = value["introduce"]

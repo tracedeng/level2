@@ -23,6 +23,7 @@ message MerchantCreditRetrieveRequest {
     string numbers = 1;     // 商家管理员
     string identity = 2;    // 管理员ID
     string merchant_identity = 3;   // 商家ID，不给出则查询管理员所有商家积分
+    string consumer_numbers = 4;    // 用户号码，merchant_identity存在时才有意义，给出则只查该用户的积分
 }
 
 message MerchantCreditRetrieveResponse {
@@ -46,16 +47,12 @@ message ConfirmConsumptionResponse {
 
 }
 
-// TODO... 商家拒绝消费兑换成积分
 message RefuseConsumptionRequest {
-    string manager_numbers = 1;     // 操作员
-    string manager_identity = 2;    // 操作员ID
+    string numbers = 1; // 操作员
+    string identity = 2;    // 操作员ID
 
-    string numbers = 3; // 用户手机号，为了路由
-    string identity = 4;    // 用户ID
-
-    string merchant_identity = 5;   // 商家ID
-    string credit_identity = 6; // 消费ID
+    string merchant_identity = 3;   // 商家ID
+    string credit_identity = 4; // 消费ID
 
     string reason = 10;      // 拒绝原因
 }

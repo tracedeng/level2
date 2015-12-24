@@ -77,6 +77,7 @@ class Account():
                 if self.message[2]:
                     merchant_material_copy_from_document(response.login_response.merchant, self.message[2])
                 else:
+                    # 用户没有创建商家
                     response.login_response.merchant.identity = ""
                 return response
             else:
