@@ -49,7 +49,7 @@ class Credit():
                               303: self.confirm_consumption, 304: self.refuse_consumption,
                               305: self.credit_free, 306: self.consumer_credit_retrieve,
                               307: self.consume_credit, 308: self.consume_credit_retrieve,
-                              309: self.credit_exchange, 310: self.credit_exchange_retrieve}
+                              309: self.credit_interchange, 310: self.credit_interchange_retrieve}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -496,32 +496,39 @@ class Credit():
             g_log.error("%s", e)
             return 0
 
-    def credit_exchange(self):
+    def credit_interchange(self):
         """
         积分兑换
         """
         try:
-            body = self.request.credit_exchange_request
+            body = self.request.credit_interchange_request
             numbers = body.numbers
+            identity = body.identity
             credit_identity = body.credit_identity
             to_merchant = body.to_merchant
             credit = body.credit
+            exec_interchange = body.exec_interchange
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    g_log.debug("missing argument numbers")
+                    self.code = 40901
+                    self.message = "missing argument"
+                    return 1
 
             # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s is not manager %s", self.numbers, numbers)
-                self.code = 40709
+                self.code = 40902
                 self.message = "no privilege to consume credit"
                 return 1
 
             kwargs = {"numbers": numbers, "credit_identity": credit_identity, "to_merchant": to_merchant,
-                      "credit": credit}
-            g_log.debug("exchange credit: %s", kwargs)
-            self.code, self.message = credit_exchange(**kwargs)
+                      "credit": credit, "exec_interchange": exec_interchange}
+            g_log.debug("interchange credit: %s", kwargs)
+            self.code, self.message = credit_interchange(**kwargs)
 
             if 40900 == self.code:
                 # 成功
@@ -531,15 +538,18 @@ class Credit():
                 response.head.code = 1
                 response.head.message = "consume credit done"
 
-                response.credit_exchange_response.credit = self.message
+                response.credit_interchange_response.credit = self.message[0]
+                response.credit_interchange_response.fee = self.message[1]
                 return response
             else:
                 return 1
         except Exception as e:
+            # from print_exception import print_exception
+            # print_exception()
             g_log.error("%s", e)
             return 0
 
-    def credit_exchange_retrieve(self):
+    def credit_interchange_retrieve(self):
         """
         积分兑记录查询
         """
@@ -563,7 +573,7 @@ class Credit():
 
             kwargs = {"numbers": numbers, "begin_time": begin_time, "end_time": end_time, "limit": limit}
             g_log.debug("exchange record: %s", kwargs)
-            self.code, self.message = credit_exchange_retrieve(**kwargs)
+            self.code, self.message = credit_interchange_retrieve(**kwargs)
 
             if 41000 == self.code:
                 # 创建成功
@@ -587,7 +597,7 @@ class Credit():
                         exchange = exchange_record_one.exchange
                     exchange_one = exchange.add()
                     last_merchant[0] = (value["from_merchant"], value["to_merchant"])
-                    exchange_copy_from_document(exchange_one, value)
+                    interchange_copy_from_document(exchange_one, value)
 
                 return response
             else:
@@ -1084,7 +1094,7 @@ def consume_credit_retrieve(**kwargs):
         return 40803, "exception"
 
 
-def exchange_credit_create(**kwargs):
+def interchange_credit_create(**kwargs):
     """
     兑换后新积分
     gift 消费记录/0，赠送积分/1
@@ -1096,79 +1106,87 @@ def exchange_credit_create(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 40521, "invalid phone number"
+            return 40921, "invalid phone number"
 
         merchant_identity = kwargs.get("merchant_identity")
         if not merchant_identity:
             g_log.error("lost merchant")
-            return 40522, "illegal argument"
+            return 40922, "illegal argument"
 
         credit = kwargs.get("credit")
         if not credit or credit < 0:
             g_log.error("credit %s illegal", credit)
-            return 40523, "illegal argument"
+            return 40923, "illegal argument"
 
         # 检查商家是否存在，TODO... user_is_merchant_manager包含该检查
         if not merchant_exist(merchant_identity):
             g_log.error("merchant %s not exit", merchant_identity)
-            return 40524, "illegal argument"
+            return 40924, "illegal argument"
 
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime(1970, 1, 1),
-                 "sums": 0, "exchanged": 2, "credit": credit, "manager_numbers": "", "gift": 0,
-                 "exchange_time": datetime.now(), "credit_rest": credit}
+                 "sums": 0, "exchanged": 1, "credit": credit, "manager_numbers": "", "type": "i",
+                 "exchange_time": datetime.now(), "expire_time": datetime(1970, 1, 1), "credit_rest": credit}
 
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40527, "get collection credit failed"
+            return 40927, "get collection credit failed"
         credit_identity = collection.insert_one(value).inserted_id
         credit_identity = str(credit_identity)
-        g_log.debug("insert consumption %s", value)
+        g_log.debug("insert interchange %s", value)
 
-        return 40520, credit_identity
+        return 40920, credit_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40528, "exception"
+        return 40928, "exception"
 
 
-def credit_exchange(**kwargs):
+def credit_interchange(**kwargs):
     """
     用户兑换积分
     :param numbers: 用户号码
-    :return: (40700, (consumer, credit)/成功，(>40700, "errmsg")/失败
+    :return: (40900, (consumer, credit)/成功，(>40900, "errmsg")/失败
     """
     try:
         # 检查要创建者numbers
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 40901, "invalid phone number"
+            return 40911, "invalid account"
 
         credit_identity = kwargs.get("credit_identity")
         if not credit_identity:
             g_log.error("lost credit identity")
-            return 40902, "illegal argument"
+            return 40912, "illegal argument"
 
         to_merchant = kwargs.get("to_merchant")
         if not to_merchant:
             g_log.error("lost to merchant")
-            return 40903, "illegal argument"
+            return 40913, "illegal argument"
 
         credit = kwargs.get("credit")
         if not credit or credit < 0:
             g_log.error("credit %s illegal", credit)
-            return 40904, "illegal argument"
+            return 40914, "illegal argument"
         from_credit = credit
+
+        exec_interchange = kwargs.get("exec_interchange", 0)
+
+        # TODO...检查to_merchant是否允许兑换
+        # TODO...计算to_credit
+        to_credit = from_credit / 2
+        fee = to_credit / 100
+        to_credit -= fee
+
+        # 只计算to_credit
+        if not exec_interchange:
+            return 40900, (to_credit, fee)
 
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40905, "get collection credit failed"
-
-        # TODO...检查to_merchant是否允许兑换
-        # TODO...计算to_credit
-        to_credit = 0
+            return 40915, "get collection credit failed"
 
         # 更新积分总量
         result = collection.find_one_and_update({"numbers": numbers, "_id": ObjectId(credit_identity), "exchanged": 1,
@@ -1176,36 +1194,37 @@ def credit_exchange(**kwargs):
                                                 {"$inc": {"credit_rest": -credit}},
                                                 return_document=ReturnDocument.AFTER)
         if not result:
-            g_log.warning("exchange credit failed")
-            return 40906, "exchange credit failed"
+            g_log.warning("interchange credit failed")
+            return 40916, "interchange credit failed"
         from_merchant = result["merchant_identity"]
 
         # 创建兑换成的新积分
-        code, credit_new = exchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant, "credit": to_credit})
-        if code != 40520:
-            g_log.error("create exchange credit failed")
-            return 40907, "create exchange credit failed"
+        code, credit_new = interchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant,
+                                                        "credit": to_credit})
+        if code != 40920:
+            g_log.error("create interchange credit failed")
+            return 40917, "create interchange credit failed"
 
         # 保存积分兑换记录
-        collection = get_mongo_collection("exchange_record")
+        collection = get_mongo_collection("interchange_record")
         if not collection:
             g_log.error("get collection credit record failed")
-            return 40908, "get collection credit record failed"
+            return 40918, "get collection credit record failed"
         value = {"numbers": numbers, "credit_identity": credit_identity, "from_merchant": from_merchant,
-                 "to_merchant": to_merchant, "exchange_time": datetime.now(), "from_credit": from_credit,
-                 "to_credit": to_credit}
-        exchange_record_identity = collection.insert_one(value).inserted_id
-        exchange_record_identity = str(exchange_record_identity)
-        g_log.debug("insert credit record %s", exchange_record_identity)
+                 "to_merchant": to_merchant, "interchange_time": datetime.now(), "from_credit": from_credit,
+                 "to_credit": to_credit, "fee": fee}
+        interchange_record_identity = collection.insert_one(value).inserted_id
+        interchange_record_identity = str(interchange_record_identity)
+        g_log.debug("insert credit record %s", interchange_record_identity)
 
         # TODO... 考虑返回(兑换后的原积分， 兑换后的新积分)
-        return 40900, exchange_record_identity
+        return 40900, (to_credit, fee)
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40909, "exception"
+        return 40919, "exception"
 
 
-def credit_exchange_retrieve(**kwargs):
+def credit_interchange_retrieve(**kwargs):
     """
     积分兑换查询
     :param numbers: 用户号码
@@ -1216,26 +1235,26 @@ def credit_exchange_retrieve(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 41001, "invalid phone number"
+            return 41011, "invalid phone number"
 
         begin_time = kwargs.get("begin_time", datetime(1970, 1, 1))
         end_time = kwargs.get("end_time", datetime.now())
         limit = kwargs.get("limit", 0)
 
-        collection = get_mongo_collection("exchange_record")
+        collection = get_mongo_collection("interchange_record")
         if not collection:
-            g_log.error("get collection exchange record failed")
-            return 41002, "get collection exchange record failed"
+            g_log.error("get collection interchange record failed")
+            return 41012, "get collection interchange record failed"
 
-        records = collection.find({"numbers": numbers, "exchange_time": {"$gte": begin_time},
-                                   "exchange_time": {"$lte": end_time}},
+        records = collection.find({"numbers": numbers, "interchange_time": {"$gte": begin_time},
+                                   "interchange_time": {"$lte": end_time}},
                                   limit=limit).sort(["from_merchant", "to_merchant"])
-        g_log.debug("consumer has %s exchange record", records.count())
+        g_log.debug("consumer has %s interchange record", records.count())
 
         return 41000, records
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 41003, "exception"
+        return 41013, "exception"
 
 
 def credit_copy_from_document(material, value):
@@ -1277,14 +1296,14 @@ def consume_copy_from_document(material, value):
     material.identity = str(value["_id"])
 
 
-def exchange_copy_from_document(material, value):
+def interchange_copy_from_document(material, value):
     """
     mongo中的单条积分记录赋值给ExchangeMaterial
     :param material: ExchangeMaterial
     :param value: 单个积分document
     :return:
     """
-    material.exchange_time = value["exchange_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.interchange_time = value["interchange_time"].strftime("%Y-%m-%d %H:%M:%S")
     # material.credit_identity = value["credit_identity"]
     material.from_credit = value["credit"]
     material.to_credit = value["credit"]

@@ -50,8 +50,8 @@ message Request {
     ConsumerCreditRetrieveRequest consumer_credit_retrieve_request = 306;
     ConsumeCreditRequest consume_credit_request = 307;
     ConsumeCreditRetrieveRequest consume_credit_retrieve_request = 308;
-    CreditExchangeRequest credit_exchange_request = 309;
-    CreditExchangeRetrieveRequest credit_exchange_retrieve_request = 310;
+    CreditInterchangeRequest credit_interchange_request = 309;
+    CreditInterchangeRetrieveRequest credit_interchange_retrieve_request = 310;
 
     // 商家经营参数，[401, 500]
     PlatformUpdateParametersRequest platform_update_parameters_request = 401;
@@ -114,8 +114,8 @@ message Response {
     ConsumerCreditRetrieveResponse consumer_credit_retrieve_response = 306;
     ConsumeCreditResponse consume_credit_response = 307;
     ConsumeCreditRetrieveResponse consume_credit_retrieve_response = 308;
-    CreditExchangeResponse credit_exchange_response = 309;
-    CreditExchangeRetrieveResponse credit_exchange_retrieve_response = 310;
+    CreditInterchangeResponse credit_interchange_response = 309;
+    CreditInterchangeRetrieveResponse credit_interchange_retrieve_response = 310;
 
     // 商家经营参数，[401, 500]
     PlatformUpdateParametersResponse platform_update_parameters_response = 401;

@@ -134,21 +134,24 @@ message ConsumeCreditRetrieveResponse {
     repeated ConsumeRecord consume_record = 1;
 }
 
-// 积分兑换
-message CreditExchangeRequest {
+// 积分互换
+message CreditInterchangeRequest {
     string numbers = 1; // 用户手机号
     string identity = 2;    // 用户ID;
-    string credit_identity = 3; // 用户拥有的商家的积分
-    string to_merchant = 4; // 兑换至商家ID
-    string credit = 5;      // 兑换量
+    uint32 exec_interchange = 3;     // 是否执行互换，0-返回to_credit，1-互换
+    string from_merchant = 4;   // 积分所属商家
+    string credit_identity = 5; // 用户拥有的商家的积分
+    string to_merchant = 6; // 兑换至商家ID
+    uint32 credit = 7;      // 兑换量
 }
 
-message CreditExchangeResponse {
-    string credit = 1;      // 兑换成多少积分
+message CreditInterchangeResponse {
+    uint32 credit = 1;      // 兑换成多少积分
+    uint32 fee = 2;         // 手续费
 }
 
-// 积分兑换记录查询
-message CreditExchangeRetrieveRequest {
+// 积分互换记录查询
+message CreditInterchangeRetrieveRequest {
     string numbers = 1; // 用户手机号
     string identity = 2;    // 用户ID;
 
@@ -157,13 +160,13 @@ message CreditExchangeRetrieveRequest {
     uint32 limit = 5;       // 最多查询条数
 }
 
-message CreditExchangeRetrieveResponse {
-    repeated ExchangeRecord exchange_record = 1;
+message CreditInterchangeRetrieveResponse {
+    repeated InterchangeRecord exchange_record = 1;
 }
 
 //（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
 message CreditMaterial {
-    string type = 1;        // 积分类型，consumption、gift、exchange、refuse
+    string type = 1;        // 积分类型，consumption、gift、interchange、refuse
 
     uint32 sums = 2;
     string consumption_time = 3;
@@ -221,16 +224,16 @@ message ConsumeRecord {
 }
 
 // 兑换记录详情
-message ExchangeMaterial {
-    string exchange_time = 1;    // 消费时间
+message InterchangeMaterial {
+    string interchange_time = 1;    // 消费时间
     uint64 from_credit = 4;      // 积分量
     uint64 to_credit = 5;        // 积分量
     string identity = 6;         // 兑换记录ID
 }
 
 // 用户积分兑换记录
-message ExchangeRecord {
+message InterchangeRecord {
     MerchantMaterial from_merchant = 1;
     MerchantMaterial to_merchant = 2;
-    repeated ExchangeMaterial exchange = 3;
+    repeated InterchangeMaterial interchange = 3;
 }
