@@ -11,6 +11,7 @@ g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动�
 from account_valid import account_is_valid_merchant, account_is_platform
 from merchant import user_is_merchant_manager, merchant_is_verified, merchant_retrieve_with_merchant_identity_only, \
     merchant_material_copy_from_document
+from account_auxiliary import identity_to_numbers, verify_session_key
 
 
 class Business():
@@ -24,6 +25,8 @@ class Business():
         self.cmd = self.head.cmd
         self.seq = self.head.seq
         self.numbers = self.head.numbers
+        self.session_key = self.head.session_key
+
         self.code = 1   # 模块号(2位) + 功能号(2位) + 错误号(2位)
         self.message = ""
 
@@ -32,8 +35,13 @@ class Business():
         处理具体业务
         :return: 0/不回包给前端，pb/正确返回，timeout/超时
         """
-        # TODO... 验证登录态
         try:
+            # 验证登录态，某些命令可能不需要登录态，此处做判断
+            code, message = verify_session_key(self.numbers, self.session_key)
+            if 10400 != code:
+                g_log.debug("verify session key failed, %s, %s", code, message)
+                return package.error_response(self.cmd, self.seq, 20001, "invalid session key")
+
             command_handle = {401: self.platform_update_parameters, 402: self.business_parameters_retrieve,
                               403: self.business_parameters_batch_retrieve,
                               404: self.consumption_ratio_update, 405: self.dummy_command,
@@ -141,10 +149,21 @@ class Business():
             numbers = body.numbers
             merchant_identity = body.merchant_identity
             ratio = body.consumption_ratio
+            identity = body.identity
 
             if not numbers:
-                # TODO... 根据包体中的identity获取numbers
-                pass
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 50401
+                    self.message = "missing argument"
+                    return 1
+
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve consumer %s", self.numbers, numbers)
+                self.code = 50402
+                self.message = "no privilege"
+                return 1
 
             kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_ratio": ratio}
             g_log.debug("update consumption ratio: %s", kwargs)
@@ -328,7 +347,7 @@ def platform_update_parameters(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_platform(numbers):
             g_log.warning("not platform %s", numbers)
-            return 50101, "no privilege"
+            return 50111, "no privilege"
 
         # 必须是已认证商家
         manager = kwargs.get("manager", "")
@@ -336,11 +355,11 @@ def platform_update_parameters(**kwargs):
         merchant = user_is_merchant_manager(manager, merchant_identity)
         if not merchant:
             g_log.error("%s is not merchant %s manager", manager, merchant_identity)
-            return 50102, "not manager"
+            return 50112, "not manager"
         merchant_founder = merchant["merchant_founder"]
         if not merchant_is_verified(merchant_founder, merchant_identity):
             g_log.error("merchant %s not verified", merchant_identity)
-            return 50108, "not verified"
+            return 50118, "not verified"
         g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
 
         # TODO... 保证金、账户余额、账户余额换积分比率、消费换积分比率检查
@@ -352,7 +371,7 @@ def platform_update_parameters(**kwargs):
         collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
-            return 50103, "get collection parameters failed"
+            return 50113, "get collection parameters failed"
         business_parameters = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
                                                              {"$set": value})
 
@@ -365,24 +384,24 @@ def platform_update_parameters(**kwargs):
 
         if not business_parameters:
             g_log.error("update merchant %s parameters failed", merchant_identity)
-            return 50104, "update failed"
+            return 50114, "update failed"
         g_log.debug("update parameter succeed")
 
         # 更新记录入库
         collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
-            return 50105, "get collection parameters record failed"
+            return 50115, "get collection parameters record failed"
         quantization = "bond:%s, balance_ratio:%s" % (bond, balance_ratio)
         result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
                                         "operator": numbers, "quantization": quantization})
         if not result:
             g_log.error("insert parameters record failed")
-            return 50106, "insert parameters record failed"
+            return 50116, "insert parameters record failed"
         return 50100, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 50107, "exception"
+        return 50117, "exception"
 
 
 # pragma 读取商家经营参数API
@@ -464,20 +483,20 @@ def consumption_ratio_update(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_merchant(numbers):
             g_log.warning("not manager %s", numbers)
-            return 50401, "not manager"
+            return 50411, "not manager"
 
         # 检查管理员和商家关系
         merchant_identity = kwargs.get("merchant_identity", "")
         merchant = user_is_merchant_manager(numbers, merchant_identity)
         if not merchant:
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 50402, "not manager"
+            return 50412, "not manager"
         merchant_founder = merchant["merchant_founder"]
         g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
 
         # if not merchant_is_verified(merchant_founder, merchant_identity):
         #     g_log.error("merchant %s not verified", merchant_identity)
-        #     return 50403, "not verified"
+        #     return 50413, "not verified"
 
         # TODO... 消费换积分比率检查
         consumption_ratio = kwargs.get("consumption_ratio", 0)
@@ -487,7 +506,7 @@ def consumption_ratio_update(**kwargs):
         collection = get_mongo_collection("parameters")
         if not collection:
             g_log.error("get collection parameters failed")
-            return 50403, "get collection parameters failed"
+            return 50413, "get collection parameters failed"
         business_parameters = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
                                                              {"$set": value})
         # 第一次更新，则插入一条
@@ -499,24 +518,30 @@ def consumption_ratio_update(**kwargs):
             business_parameters = collection.insert_one(value)
         if not business_parameters:
             g_log.error("update merchant %s parameters failed", merchant_identity)
-            return 50404, "update failed"
-        g_log.debug("update consumption done")
+            return 50414, "update failed"
+
+        # business_parameters = collection.find_one_and_replace({"merchant_identity": merchant_identity, "deleted": 0},
+        #                                                       value, upsert=True, return_document=ReturnDocument.AFTER)
+        # if not business_parameters:
+        #     g_log.error("update merchant %s parameters failed", merchant_identity)
+        #     return 50414, "update failed"
+        # g_log.debug("update consumption done")
 
         # 更新记录入库
         collection = get_mongo_collection("parameters_record")
         if not collection:
             g_log.error("get collection parameters record failed")
-            return 50405, "get collection parameters record failed"
+            return 50415, "get collection parameters record failed"
         quantization = "consumption_ratio:%s" % (consumption_ratio,)
         result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
                                         "operator": numbers, "quantization": quantization})
         if not result:
             g_log.error("insert parameters record failed")
-            return 50406, "insert parameters record failed"
+            return 50416, "insert parameters record failed"
         return 50400, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 50407, "exception"
+        return 50417, "exception"
 
 
 # pragma 删除用户资料API
