@@ -15,6 +15,7 @@ from account_valid import account_is_valid_merchant, numbers_is_valid, yes_no_2_
     email_is_valid, account_is_platform
 from account_auxiliary import verify_session_key, identity_to_numbers
 from google_bug import message_has_field
+# from flow import upper_bound_update
 
 
 class Merchant():
@@ -702,6 +703,12 @@ def merchant_create(**kwargs):
         if not merchant_manager:
             g_log.error("create merchant %s manager %s many-many relation failed", merchant_identity, numbers)
             return 30116, "create merchant founder failed"
+
+        # 创建商家默认提供积分上线 TODO... 和flow.py循环import
+        # code, message = upper_bound_update({"numbers": 1000000, "merchant_identity": merchant_identity, "bound": 10000})
+        # if code != 60100:
+        #     g_log.error("create merchant failed, set upper bound failed")
+        #     return 30118, "set upper bound failed"
         return 30100, merchant_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
@@ -1510,10 +1517,9 @@ def user_is_merchant_manager(manager, merchant_identity):
         return None
 
 
-def merchant_is_verified(founder, merchant_identity):
+def merchant_is_verified(merchant_identity):
     """
     检查商家是否认证
-    :param founder: 管理员号码
     :param merchant_identity: 商家ID
     :return: 0/否，1/是
     """
@@ -1522,7 +1528,7 @@ def merchant_is_verified(founder, merchant_identity):
         if not collection:
             g_log.error("get collection merchant failed")
             return 31101, "get collection merchant failed"
-        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "numbers": founder, "deleted": 0})
+        merchant = collection.find_one({"_id": ObjectId(merchant_identity), "deleted": 0})
         return merchant["verified"]
     except Exception as e:
         g_log.critical("%s", e)

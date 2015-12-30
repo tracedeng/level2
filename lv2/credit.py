@@ -830,6 +830,14 @@ def confirm_consumption(**kwargs):
             g_log.error("confirm consumption failed")
             return 40319, "confirm consumption failed"
 
+        # 更新已发行积分量(用户消费从商家获得的积分)
+        from flow import merchant_credit_update
+        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": merchant_identity,
+                                                  "mode": "issued", "supplement": credit})
+        if code != 60400:
+            g_log.error("update issued credit failed")
+            return 40321, "update issued credit failed"
+
         return 40300, "yes"
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
@@ -1198,12 +1206,30 @@ def credit_interchange(**kwargs):
             return 40916, "interchange credit failed"
         from_merchant = result["merchant_identity"]
 
+        # 更新兑换出的积分量(积分互换)
+        from flow import merchant_credit_update
+        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": from_merchant,
+                                                  "mode": "interchange_out", "supplement": from_credit})
+        if code != 60400:
+            g_log.error("update interchange out credit failed")
+            return 40920, "update interchange out credit failed"
+
         # 创建兑换成的新积分
         code, credit_new = interchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant,
                                                         "credit": to_credit})
         if code != 40920:
             g_log.error("create interchange credit failed")
             return 40917, "create interchange credit failed"
+
+        # 更新兑换进的积分量(积分互换)
+        from flow import merchant_credit_update
+        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": from_merchant,
+                                                  "mode": "interchange_in", "supplement": to_credit})
+        if code != 60400:
+            g_log.error("update interchange in credit failed")
+            return 40921, "update interchange in credit failed"
+
+        # TODO... fee保存入平台账号
 
         # 保存积分兑换记录
         collection = get_mongo_collection("interchange_record")

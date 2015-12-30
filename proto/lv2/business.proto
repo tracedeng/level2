@@ -9,11 +9,12 @@ import "merchant.proto";
 // 平台修改商家保证金、账户余额换积分比率
 message PlatformUpdateParametersRequest {
     string numbers = 1;             // 平台
-    uint64 bond = 2;                // 商家保证金
-    uint64 balance_ratio = 3;       // 账户余额换积分比率，积分量 = 账户余额 * 比率
+    string identity = 2;            // 平台ID
+    uint64 bond = 3;                // 商家保证金
+    uint64 balance_ratio = 4;       // 账户余额换积分比率，积分量 = 账户余额 * 比率
 
-    string merchant_identity = 4;   // 商家ID
-    string manager = 5;             // 商家管理员
+    string merchant_identity = 5;   // 商家ID
+    //string manager = 5;             // 商家管理员
 };
 
 message PlatformUpdateParametersResponse {
