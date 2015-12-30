@@ -15,7 +15,7 @@ from account_valid import account_is_valid_merchant, numbers_is_valid, yes_no_2_
     email_is_valid, account_is_platform
 from account_auxiliary import verify_session_key, identity_to_numbers
 from google_bug import message_has_field
-# from flow import upper_bound_update
+from flow_auxiliary import gift_upper_bound
 
 
 class Merchant():
@@ -161,21 +161,7 @@ class Merchant():
                 for value in self.message:
                     material = materials.add()
                     merchant_material_copy_from_document(material, value)
-                    # material.name = value["name"]
-                    # material.name_en = value["name_en"]
-                    # material.numbers = value["numbers"]
-                    # material.verified = char_2_yes_no(value["verified"])
-                    # material.identity = str(value["_id"])
-                    # material.logo = value["logo"]
-                    # material.email = value["email"]
-                    # material.qrcode = value["qrcode"]
-                    # material.introduce = value["introduce"]
-                    # material.contact_numbers = value["contact_numbers"]
-                    # material.contract = value["contract"]
-                    # material.location = value["location"]
-                    # material.country = value["country"]
-                    # material.latitude = float(value["latitude"])
-                    # material.longitude = float(value["longitude"])
+
                 return response
             else:
                 return 1
@@ -704,11 +690,11 @@ def merchant_create(**kwargs):
             g_log.error("create merchant %s manager %s many-many relation failed", merchant_identity, numbers)
             return 30116, "create merchant founder failed"
 
-        # 创建商家默认提供积分上线 TODO... 和flow.py循环import
-        # code, message = upper_bound_update({"numbers": 1000000, "merchant_identity": merchant_identity, "bound": 10000})
-        # if code != 60100:
-        #     g_log.error("create merchant failed, set upper bound failed")
-        #     return 30118, "set upper bound failed"
+        # 创建商家默认提供积分上线
+        code, message = gift_upper_bound(**{"numbers": 1000000, "merchant_identity": merchant_identity, "bound": 10000})
+        if code != 60100:
+            g_log.error("create merchant failed, set upper bound failed")
+            return 30118, "set upper bound failed"
         return 30100, merchant_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)

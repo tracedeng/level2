@@ -65,6 +65,7 @@ message Request {
 
     // 商家积分，[501, 600]
     MerchantCreditFlowRetrieveRequest merchant_credit_flow_retrieve_request = 501;
+    MerchantSettlementRequest merchant_settlement_request = 502;
 
     // 七牛云存储token，[601, 700]
     UploadTokenRequest upload_token_request = 601;
@@ -128,6 +129,7 @@ message Response {
 
     // 商家积分，[501, 600]
     MerchantCreditFlowRetrieveResponse merchant_credit_flow_retrieve_response = 501;
+    MerchantSettlementResponse merchant_settlement_response = 502;
 
     // 七牛云存储token，[601, 700]
     UploadTokenResponse upload_token_response = 601;

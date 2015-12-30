@@ -571,7 +571,7 @@ def consumption_ratio_update(**kwargs):
                                         "operator": numbers, "quantization": quantization})
         if not result:
             g_log.error("insert parameters record failed")
-            return 50416, "insert parameters record failed"
+            # return 50416, "insert parameters record failed"
         return 50400, "yes"
     except Exception as e:
         g_log.error("%s", e)

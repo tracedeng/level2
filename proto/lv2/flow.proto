@@ -12,10 +12,21 @@ message MerchantCreditFlowRetrieveRequest {
 };
 
 message MerchantCreditFlowRetrieveResponse {
-    repeated FlowRecord flow_record = 1;
+    repeated CreditFlow credit_flow = 1;
 };
 
-message FlowRecord {
+message MerchantSettlementRequest {
+    string numbers = 1;     // 管理员手机号
+    string identity = 2;    // 管理员ID
+    string merchant_identity = 3;   //商家ID
+    uint32 exec_settlement = 4;     // 是否执行结算，0-返回settlement，1-执行
+};
+
+message MerchantSettlementResponse {
+    int64 settlement = 1;   // 结算量，TODO... 换成钱
+};
+
+message CreditFlow {
     MerchantMaterial merchant = 1;
     FlowMaterial material = 2;
 }
@@ -28,4 +39,5 @@ message FlowMaterial {
     uint64 interchange_in = 5;
     uint64 interchange_out = 6;
     uint64 interchange_consumption = 7;
+    int64 settlement = 8;
 }

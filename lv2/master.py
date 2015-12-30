@@ -69,13 +69,16 @@ class Master():
                 # 商户资料模块
                 response = merchant.enter(request)
             elif head.cmd < 400:
-                # 积分兑换模块
+                # 积分模块
                 response = credit.enter(request)
             elif head.cmd < 500:
+                # 商家经营参数
                 response = business.enter(request)
             elif head.cmd < 600:
+                # 商家积分流动模块
                 response = flow.enter(request)
             elif head.cmd < 700:
+                # 七牛云存储
                 response = qiniu_token.enter(request)
             else:
                 # 非法请求，无效命令，不回包
