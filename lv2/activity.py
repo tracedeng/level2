@@ -2,14 +2,15 @@
 __author__ = 'tracedeng'
 
 from datetime import datetime
-from pymongo.collection import ReturnDocument
+# from pymongo.collection import ReturnDocument
 from mongo_connection import get_mongo_collection
 import common_pb2
 import package
 from bson.objectid import ObjectId
+from datetime import datetime
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import account_is_valid_merchant
+from account_valid import account_is_valid_merchant, account_is_valid_consumer
 from account_auxiliary import identity_to_numbers, verify_session_key
 from merchant import user_is_merchant_manager
 from google_bug import message_has_field
@@ -44,7 +45,8 @@ class Activity():
                 return package.error_response(self.cmd, self.seq, 70001, "invalid session key")
 
             command_handle = {701: self.activity_create, 702: self.activity_retrieve, 703: self.dummy_command,
-                              704: self.activity_update, 705: self.activity_delete}
+                              704: self.activity_update, 705: self.activity_delete,
+                              706: self.consumer_retrieve_activity}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -175,14 +177,14 @@ class Activity():
                 # 根据包体中的identity获取numbers
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
-                    self.code = 70301
+                    self.code = 70401
                     self.message = "missing argument"
                     return 1
 
             # 发起请求的商家和要创建的商家不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to update activity %s", self.numbers, numbers)
-                self.code = 70302
+                self.code = 70402
                 self.message = "no privilege to update activity"
                 return 1
 
@@ -204,7 +206,7 @@ class Activity():
             g_log.debug("update activity material: %s", value)
             self.code, self.message = activity_update_with_numbers(numbers, **value)
 
-            if 70300 == self.code:
+            if 70400 == self.code:
                 # 更新成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
@@ -235,26 +237,77 @@ class Activity():
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
                     g_log.debug("missing argument numbers")
-                    self.code = 70401
+                    self.code = 70501
                     self.message = "missing argument"
                     return 1
 
             # 发起请求的用户和要创建的用户不同，认为没有权限，TODO...更精细控制
             if self.numbers != numbers:
                 g_log.warning("%s no privilege to delete activity %s", self.numbers, numbers)
-                self.code = 70402
+                self.code = 70502
                 self.message = "no privilege to delete activity"
                 return 1
 
             self.code, self.message = activity_delete_with_numbers(numbers, merchant_identity, activity_identity)
 
-            if 70400 == self.code:
+            if 70500 == self.code:
                 # 删除成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
                 response.head.message = "delete activity done"
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def consumer_retrieve_activity(self):
+        """
+        用户获取activity资料
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.consumer_retrieve_activity_request
+            numbers = body.numbers
+            identity = body.identity
+
+            if not numbers:
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 70601
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的用户和要获取的用户不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve activity %s", self.numbers, numbers)
+                self.code = 70602
+                self.message = "no privilege to retrieve activity"
+                return 1
+
+            self.code, self.message = consumer_retrieve_activity_with_numbers(numbers)
+
+            for a in self.message:
+                g_log.debug(a)
+                g_log.debug("abc")
+
+            if 70600 == self.code:
+                # 获取成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "consumer retrieve activity done"
+
+                materials = response.consumer_retrieve_activity_response.materials
+                for value in self.message:
+                    material = materials.add()
+                    activity_material_copy_from_document(material, value)
 
                 return response
             else:
@@ -318,7 +371,8 @@ def activity_create(**kwargs):
 
         poster = kwargs.get("poster", "")
         credit = kwargs.get("credit", 0)
-        expire_time = kwargs.get("expire_time", 0)
+        expire_time = kwargs.get("expire_time", "")
+        expire_time = datetime.strptime(expire_time, "%Y-%m-%d")
 
         value = {"numbers": numbers, "title": title, "introduce": introduce, "introduce": introduce, "credit": credit,
                  "merchant_identity": merchant_identity, "poster": poster, "deleted": 0, "create_time": datetime.now(),
@@ -418,20 +472,21 @@ def activity_update_with_numbers(numbers, **kwargs):
     更新活动资料
     :param numbers: 用户电话号码
     :param kwargs: {"numbers": "18688982240", "title": "good taste", "introduce": "ego cogito ergo sum",
-                    "poster": "a/18688982240/x87cd", "credit": 100, "activity_identity": "xij923f0a8m"}
+                    "poster": "a/18688982240/x87cd", "credit": 100, "activity_identity": "xij923f0a8m",
+                    "expire_time": "2016-12-12"}
     :return: (20400, "yes")/成功，(>20400, "errmsg")/失败
     """
     try:
         # 检查合法账号
         if not account_is_valid_merchant(numbers):
             g_log.warning("invalid merchant account %s", numbers)
-            return 70311, "invalid phone number"
+            return 70411, "invalid phone number"
 
         merchant_identity = kwargs.get("merchant_identity")
         merchant = user_is_merchant_manager(numbers, merchant_identity)
         if not merchant:
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 70312, "not manager"
+            return 70412, "not manager"
         activity_identity = kwargs.get("activity_identity")
 
         value = {}
@@ -460,21 +515,25 @@ def activity_update_with_numbers(numbers, **kwargs):
         if poster:
             value["poster"] = poster
 
+        expire_time = kwargs.get("expire_time", "")
+        if expire_time:
+            value["expire_time"] = datetime.strptime(expire_time, "%Y-%m-%d")
+
         g_log.debug("update activity material: %s", value)
         # 存入数据库
         collection = get_mongo_collection("activity")
         if not collection:
             g_log.error("get collection activity failed")
-            return 70313, "get collection activity failed"
+            return 70413, "get collection activity failed"
         activity = collection.find_one_and_update({"merchant_identity": merchant_identity,
                                                    "_id": ObjectId(activity_identity), "deleted": 0}, {"$set": value})
         if not activity:
             g_log.error("activity %s exist", numbers)
-            return 70314, "activity not exist"
-        return 70300, "yes"
+            return 70414, "activity not exist"
+        return 70400, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 70315, "exception"
+        return 70415, "exception"
 
 
 # pragma 删除活动资料API
@@ -482,33 +541,74 @@ def activity_delete_with_numbers(numbers, merchant_identity, activity_identity):
     """
     删除活动资料
     :param numbers: 用户电话号码
-    :return: (70400, "yes")/成功，(>70400, "errmsg")/失败
+    :return: (70500, "yes")/成功，(>70500, "errmsg")/失败
     """
     try:
         # 检查合法账号
         if not account_is_valid_merchant(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 70411, "invalid phone number"
+            return 70511, "invalid phone number"
 
         merchant = user_is_merchant_manager(numbers, merchant_identity)
         if not merchant:
             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 70412, "not manager"
+            return 70512, "not manager"
 
         collection = get_mongo_collection("activity")
         if not collection:
             g_log.error("get collection activity failed")
-            return 70413, "get collection activity failed"
+            return 70513, "get collection activity failed"
         activity = collection.find_one_and_update({"merchant_identity": merchant_identity,
                                                    "_id": ObjectId(activity_identity), "deleted": 0},
                                                   {"$set": {"deleted": 1}})
         if not activity:
             g_log.error("activity %s not exist", activity_identity)
-            return 70414, "activity not exist"
-        return 70400, "yes"
+            return 70514, "activity not exist"
+        return 70500, "yes"
     except Exception as e:
         g_log.error("%s", e)
-        return 70415, "exception"
+        return 70515, "exception"
+
+
+# pragma 用户读取活动资料API
+def consumer_retrieve_activity_with_numbers(numbers):
+    """
+    读取活动资料
+    :param numbers: 用户电话号码
+    :return: (70200, activity)/成功，(>70200, "errmsg")/失败
+    """
+    try:
+        # 检查合法账号
+        if not account_is_valid_consumer(numbers):
+            g_log.warning("invalid customer account %s", numbers)
+            return 70611, "invalid account"
+
+        collection = get_mongo_collection("activity")
+        if not collection:
+            g_log.error("get collection activity failed")
+            return 70613, "get collection activity failed"
+        activity = collection.find({"deleted": 0}).sort("create_time")
+        if not activity:
+            g_log.debug("activity %s not exist", numbers)
+            return 70614, "activity not exist"
+
+        collection2 = get_mongo_collection("merchant")
+        if not collection2:
+            g_log.error("get collection merchant failed")
+            return 70615, "get collection merchant failed"
+
+        activity_dict = []
+        # type(activity_one) = "dict"
+        for activity_one in activity:
+            merchant = collection2.find_one({"_id": ObjectId(activity_one["merchant_identity"])})
+            activity_one["merchant"] = merchant
+            activity_dict.append(activity_one)
+        # activity.rewind()
+
+        return 70600, activity_dict
+    except Exception as e:
+        g_log.error("%s", e)
+        return 70617, "exception"
 
 
 def activity_material_copy_from_document(material, value):
@@ -521,3 +621,7 @@ def activity_material_copy_from_document(material, value):
     material.poster = value["poster"]
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
     # material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+
+    if value["merchant"]:
+        material.merchant_identity = str(value["merchant"]["_id"])
+        material.name = value["merchant"]["name"]

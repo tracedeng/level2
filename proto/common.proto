@@ -79,6 +79,7 @@ message Request {
     // 703留给批量retrieve
     ActivityUpdateRequest activity_update_request = 704;
     ActivityDeleteRequest activity_delete_request = 705;
+    ConsumerRetrieveActivityRequest consumer_retrieve_activity_request = 706;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -149,6 +150,8 @@ message Response {
     ActivityRetrieveResponse activity_retrieve_response = 702;
     ActivityUpdateResponse activity_update_response = 704;
     ActivityDeleteResponse activity_delete_response = 705;
+    ConsumerRetrieveActivityResponse consumer_retrieve_activity_response = 706;
+    //ActivityDetailResponse activity_detail_response = 707;
 
     // 旁路
     VipResponse vip = 10000;

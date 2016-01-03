@@ -52,6 +52,20 @@ message ActivityDeleteResponse {
 
 }
 
+// 用户读取商家活动列表，活动按照创建日期排序
+message ConsumerRetrieveActivityRequest {
+    string numbers = 1;     // 用户
+    string identity = 2;
+
+    uint32 latitude = 3;    // TODO...用户位置信息
+    uint32 longitude = 4;
+}
+
+message ConsumerRetrieveActivityResponse {
+    repeated ActivityMaterial materials = 1;
+}
+
+
 message ActivityMaterial {
     string title = 1;       // 活动标题
     string introduce = 2;   // 活动介绍
@@ -63,4 +77,7 @@ message ActivityMaterial {
     string expire_time = 6;     // 过期时间
     string numbers = 7;         // 创建人
     string identity = 8;        // 活动ID
+
+    string merchant_identity = 9;   // 商家ID
+    string name = 10;           // 商家名称
 }
