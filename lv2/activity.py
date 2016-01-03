@@ -622,6 +622,6 @@ def activity_material_copy_from_document(material, value):
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
     # material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
 
-    if value["merchant"]:
+    if value.get("merchant", ""):
         material.merchant_identity = str(value["merchant"]["_id"])
         material.name = value["merchant"]["name"]
