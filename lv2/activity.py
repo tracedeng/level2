@@ -6,6 +6,7 @@ from pymongo.collection import ReturnDocument
 from mongo_connection import get_mongo_collection
 import common_pb2
 import package
+from bson.objectid import ObjectId
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 from account_valid import account_is_valid_merchant
@@ -42,7 +43,7 @@ class Activity():
                 g_log.debug("verify session key failed, %s, %s", code, message)
                 return package.error_response(self.cmd, self.seq, 70001, "invalid session key")
 
-            command_handle = {701: self.activity_create, 702: self.activity_retrieve, 703: self.activity_batch_retrieve,
+            command_handle = {701: self.activity_create, 702: self.activity_retrieve, 703: self.dummy_command,
                               704: self.activity_update, 705: self.activity_delete}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
@@ -68,7 +69,7 @@ class Activity():
             body = self.request.activity_create_request
             numbers = body.numbers
             identity = body.identity
-            activity_identity = body.activity_identity
+            merchant_identity = body.merchant_identity
             material = body.material
 
             if not numbers:
@@ -88,7 +89,8 @@ class Activity():
                 return 1
 
             kwargs = {"numbers": numbers, "title": material.title, "poster": material.poster, "credit": material.credit,
-                      "introduce": material.introduce, "activity_identity": activity_identity}
+                      "introduce": material.introduce, "merchant_identity": merchant_identity,
+                      "expire_time": material.expire_time}
             g_log.debug("create activity: %s", kwargs)
             self.code, self.message = activity_create(**kwargs)
 
@@ -117,7 +119,7 @@ class Activity():
             body = self.request.activity_retrieve_request
             numbers = body.numbers
             identity = body.identity
-            activity_identity = body.activity_identity
+            merchant_identity = body.merchant_identity
             
             if not numbers:
                 # 根据包体中的identity获取numbers
@@ -134,7 +136,7 @@ class Activity():
                 self.message = "no privilege to retrieve activity"
                 return 1
 
-            self.code, self.message = activity_retrieve_with_numbers(numbers, activity_identity)
+            self.code, self.message = activity_retrieve_with_numbers(numbers, merchant_identity)
 
             if 70200 == self.code:
                 # 获取成功
@@ -261,6 +263,11 @@ class Activity():
             g_log.error("%s", e)
             return 0
 
+    def dummy_command(self):
+        # 无效的命令，不回包
+        g_log.debug("unknow command %s", self.cmd)
+        return 0
+
 
 def enter(request):
     """
@@ -281,7 +288,7 @@ def activity_create(**kwargs):
     """
     新增活动
     :param kwargs: {"numbers": "18688982240", "title": "good taste", "introduce": "ego cogito ergo sum",
-                    "poster": "a/18688982240/x87cd", "credit": 100, "activity_identity": "xij923f0a8m"}
+                    "poster": "a/18688982240/x87cd", "credit": 100, "merchant_identity": "xij923f0a8m"}
     :return: (70100, "yes")/成功，(>70100, "errmsg")/失败
     """
     try:
@@ -291,10 +298,10 @@ def activity_create(**kwargs):
             g_log.warning("not manager %s", numbers)
             return 70111, "not manager"
 
-        activity_identity = kwargs.get("activity_identity", "")
-        activity = user_is_merchant_manager(numbers, activity_identity)
-        if not activity:
-            g_log.error("%s is not activity %s manager", numbers, activity_identity)
+        merchant_identity = kwargs.get("merchant_identity", "")
+        merchant = user_is_merchant_manager(numbers, merchant_identity)
+        if not merchant:
+            g_log.error("%s is not activity %s manager", numbers, merchant_identity)
             return 70112, "not manager"
 
         # 活动标题不能超过32字节，超过要截取前32字节
@@ -311,23 +318,26 @@ def activity_create(**kwargs):
 
         poster = kwargs.get("poster", "")
         credit = kwargs.get("credit", 0)
+        expire_time = kwargs.get("expire_time", 0)
 
         value = {"numbers": numbers, "title": title, "introduce": introduce, "introduce": introduce, "credit": credit,
-                 "activity_identity": activity_identity, "poster": poster, "deleted": 0, "create_time": datetime.now(),
-                 "expire_time": datetime.now()}
+                 "merchant_identity": merchant_identity, "poster": poster, "deleted": 0, "create_time": datetime.now(),
+                 "expire_time": expire_time}
 
         # 存入数据库
         collection = get_mongo_collection("activity")
         if not collection:
             g_log.error("get collection activity failed")
             return 70113, "get collection activity failed"
-        activity = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True,
-                                                   return_document=ReturnDocument.AFTER)
-        if not activity:
+        # activity = collection.find_one_and_replace({"numbers": numbers}, value, upsert=True,
+        #                                            return_document=ReturnDocument.AFTER)
+        identity = collection.insert_one(value).inserted_id
+        if not identity:
             g_log.error("create activity %s failed", numbers)
             return 70114, "create activity failed"
 
-        return 70100, "yes"
+        identity = str(identity)
+        return 70100, identity
     except Exception as e:
         g_log.error("%s", e)
         return 70115, "exception"
@@ -355,7 +365,7 @@ def activity_retrieve_with_numbers(numbers, merchant_identity):
         if not collection:
             g_log.error("get collection activity failed")
             return 70213, "get collection activity failed"
-        activity = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
+        activity = collection.find({"merchant_identity": merchant_identity, "deleted": 0})
         if not activity:
             g_log.debug("activity %s not exist", numbers)
             return 70214, "activity not exist"
@@ -366,7 +376,7 @@ def activity_retrieve_with_numbers(numbers, merchant_identity):
         return 70215, "exception"
 
 
-def activity_retrieve_with_identity(identity, activity_identity):
+def activity_retrieve_with_identity(identity, merchant_identity):
     """
     查询活动资料
     :param identity: 用户ID
@@ -377,13 +387,13 @@ def activity_retrieve_with_identity(identity, activity_identity):
         code, numbers = identity_to_numbers(identity)
         if code != 10500:
             return 70216, "illegal identity"
-        return activity_retrieve_with_numbers(numbers)
+        return activity_retrieve_with_numbers(numbers, merchant_identity)
     except Exception as e:
         g_log.error("%s", e)
         return 70217, "exception"
 
 
-def activity_retrieve(activity_identity, numbers=None, identity=None):
+def activity_retrieve(merchant_identity, numbers=None, identity=None):
     """
     获取活动资料，用户电话号码优先
     :param numbers: 用户电话号码
@@ -392,9 +402,9 @@ def activity_retrieve(activity_identity, numbers=None, identity=None):
     """
     try:
         if numbers:
-            return activity_retrieve_with_numbers(numbers, activity_identity)
+            return activity_retrieve_with_numbers(numbers, merchant_identity)
         elif identity:
-            return activity_retrieve_with_identity(identity, activity_identity)
+            return activity_retrieve_with_identity(identity, merchant_identity)
         else:
             return 70218, "bad arguments"
     except Exception as e:
@@ -457,7 +467,7 @@ def activity_update_with_numbers(numbers, **kwargs):
             g_log.error("get collection activity failed")
             return 70313, "get collection activity failed"
         activity = collection.find_one_and_update({"merchant_identity": merchant_identity,
-                                                   "identity": activity_identity, "deleted": 0}, {"$set": value})
+                                                   "_id": ObjectId(activity_identity), "deleted": 0}, {"$set": value})
         if not activity:
             g_log.error("activity %s exist", numbers)
             return 70314, "activity not exist"
@@ -490,10 +500,10 @@ def activity_delete_with_numbers(numbers, merchant_identity, activity_identity):
             g_log.error("get collection activity failed")
             return 70413, "get collection activity failed"
         activity = collection.find_one_and_update({"merchant_identity": merchant_identity,
-                                                   "activity_identity": activity_identity, "deleted": 0},
+                                                   "_id": ObjectId(activity_identity), "deleted": 0},
                                                   {"$set": {"deleted": 1}})
         if not activity:
-            g_log.error("activity %s not exist", numbers)
+            g_log.error("activity %s not exist", activity_identity)
             return 70414, "activity not exist"
         return 70400, "yes"
     except Exception as e:
@@ -510,4 +520,4 @@ def activity_material_copy_from_document(material, value):
     material.title = value["title"]
     material.poster = value["poster"]
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
-    material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+    # material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
