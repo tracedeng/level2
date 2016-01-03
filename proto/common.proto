@@ -72,6 +72,12 @@ message Request {
     DownloadTokenRequest download_token_request = 602;
     AccessTokenRequest access_token_request = 603;
 
+    // 活动，[701, 800]
+    ActivityCreateRequest activity_create_request = 701;
+    ActivityRetrieveRequest activity_retrieve_request = 702;
+    ActivityUpdateRequest activity_update_request = 703;
+    ActivityDeleteRequest activity_delete_request = 704;
+
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
 }
@@ -135,6 +141,12 @@ message Response {
     UploadTokenResponse upload_token_response = 601;
     DownloadTokenResponse download_token_response = 602;
     AccessTokenResponse access_token_response = 603;
+
+    // 活动，[701, 800]
+    ActivityCreateResponse activity_create_response = 701;
+    ActivityRetrieveResponse activity_retrieve_response = 702;
+    ActivityUpdateResponse activity_update_response = 703;
+    ActivityDeleteResponse activity_delete_response = 704;
 
     // 旁路
     VipResponse vip = 10000;

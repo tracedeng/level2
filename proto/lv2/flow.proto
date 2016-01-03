@@ -33,11 +33,11 @@ message CreditFlow {
 
 message FlowMaterial {
     string identity = 1;    //response 使用
-    uint64 upper_bound = 2;
-    uint64 may_issued = 3;
-    uint64 issued = 4;
-    uint64 interchange_in = 5;
-    uint64 interchange_out = 6;
-    uint64 interchange_consumption = 7;
-    int64 settlement = 8;
+    uint64 upper_bound = 2;  // 积分总量
+    uint64 may_issued = 3;  // 可发行积分量
+    uint64 issued = 4;      // 已发行积分量
+    uint64 interchange_in = 5;  // 兑换进的积分
+    uint64 interchange_out = 6; // 兑换出的积分
+    uint64 interchange_consumption = 7;    // 兑换积分消费量
+    int64 settlement = 8;   // 已提现的积分
 }

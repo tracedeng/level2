@@ -18,6 +18,7 @@ import credit
 import business
 import flow
 import qiniu_token
+import activity
 
 __all__ = ['Master']
 
@@ -80,6 +81,9 @@ class Master():
             elif head.cmd < 700:
                 # 七牛云存储
                 response = qiniu_token.enter(request)
+            elif head.cmd < 800:
+                # 活动
+                response = activity.enter(request)
             else:
                 # 非法请求，无效命令，不回包
                 # return 0

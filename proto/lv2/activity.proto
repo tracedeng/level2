@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+
+// 管理员创建活动
+message ActivityCreateRequest {
+    string numbers = 1;     // 管理员
+    string identity = 2;
+    string merchant_identity = 3;    // 商家ID
+
+    ActivityMaterial material = 4;  // 活动详情
+};
+
+message ActivityCreateResponse {
+    string identity = 1;    // 活动ID
+};
+
+// 读取商家活动列表
+message ActivityRetrieveRequest {
+    string numbers = 1;     // 管理员
+    string identity = 2;
+
+    string merchant_identity = 3;    // 商家ID
+}
+
+message ActivityRetrieveResponse {
+    repeated ActivityMaterial materials = 1;
+}
+
+// 管理员修改商家活动
+message ActivityUpdateRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // must
+    string activity_identity = 4;   // must
+
+    ActivityMaterial material = 5;
+}
+
+message ActivityUpdateResponse {
+
+}
+
+// 管理员删除商家活动
+message ActivityDeleteRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // must
+    string activity_identity = 4;   // must 活动ID
+}
+
+message ActivityDeleteResponse {
+
+}
+
+message ActivityMaterial {
+    string title = 1;       // 活动标题
+    string introduce = 2;   // 活动介绍
+    string poster = 3;      // 活动海报
+    uint32 credit = 4;      // 活动需要支付的积分
+
+    //response带回
+    string create_time = 5;     // 创建时间
+    string expire_time = 6;     // 过期时间
+    string numbers = 7;         // 创建人
+    string identity = 8;        // 活动ID
+}

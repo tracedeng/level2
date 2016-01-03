@@ -117,7 +117,7 @@ class Flow():
 
     def merchant_settlement(self):
         try:
-            body = self.request.merchant_credit_flow_retrieve_request
+            body = self.request.merchant_settlement_request
             numbers = body.numbers
             merchant_identity = body.merchant_identity
             exec_settlement = body.exec_settlement
@@ -142,6 +142,8 @@ class Flow():
                 response.head.seq = self.head.seq
                 response.head.code = 1
                 response.head.message = "merchant settlement done"
+
+                response.merchant_settlement_response.settlement = self.message
                 return response
             else:
                 return 1
@@ -390,7 +392,7 @@ def merchant_settlement(**kwargs):
         exec_settlement = kwargs.get("exec_settlement", 0)
         if not exec_settlement:
             # TODO... 换成钱
-            return 60100, settlement
+            return 60200, settlement
 
         # TODO... 积分结算
         flow = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
