@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "merchant.proto";
+
+
+// 用户读取优惠券列表
+message ConsumerRetrieveVoucherRequest {
+    string numbers = 1;     // 管理员
+    string identity = 2;
+    string merchant_identity = 3;    // 商家ID
+};
+
+message ConsumerRetrieveVoucherResponse {
+    repeated MerchantVoucher merchant_voucher = 1;
+};
+
+// 商家读取优惠券列表
+message MerchantRetrieveVoucherRequest {
+    string numbers = 1;     // 管理员
+    string identity = 2;
+
+    string merchant_identity = 3;    // 商家ID
+}
+
+message MerchantRetrieveVoucherResponse {
+    repeated VoucherMaterial vouchers = 1;
+}
+
+// 管理员确认用户优惠券
+message ConfirmVoucherRequest {
+    string numbers = 1;             // 管理员账号
+    string identity = 2;            // 管理员ID
+
+    string voucher_identity = 3;    // 优惠券ID
+    string c_numbers = 4;           // 用户账号
+    string c_identity = 5;          // 用户ID
+    string merchant_identity = 6;   // 商家ID
+}
+
+message ConfirmVoucherResponse {
+
+}
+
+message MerchantVoucher {
+    MerchantMaterial merchant = 1;
+    repeated VoucherMaterial vouchers = 2;
+}
+
+message VoucherMaterial {
+    string activity_identity = 1;   // 对应活动ID
+    string create_time = 2;     // 生成时间
+    string expire_time = 3;     // 过期时间
+    uint32 used = 4;            // 已使用
+
+    string identity = 5;    // 优惠券ID
+}

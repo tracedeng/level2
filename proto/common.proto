@@ -10,6 +10,7 @@ import "business.proto";
 import "flow.proto";
 import "qiniu_token.proto";
 import "activity.proto";
+import "voucher.proto";
 
 message Request {
     RequestHead head = 1;
@@ -80,6 +81,12 @@ message Request {
     ActivityUpdateRequest activity_update_request = 704;
     ActivityDeleteRequest activity_delete_request = 705;
     ConsumerRetrieveActivityRequest consumer_retrieve_activity_request = 706;
+    BuyActivityRequest buy_activity_request = 708;
+
+    // 优惠券，[801, 900]
+    ConsumerRetrieveVoucherRequest consumer_retrieve_voucher_request = 801;
+    MerchantRetrieveVoucherRequest merchant_retrieve_voucher_request = 802;
+    ConfirmVoucherRequest confirm_voucher_request = 803;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -152,6 +159,12 @@ message Response {
     ActivityDeleteResponse activity_delete_response = 705;
     ConsumerRetrieveActivityResponse consumer_retrieve_activity_response = 706;
     //ActivityDetailResponse activity_detail_response = 707;
+    BuyActivityResponse buy_activity_response = 708;
+
+    // 优惠券，[801, 900]
+    ConsumerRetrieveVoucherResponse consumer_retrieve_voucher_response = 801;
+    MerchantRetrieveVoucherResponse merchant_retrieve_voucher_response = 802;
+    ConfirmVoucherResponse confirm_voucher_response = 803;
 
     // 旁路
     VipResponse vip = 10000;

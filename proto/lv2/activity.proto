@@ -65,6 +65,25 @@ message ConsumerRetrieveActivityResponse {
     repeated ActivityMaterial materials = 1;
 }
 
+message BuyActivityRequest {
+    string numbers = 1;     // 用户
+    string identity = 2;
+
+    string merchant_identity = 3;   // 商家ID
+    string activity_identity = 4;   // 活动ID
+
+    repeated SpendCredit credits = 5;   // 用户消费的积分
+    //uint64 total_quantity = 6;            // 用户使用积分总量
+}
+
+message BuyActivityResponse {
+    string voucher = 1;         // 优惠券
+}
+
+message SpendCredit{
+    string identity = 1;     // 积分ID
+    uint64 quantity = 2;     // 积分量
+}
 
 message ActivityMaterial {
     string title = 1;       // 活动标题

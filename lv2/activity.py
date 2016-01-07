@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'tracedeng'
 
-from datetime import datetime
 # from pymongo.collection import ReturnDocument
 from mongo_connection import get_mongo_collection
 import common_pb2
@@ -14,6 +13,7 @@ from account_valid import account_is_valid_merchant, account_is_valid_consumer
 from account_auxiliary import identity_to_numbers, verify_session_key
 from merchant import user_is_merchant_manager
 from google_bug import message_has_field
+from credit import consume_credit
 
 
 class Activity():
@@ -46,7 +46,7 @@ class Activity():
 
             command_handle = {701: self.activity_create, 702: self.activity_retrieve, 703: self.dummy_command,
                               704: self.activity_update, 705: self.activity_delete,
-                              706: self.consumer_retrieve_activity}
+                              706: self.consumer_retrieve_activity, 708: self.buy_activity}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -292,10 +292,6 @@ class Activity():
 
             self.code, self.message = consumer_retrieve_activity_with_numbers(numbers)
 
-            for a in self.message:
-                g_log.debug(a)
-                g_log.debug("abc")
-
             if 70600 == self.code:
                 # 获取成功
                 response = common_pb2.Response()
@@ -308,6 +304,59 @@ class Activity():
                 for value in self.message:
                     material = materials.add()
                     activity_material_copy_from_document(material, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def buy_activity(self):
+        """
+        用户购买优惠活动
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.buy_activity_request
+            numbers = body.numbers
+            identity = body.identity
+            merchant_identity = body.merchant_identity
+            activity_identity = body.activity_identity
+
+            if not numbers:
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 70801
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的用户和要获取的用户不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to buy activity %s", self.numbers, numbers)
+                self.code = 70802
+                self.message = "no privilege to buy activity"
+                return 1
+
+            spend_credit = []
+            for credit in body.credits:
+                spend_credit.append({"identity": credit.identity, "quantity": credit.quantity})
+            kwargs = {"numbers": numbers,"activity_identity": activity_identity, "merchant_identity": merchant_identity,
+                      "spend_credit": spend_credit}
+            g_log.debug("buy activity: %s", kwargs)
+            self.code, self.message = buy_activity(**kwargs)
+
+            if 70800 == self.code:
+                # 获取成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "buy activity done"
+
+                body = response.buy_activity_response
+                body.voucher = self.message
 
                 return response
             else:
@@ -609,6 +658,66 @@ def consumer_retrieve_activity_with_numbers(numbers):
     except Exception as e:
         g_log.error("%s", e)
         return 70617, "exception"
+
+
+# pragma 购买活动API
+def buy_activity(**kwargs):
+    """
+    购买活动
+    :param kwargs: {"numbers": "18688982240", "activity_identity": "xij923f0a8m", "merchant_identity": "xij923f0a8m",
+                    "spend_credit": [{"identity": "a97jiw", "quantity": 100}, ...]}
+    :return: (70800, "yes")/成功，(>70800, "errmsg")/失败
+    """
+    try:
+        # 检查要创建的用户numbers
+        numbers = kwargs.get("numbers", "")
+        if not account_is_valid_consumer(numbers):
+            g_log.warning("not manager %s", numbers)
+            return 70811, "not manager"
+
+        merchant_identity = kwargs.get("merchant_identity", "")
+        activity_identity = kwargs.get("activity_identity", "")
+        spend_credit = kwargs.get("spend_credit", [])
+
+        total_quantity = 0
+        for credit in spend_credit:
+            total_quantity += credit["quantity"]
+
+        collection = get_mongo_collection("activity")
+        if not collection:
+            g_log.error("get collection activity failed")
+            return 70812, "get collection activity failed"
+        activity = collection.find_one({"merchant_identity": merchant_identity, "_id": ObjectId(activity_identity),
+                                        "credit": total_quantity, "deleted": 0})
+        if not activity:
+            g_log.error("activity %s not exist", activity_identity)
+            return 70813, "activity not exist"
+
+        for credit in spend_credit:
+            value = {"numbers": numbers, "merchant_identity": merchant_identity,
+                     "credit_identity": credit["identity"],
+                     "credit": credit["quantity"]}
+            g_log.debug("buy activity using credit: %s", value)
+            consume_credit(**value)
+
+        # 存入优惠券数据库
+        collection = get_mongo_collection("voucher")
+        if not collection:
+            g_log.error("get collection voucher failed")
+            return 70814, "get collection voucher failed"
+        # TODO... 优惠券唯一识别码，二维码
+        value = {"numbers": numbers, "merchant_identity": merchant_identity, "activity_identity": activity_identity,
+                 "create_time": datetime.now(), "expire_time": activity["expire_time"]}
+        g_log.debug("create voucher: %s", value)
+        voucher = collection.insert_one(value).inserted_id
+        if not voucher:
+            g_log.error("create voucher failed")
+            return 70815, "create voucher failed"
+
+        return 70800, str(voucher)
+    except Exception as e:
+        g_log.error("%s", e)
+        return 70816, "exception"
 
 
 def activity_material_copy_from_document(material, value):
