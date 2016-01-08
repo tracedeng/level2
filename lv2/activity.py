@@ -683,6 +683,7 @@ def buy_activity(**kwargs):
         for credit in spend_credit:
             total_quantity += credit["quantity"]
 
+        # 检查活动是否存在
         collection = get_mongo_collection("activity")
         if not collection:
             g_log.error("get collection activity failed")
@@ -693,6 +694,7 @@ def buy_activity(**kwargs):
             g_log.error("activity %s not exist", activity_identity)
             return 70813, "activity not exist"
 
+        # 扣除用户积分
         for credit in spend_credit:
             value = {"numbers": numbers, "merchant_identity": merchant_identity,
                      "credit_identity": credit["identity"],
@@ -707,7 +709,8 @@ def buy_activity(**kwargs):
             return 70814, "get collection voucher failed"
         # TODO... 优惠券唯一识别码，二维码
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "activity_identity": activity_identity,
-                 "create_time": datetime.now(), "expire_time": activity["expire_time"]}
+                 "create_time": datetime.now(), "expire_time": activity["expire_time"],
+                 "activity_title": activity["title"], "used": 0}
         g_log.debug("create voucher: %s", value)
         voucher = collection.insert_one(value).inserted_id
         if not voucher:

@@ -51,6 +51,7 @@ message VoucherMaterial {
     string create_time = 2;     // 生成时间
     string expire_time = 3;     // 过期时间
     uint32 used = 4;            // 已使用
+    string activity_title = 5;  // 活动标题
 
-    string identity = 5;    // 优惠券ID
+    string identity = 6;    // 优惠券ID
 }

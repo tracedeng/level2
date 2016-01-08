@@ -361,8 +361,9 @@ def confirm_voucher(**kwargs):
 def voucher_copy_from_document(material, value):
     material.activity_identity = value["activity_identity"]
     material.used = int(value["used"])
+    material.activity_title = value["activity_title"]
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
-    # material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
     material.identity = str(value["_id"])
 
 
