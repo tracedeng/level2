@@ -261,11 +261,11 @@ def upload_token_retrieve_online(kind, numbers, merchant_identity=""):
     q = Auth(g_access_key, g_secret_key)
 
     # 回调url
-    kind_to_path = {"c_avatar": "consumer", "m_logo": "merchant", "ma_poster": "activity"}
+    kind_to_path = {"c_avatar": "consumer", "m_logo": "merchant", "a_poster": "activity"}
     callback_url = "%s/%s" % (g_qiniu_callback_url, kind_to_path.get(kind, "dummy"))
 
     # 回调post参数
-    kind_to_type = {"c_avatar": "update_avatar", "m_logo": "update_logo", "ma_poster": "update_poster"}
+    kind_to_type = {"c_avatar": "update_avatar", "m_logo": "update_logo", "a_poster": "update_poster"}
     callback_body_type = kind_to_type.get(kind, "dummy")
     callback_body = {"type": callback_body_type, "numbers": numbers, "merchant": merchant_identity, "hash": "$(etags)"}
 
@@ -285,7 +285,7 @@ def upload_token_retrieve_online(kind, numbers, merchant_identity=""):
         # 平台修改商家logo资料
         if not account_is_valid_merchant(numbers):
             return 70118, "invalid consumer account"
-    elif kind == "m_activity_poster":
+    elif kind == "a_poster":
         # 平台修改活动图片资料
         if not account_is_valid_merchant(numbers):
             return 70119, "invalid consumer account"
@@ -306,7 +306,7 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
     """
     q = Auth(g_access_key, g_secret_key)
 
-    kind_to_key = {"c_avatar": "c/avatar", "m_logo": "m/logo", "ma_poster": "ma/poster"}
+    kind_to_key = {"c_avatar": "c/avatar", "m_logo": "m/logo", "a_poster": "a/poster"}
     key = "%s/%s/%s" % (kind_to_key.get(kind, "dummy"), numbers, datetime.now().strftime('%b%d%y%H%M%S'))
     policy = {"scope": g_bucket_name_debug + ":" + key, "mimeLimit": "image/*"}
     upload_token = q.upload_token(g_bucket_name_debug, key=key, expires=3600, policy=policy)
@@ -332,13 +332,14 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         # if code != 30400:
         #     g_log.warning("update merchant logo %s failed", key)
         #     return 70115, "update merchant logo failed"
-    elif kind == "m_activity_poster":
+    elif kind == "a_poster":
         # 平台修改活动图片资料
         if not account_is_valid_merchant(numbers):
             return 70116, "invalid merchant account"
-        pass
+        if not merchant_identity:
+            return 70117, "missing merchant identity"
     else:
         g_log.debug("unsupported resource kind %s", kind)
-        return 70116, "unsupported resource kind"
+        return 70118, "unsupported resource kind"
 
     return 70100, (upload_token, key)
