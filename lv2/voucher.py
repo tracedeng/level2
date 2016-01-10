@@ -172,7 +172,7 @@ class Voucher():
                 # 根据包体中的merchant_identity获取numbers
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
-                    self.code = 80201
+                    self.code = 80301
                     self.message = "missing argument"
                     return 1
 
@@ -180,7 +180,7 @@ class Voucher():
                 # 根据包体中的merchant_identity获取numbers
                 code, c_numbers = identity_to_numbers(c_identity)
                 if code != 10500:
-                    self.code = 80202
+                    self.code = 80302
                     self.message = "missing argument"
                     return 1
 
@@ -188,7 +188,7 @@ class Voucher():
                       "voucher_identity": voucher_identity}
             self.code, self.message = confirm_voucher(**kwargs)
 
-            if 80200 == self.code:
+            if 80300 == self.code:
                 # 更新成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
