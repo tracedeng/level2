@@ -6,7 +6,7 @@ import random
 from datetime import datetime
 from bson.objectid import ObjectId
 from pymongo.collection import ReturnDocument
-from qiniu import Auth
+from qiniu import Auth, put_data, put_file
 import common_pb2
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
@@ -302,11 +302,11 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
     指定客户头像路径c/avatar/numbers, 商家logo路径m/logo/numbers, 商家活动路径ma/poster/numbers
     :param kind: 资源类型
     :param numbers: 账号
-    :return:
+    :return: (upload_token, key)
     """
     q = Auth(g_access_key, g_secret_key)
 
-    kind_to_key = {"c_avatar": "c/avatar", "m_logo": "m/logo", "a_poster": "a/poster"}
+    kind_to_key = {"c_avatar": "c/avatar", "m_logo": "m/logo", "m_qrcode": "m/qrcode", "a_poster": "a/poster"}
     key = "%s/%s/%s" % (kind_to_key.get(kind, "dummy"), numbers, datetime.now().strftime('%b%d%y%H%M%S'))
     policy = {"scope": g_bucket_name_debug + ":" + key, "mimeLimit": "image/*"}
     upload_token = q.upload_token(g_bucket_name_debug, key=key, expires=3600, policy=policy)
@@ -332,6 +332,11 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         # if code != 30400:
         #     g_log.warning("update merchant logo %s failed", key)
         #     return 70115, "update merchant logo failed"
+    elif kind == "m_qrcode":
+        if not account_is_valid_merchant(numbers):
+            return 70113, "invalid merchant account"
+        if not merchant_identity:
+            return 70114, "missing merchant identity"
     elif kind == "a_poster":
         # 平台修改活动图片资料
         if not account_is_valid_merchant(numbers):
@@ -343,3 +348,32 @@ def upload_token_retrieve_debug(kind, numbers, merchant_identity=""):
         return 70118, "unsupported resource kind"
 
     return 70100, (upload_token, key)
+
+
+def upload_data(token, key, data):
+    # 直接上传二进制流
+    ret, info = put_data(token, key, data)
+    # assert ret['key'] == key
+    if info.status_code == 200:
+        return 70400, ret
+    else:
+        g_log.debug("upload file failed, (%d, %s)", info.status_code, info.error)
+        return 70401, info.error
+
+
+def upload_file(token, key, path):
+    """
+    上传文件到七牛服务器
+    :param token:
+    :param key:
+    :param path: 文件本地路径
+    :return:
+    """
+    ret, info = put_file(token, key, path, mime_type="image/*", check_crc=True)
+    # assert ret['key'] == key
+    # assert ret['hash'] == etag(localfile)
+    if info.status_code == 200:
+        return 70400, ret
+    else:
+        g_log.debug("upload file failed, (%d, %s)", info.status_code, info.error)
+        return 70401, info.error

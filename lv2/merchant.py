@@ -690,6 +690,9 @@ def merchant_create(**kwargs):
             g_log.error("create merchant %s manager %s many-many relation failed", merchant_identity, numbers)
             return 30116, "create merchant founder failed"
 
+        # from qiniu_upload import upload_merchant_qrcode
+        # if upload_merchant_qrcode(numbers, merchant_identity) == 1:
+
         # 创建商家默认提供积分上线
         code, message = gift_upper_bound(**{"numbers": 1000000, "merchant_identity": merchant_identity, "bound": 10000})
         if code != 60100:
