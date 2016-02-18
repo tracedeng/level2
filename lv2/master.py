@@ -20,6 +20,7 @@ import flow
 import qiniu_token
 import activity
 import voucher
+import maintain
 
 __all__ = ['Master']
 
@@ -87,6 +88,8 @@ class Master():
                 response = activity.enter(request)
             elif head.cmd < 900:
                 response = voucher.enter(request)
+            elif head.cmd < 1000:
+                response = maintain.enter(request)
             else:
                 # 非法请求，无效命令，不回包
                 # return 0

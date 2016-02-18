@@ -11,6 +11,7 @@ import "flow.proto";
 import "qiniu_token.proto";
 import "activity.proto";
 import "voucher.proto";
+import "maintain.proto";
 
 message Request {
     RequestHead head = 1;
@@ -87,6 +88,12 @@ message Request {
     ConsumerRetrieveVoucherRequest consumer_retrieve_voucher_request = 801;
     MerchantRetrieveVoucherRequest merchant_retrieve_voucher_request = 802;
     ConfirmVoucherRequest confirm_voucher_request = 803;
+
+    // 统计数据，反馈，[901, 1000]
+    VersionReportRequest version_report_request = 901;
+    BootReportRequest boot_report_request = 902;
+    ActiveReportRequest active_report_request = 903;
+    FeedbackRequest feed_back_request = 904;
 
     // 旁路，[1000, +inf)
     VipRequest vip = 10000;
@@ -165,6 +172,12 @@ message Response {
     ConsumerRetrieveVoucherResponse consumer_retrieve_voucher_response = 801;
     MerchantRetrieveVoucherResponse merchant_retrieve_voucher_response = 802;
     ConfirmVoucherResponse confirm_voucher_response = 803;
+
+    // 统计数据，反馈，[901, 1000]
+    VersionReportResponse version_report_response = 901;
+    BootReportResponse boot_report_response = 902;
+    ActiveReportResponse active_report_response = 903;
+    FeedbackResponse feed_back_response = 904;
 
     // 旁路
     VipResponse vip = 10000;

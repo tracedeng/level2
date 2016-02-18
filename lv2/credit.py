@@ -812,7 +812,7 @@ def confirm_consumption(**kwargs):
             g_log.error("manager %s is not merchant %s manager", numbers, merchant_identity)
             return 40316, "manager is not merchant manager"
 
-        # TODO... 平台根据兑换比例计算
+        # TODO... 平台根据兑换比例计算，判断是已发行积分否已经超过最大可发行量
         credit = sums
 
         collection = get_mongo_collection("credit")

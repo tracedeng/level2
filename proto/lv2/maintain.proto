@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+// 客户端版本上报，需要用户信息，所以登录后上报
+message VersionReportRequest {
+    string numbers = 1;     //
+    string identity = 2;
+
+    string version = 3;     // 版本编号
+};
+
+message VersionReportResponse {
+
+};
+
+// 启动上报
+message BootReportRequest {
+
+}
+
+message BootReportResponse {
+
+}
+
+// become active上报
+message ActiveReportRequest {
+    string numbers = 1;
+    string mode = 2;    // app身份，merchant or consumer
+}
+
+message ActiveReportResponse {
+}
+
+// 意见反馈
+message FeedbackRequest {
+    string numbers = 1;
+    string identity = 2;
+    string version = 3;
+    string mode = 4;    // app身份，merchant or consumer
+
+    string feedback = 5;    // 反馈内容
+}
+
+message FeedbackResponse {
+
+}
+

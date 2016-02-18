@@ -32,7 +32,7 @@ message BusinessParametersRetrieveResponse {
     BusinessParametersMaterial material = 1;
 }
 
-// 读取商家经营参数
+// 批量读取商家经营参数
 message BusinessParametersBatchRetrieveRequest {
     string numbers = 1;
     string identity = 2;
