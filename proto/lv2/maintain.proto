@@ -12,16 +12,16 @@ message VersionReportResponse {
 
 };
 
-// 启动上报
+// 启动上报，不需要登录态
 message BootReportRequest {
-
+    string version = 1;
 }
 
 message BootReportResponse {
 
 }
 
-// become active上报
+// become active上报，需要用户信息，所以登录后上报
 message ActiveReportRequest {
     string numbers = 1;
     string mode = 2;    // app身份，merchant or consumer
