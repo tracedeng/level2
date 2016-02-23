@@ -61,7 +61,7 @@ message MerchantBalanceRecordResponse {
 
 message BalanceRecord {
     MerchantMaterial merchant = 1;
-    repeated RechargeRecordAggressive aggressive_record = 2;
+    repeated BalanceRecordAggressive aggressive_record = 2;
 }
 
 message BalanceRecordAggressive {

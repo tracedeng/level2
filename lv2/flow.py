@@ -644,14 +644,15 @@ def balance_record_retrieve_all(numbers):
 
 def merchant_flow_copy_from_document(material, value):
     g_log.debug("yes")
-    g_log.debug(value["may_issued"])
+    g_log.debug(value["balance"])
     material.upper_bound = int(value["upper_bound"])
-    material.may_issued = int(value["may_issued"])
+    # material.may_issued = int(value["may_issued"])
+    material.may_issued = int(value["upper_bound"]) - int(value["issued"])
     material.issued = int(value["issued"])
-    material.interchange_in = int(value["interchange_in"])
-    material.interchange_out = int(value["interchange_out"])
+    # material.interchange_in = int(value["interchange_in"])
+    # material.interchange_out = int(value["interchange_out"])
     # material.interchange_consumption = int(value["interchange_consumption"])
-    material.consumption = int(value["consumption"])
+    # material.consumption = int(value["consumption"])
     material.balance = int(value["balance"])
     material.identity = str(value["_id"])
 
