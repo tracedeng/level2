@@ -46,8 +46,10 @@ class Business():
             command_handle = {401: self.platform_update_parameters, 402: self.business_parameters_retrieve,
                               403: self.business_parameters_batch_retrieve,
                               404: self.consumption_ratio_update, 405: self.dummy_command,
-                              406: self.parameters_record_retrieve, 407: self.merchant_recharge,
-                              408: self.recharge_record_retrieve}
+                              406: self.parameters_record_retrieve}
+                              # , 407: self.merchant_recharge,
+                              # 408: self.merchant_Withdrawals, 409: self.balance_record_retrieve}
+            
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -250,97 +252,97 @@ class Business():
             g_log.error("%s", e)
             return 0
 
-    def merchant_recharge(self):
-        """
-        商家充值
-        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
-        """
-        try:
-            body = self.request.merchant_recharge_request
-            numbers = body.numbers
-            merchant_identity = body.merchant_identity
-            money = body.money
-            identity = body.identity
-
-            if not numbers:
-                # 根据包体中的identity获取numbers
-                code, numbers = identity_to_numbers(identity)
-                if code != 10500:
-                    self.code = 50701
-                    self.message = "missing argument"
-                    return 1
-
-            kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "money": money}
-            g_log.debug("merchant recharge: %s", kwargs)
-            self.code, self.message = merchant_recharge(**kwargs)
-
-            if 50700 == self.code:
-                # 更新成功
-                response = common_pb2.Response()
-                response.head.cmd = self.head.cmd
-                response.head.seq = self.head.seq
-                response.head.code = 1
-                response.head.message = "merchant recharge done"
-                return response
-            else:
-                return 1
-        except Exception as e:
-            g_log.error("%s", e)
-            return 0
-
-    def recharge_record_retrieve(self):
-        """
-        读取充值纪录
-        :return:
-        """
-        try:
-            body = self.request.merchant_recharge_record_request
-            numbers = body.numbers
-            merchant_identity = body.merchant_identity
-            identity = body.identity
-
-            if not numbers:
-                # 根据包体中的identity获取numbers
-                code, numbers = identity_to_numbers(identity)
-                if code != 10500:
-                    self.code = 50801
-                    self.message = "missing argument"
-                    return 1
-
-            if merchant_identity:
-                g_log.debug("%s retrieve merchant %s recharge record", numbers, merchant_identity)
-            else:
-                g_log.debug("%s retrieve all merchant recharge record", numbers)
-            self.code, self.message = recharge_record_retrieve(numbers, merchant_identity)
-
-            if 50800 == self.code:
-                # 更新成功
-                response = common_pb2.Response()
-                response.head.cmd = self.head.cmd
-                response.head.seq = self.head.seq
-                response.head.code = 1
-                response.head.message = "retrieve recharge record done"
-
-                recharge_record = response.merchant_recharge_record_response.recharge_record
-                last_merchant = ""
-                # 遍历管理员所有商家
-                for value in self.message:
-                    if last_merchant != value["merchant_identity"]:
-                        recharge_record_one = recharge_record.add()
-                        # 商家资料
-                        code, merchants = merchant_retrieve_with_merchant_identity_only(value["merchant_identity"])
-                        merchant_material_copy_from_document(recharge_record_one.merchant, merchants[0])
-                        aggressive_record = recharge_record_one.aggressive_record
-                    aggressive_record_one = aggressive_record.add()
-                    last_merchant = value["merchant_identity"]
-                    recharge_record_copy_from_document(aggressive_record_one, value)
-
-                return response
-            else:
-                return 1
-        except Exception as e:
-            g_log.error("%s", e)
-            return 0
+    # def merchant_recharge(self):
+    #     """
+    #     商家充值
+    #     :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+    #     """
+    #     try:
+    #         body = self.request.merchant_recharge_request
+    #         numbers = body.numbers
+    #         merchant_identity = body.merchant_identity
+    #         money = body.money
+    #         identity = body.identity
+    #
+    #         if not numbers:
+    #             # 根据包体中的identity获取numbers
+    #             code, numbers = identity_to_numbers(identity)
+    #             if code != 10500:
+    #                 self.code = 50701
+    #                 self.message = "missing argument"
+    #                 return 1
+    #
+    #         kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "money": money}
+    #         g_log.debug("merchant recharge: %s", kwargs)
+    #         self.code, self.message = merchant_recharge(**kwargs)
+    #
+    #         if 50700 == self.code:
+    #             # 更新成功
+    #             response = common_pb2.Response()
+    #             response.head.cmd = self.head.cmd
+    #             response.head.seq = self.head.seq
+    #             response.head.code = 1
+    #             response.head.message = "merchant recharge done"
+    #             return response
+    #         else:
+    #             return 1
+    #     except Exception as e:
+    #         g_log.error("%s", e)
+    #         return 0
+    #
+    # def balance_record_retrieve(self):
+    #     """
+    #     读取充值纪录
+    #     :return:
+    #     """
+    #     try:
+    #         body = self.request.merchant_balance_record_request
+    #         numbers = body.numbers
+    #         merchant_identity = body.merchant_identity
+    #         identity = body.identity
+    #
+    #         if not numbers:
+    #             # 根据包体中的identity获取numbers
+    #             code, numbers = identity_to_numbers(identity)
+    #             if code != 10500:
+    #                 self.code = 50801
+    #                 self.message = "missing argument"
+    #                 return 1
+    #
+    #         if merchant_identity:
+    #             g_log.debug("%s retrieve merchant %s recharge record", numbers, merchant_identity)
+    #         else:
+    #             g_log.debug("%s retrieve all merchant recharge record", numbers)
+    #         self.code, self.message = balance_record_retrieve(numbers, merchant_identity)
+    #
+    #         if 50800 == self.code:
+    #             # 更新成功
+    #             response = common_pb2.Response()
+    #             response.head.cmd = self.head.cmd
+    #             response.head.seq = self.head.seq
+    #             response.head.code = 1
+    #             response.head.message = "retrieve recharge record done"
+    #
+    #             balance_record = response.merchant_balance_record_response.balance_record
+    #             last_merchant = ""
+    #             # 遍历管理员所有商家
+    #             for value in self.message:
+    #                 if last_merchant != value["merchant_identity"]:
+    #                     balance_record_one = balance_record.add()
+    #                     # 商家资料
+    #                     code, merchants = merchant_retrieve_with_merchant_identity_only(value["merchant_identity"])
+    #                     merchant_material_copy_from_document(balance_record_one.merchant, merchants[0])
+    #                     aggressive_record = balance_record_one.aggressive_record
+    #                 aggressive_record_one = aggressive_record.add()
+    #                 last_merchant = value["merchant_identity"]
+    #                 balance_record_copy_from_document(aggressive_record_one, value)
+    #
+    #             return response
+    #         else:
+    #             return 1
+    #     except Exception as e:
+    #         g_log.error("%s", e)
+    #         return 0
 
     def dummy_command(self):
         # 无效的命令，不回包
@@ -365,7 +367,7 @@ def enter(request):
 # pragma 平台修改商家保证金、账户余额换积分比率API
 def platform_update_parameters(**kwargs):
     """
-    平台修改商家保证金、账户余额换积分比率
+    平台修改商家保证金、账户余额换积分比率，必须同时提供
     :param kwargs: {"numbers": "18688982240", "merchant_identity": "", "bond": 1000, "balance_ratio": 1}
 
     :return: (50100, "yes")/成功，(>50100, "errmsg")/失败
@@ -427,8 +429,9 @@ def platform_update_parameters(**kwargs):
             return 50116, "insert parameters record failed"
 
         # 更新商家积分总量
-        code, message = upper_bound_update(**{"numbers": 1000000, "merchant_identity": merchant_identity, "bond": bond})
-        if code != 60100:
+        code, message = upper_bound_update(**{"numbers": 1000000, "merchant_identity": merchant_identity, "bond": bond,
+                                              "ratio": balance_ratio})
+        if code != 60300:
             g_log.error("platform update parameters failed, set upper bound failed")
             return 50118, "set upper bound failed"
 
@@ -763,129 +766,144 @@ def parameters_record_retrieve_all(numbers):
         return 50617, "exception"
 
 
-# pragma 商家充值API
-def merchant_recharge(**kwargs):
-    """
-    更新消费换积分比率，未认证商家不允许操作
-    :param kwargs: {"numbers": 118688982240, "merchant_identity": "", "money": 100}
-    :return: (50700, "yes")/成功，(>50700, "errmsg")/失败
-    """
-    try:
-        # 检查要请求用户numbers必须是平台管理员
-        numbers = kwargs.get("numbers", "")
-        if not account_is_valid_merchant(numbers):
-            g_log.warning("not manager %s", numbers)
-            return 50711, "not manager"
+def consumption_to_credit(merchant_identity, money):
+    collection = get_mongo_collection("parameters")
+    if not collection:
+        g_log.error("get collection business_parameters failed")
+        return 51011, "get collection business_parameters failed"
+    business_parameters = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
+    if not business_parameters:
+        g_log.error("merchant %s parameters not exist", merchant_identity)
+        return 51012, "merchant parameters not exist"
+    credit = money / business_parameters["consumption_ratio"]
+    g_log.debug("consume money[%d], ratio[%d], credit[%d]", money, business_parameters["consumption_ratio"], credit)
 
-        # 检查管理员和商家关系
-        merchant_identity = kwargs.get("merchant_identity", "")
-        merchant = user_is_merchant_manager(numbers, merchant_identity)
-        if not merchant:
-            g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 50712, "not manager"
-        # merchant_founder = merchant["merchant_founder"]
-        # g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
-
-        # 认证用户才可以充值
-        if not merchant_is_verified(merchant_identity):
-            g_log.error("merchant %s not verified", merchant_identity)
-            return 50718, "not verified"
-
-        # TODO...充值金额检查
-        money = kwargs.get("money", 0)
-
-        # 存入数据库
-        collection = get_mongo_collection("parameters")
-        if not collection:
-            g_log.error("get collection parameters failed")
-            return 50713, "get collection parameters failed"
-
-        business_parameters = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
-                                                             {"$inc": {"balance": money}},
-                                                             return_document=ReturnDocument.AFTER)
-        if not business_parameters:
-            g_log.error("update merchant %s parameters failed", merchant_identity)
-            return 50714, "update failed"
-        g_log.debug("recharge done, money: %s", business_parameters["balance"])
-
-        # 更新记录入库
-        collection = get_mongo_collection("recharge_record")
-        if not collection:
-            g_log.error("get collection recharge record failed")
-            return 50715, "get collection recharge record failed"
-        result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
-                                        "operator": numbers, "money": money})
-        if not result:
-            g_log.error("insert recharge record failed")
-            return 50716, "insert recharge record failed"
-        return 50700, "yes"
-    except Exception as e:
-        g_log.error("%s", e)
-        return 50717, "exception"
+    return 51000, credit
 
 
-def recharge_record_retrieve(numbers, merchant_identity):
-    """
-    读取充值纪录，没给出merchant_identity则读取全部
-    :param numbers: 平台账号或管理员账号
-    :param merchant_identity: 商家ID
-    :return:
-    """
-    try:
-        if not merchant_identity:
-            # 平台读取所有操作纪录
-            return recharge_record_retrieve_all(numbers)
-
-        # 检查管理员和商家关系
-        merchant = user_is_merchant_manager(numbers, merchant_identity)
-        if not merchant:
-            g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 50812, "not manager"
-
-        # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection("recharge_record")
-        if not collection:
-            g_log.error("get collection recharge record failed")
-            return 50813, "get collection recharge record failed"
-        records = collection.find({"merchant_identity": merchant_identity})
-        if not records:
-            g_log.error("retrieve recharge record failed")
-
-        return 50800, records
-    except Exception as e:
-        g_log.error("%s", e)
-        return 50814, "exception"
-
-
-def recharge_record_retrieve_all(numbers):
-    """
-    查找所有商家的充值操作纪录
-    :param numbers:
-    :return:
-    """
-    try:
-        if not account_is_platform(numbers):
-            g_log.error("%s not platform", numbers)
-            return 50815, "no privilege"
-
-        # 广播查找所有商家的经营参数更新纪录
-        collection = get_mongo_collection("recharge_record")
-        if not collection:
-            g_log.error("get collection recharge record failed")
-            return 50816, "get collection recharge record failed"
-        records = collection.find({}).sort("merchant_identity")
-        if not records:
-            g_log.error("retrieve recharge record failed")
-
-        return 50800, records
-    except Exception as e:
-        g_log.error("%s", e)
-        return 50817, "exception"
+# # pragma 商家充值API
+# def merchant_recharge(**kwargs):
+#     """
+#     更新消费换积分比率，未认证商家不允许操作
+#     :param kwargs: {"numbers": 118688982240, "merchant_identity": "", "money": 100}
+#     :return: (50700, "yes")/成功，(>50700, "errmsg")/失败
+#     """
+#     try:
+#         # 检查要请求用户numbers必须是平台管理员
+#         numbers = kwargs.get("numbers", "")
+#         if not account_is_valid_merchant(numbers):
+#             g_log.warning("not manager %s", numbers)
+#             return 50711, "not manager"
+#
+#         # 检查管理员和商家关系
+#         merchant_identity = kwargs.get("merchant_identity", "")
+#         merchant = user_is_merchant_manager(numbers, merchant_identity)
+#         if not merchant:
+#             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
+#             return 50712, "not manager"
+#         # merchant_founder = merchant["merchant_founder"]
+#         # g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
+#
+#         # 认证用户才可以充值
+#         if not merchant_is_verified(merchant_identity):
+#             g_log.error("merchant %s not verified", merchant_identity)
+#             return 50718, "not verified"
+#
+#         # TODO...充值金额检查
+#         money = kwargs.get("money", 0)
+#
+#         # 存入数据库
+#         collection = get_mongo_collection("parameters")
+#         if not collection:
+#             g_log.error("get collection parameters failed")
+#             return 50713, "get collection parameters failed"
+#
+#         business_parameters = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
+#                                                              {"$inc": {"balance": money}},
+#                                                              return_document=ReturnDocument.AFTER)
+#         if not business_parameters:
+#             g_log.error("update merchant %s parameters failed", merchant_identity)
+#             return 50714, "update failed"
+#         g_log.debug("recharge done, money: %s", business_parameters["balance"])
+#
+#         # 更新记录入库
+#         collection = get_mongo_collection("balance_record")
+#         if not collection:
+#             g_log.error("get collection balance record failed")
+#             return 50715, "get collection balance record failed"
+#         result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
+#                                         "operator": numbers, "money": money, "type": "recharge"})
+#         if not result:
+#             g_log.error("insert recharge record failed")
+#             return 50716, "insert recharge record failed"
+#         return 50700, "yes"
+#     except Exception as e:
+#         g_log.error("%s", e)
+#         return 50717, "exception"
+#
+#
+# def balance_record_retrieve(numbers, merchant_identity):
+#     """
+#     读取充值、提现纪录，没给出merchant_identity则读取全部
+#     :param numbers: 平台账号或管理员账号
+#     :param merchant_identity: 商家ID
+#     :return:
+#     """
+#     try:
+#         if not merchant_identity:
+#             # 平台读取所有操作纪录
+#             return balance_record_retrieve_all(numbers)
+#
+#         # 检查管理员和商家关系
+#         merchant = user_is_merchant_manager(numbers, merchant_identity)
+#         if not merchant:
+#             g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
+#             return 50912, "not manager"
+#
+#         # 广播查找所有商家的经营参数更新纪录
+#         collection = get_mongo_collection("balance_record")
+#         if not collection:
+#             g_log.error("get collection balance record failed")
+#             return 50913, "get collection balance record failed"
+#         records = collection.find({"merchant_identity": merchant_identity})
+#         if not records:
+#             g_log.error("retrieve balance record failed")
+#
+#         return 50900, records
+#     except Exception as e:
+#         g_log.error("%s", e)
+#         return 50914, "exception"
+#
+#
+# def balance_record_retrieve_all(numbers):
+#     """
+#     查找所有商家的充值操作纪录
+#     :param numbers:
+#     :return:
+#     """
+#     try:
+#         if not account_is_platform(numbers):
+#             g_log.error("%s not platform", numbers)
+#             return 50915, "no privilege"
+#
+#         # 广播查找所有商家的经营参数更新纪录
+#         collection = get_mongo_collection("balance_record")
+#         if not collection:
+#             g_log.error("get collection balance record failed")
+#             return 50916, "get collection balance record failed"
+#         records = collection.find({}).sort("merchant_identity")
+#         if not records:
+#             g_log.error("retrieve balance record failed")
+#
+#         return 50900, records
+#     except Exception as e:
+#         g_log.error("%s", e)
+#         return 50917, "exception"
 
 
 def business_parameters_material_copy_from_document(material, value):
     material.bond = int(value["bond"])
-    material.balance = int(value["balance"])
+    # material.balance = int(value["balance"])
     material.balance_ratio = int(value["balance_ratio"])
     material.consumption_ratio = int(value["consumption_ratio"])
     material.identity = str(value["_id"])
@@ -898,8 +916,9 @@ def business_parameters_record_copy_from_document(material, value):
     material.identity = str(value["_id"])
 
 
-def recharge_record_copy_from_document(material, value):
-    material.operator = value["operator"]
-    material.time = value["time"].strftime("%Y-%m-%d %H:%M:%S")
-    material.money = value["money"]
-    material.identity = str(value["_id"])
+# def balance_record_copy_from_document(material, value):
+#     material.operator = value["operator"]
+#     material.time = value["time"].strftime("%Y-%m-%d %H:%M:%S")
+#     material.money = value["money"]
+#     material.identity = str(value["_id"])
+#     material.direction = value["direction"]

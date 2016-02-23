@@ -39,3 +39,33 @@ def gift_upper_bound(**kwargs):
     except Exception as e:
         g_log.error("%s", e)
         return 60117, "exception"
+
+
+def credit_exceed_upper(**kwargs):
+    """
+    商家是否允许发行本次积分
+    :param kwargs: {"merchant_identity": "", "credit": 1000}
+    :return: (60100, True|False)/成功，(>60100, "errmsg")/失败
+    """
+    try:
+        merchant_identity = kwargs.get("merchant_identity", "")
+        collection = get_mongo_collection("flow")
+        if not collection:
+            g_log.error("get collection flow failed")
+            return 61011, "get collection flow failed"
+        flow = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
+        if not flow:
+            g_log.error("merchant %s not exist", merchant_identity)
+            return 61012, "merchant not exist"
+
+        credit = kwargs.get("credit", 0)
+        issued = flow["issued"]
+        upper = flow["upper_bound"]
+        if issued + credit > upper:
+            g_log.debug("issued[%d] + credit[%d] > upper[%d]", issued, credit, upper)
+            return 61000, False
+
+        return 61000, True
+    except Exception as e:
+        g_log.error("%s", e)
+        return 61014, "exception"

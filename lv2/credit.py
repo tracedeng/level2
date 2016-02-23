@@ -15,6 +15,7 @@ from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_mer
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
     merchant_retrieve_with_merchant_identity_only
 from consumer import consumer_retrieve_with_numbers, consumer_material_copy_from_document
+from business import consumption_to_credit
 
 
 class Credit():
@@ -227,13 +228,12 @@ class Credit():
             self.code, self.message = confirm_consumption(**kwargs)
 
             if 40300 == self.code:
-                # 创建成功
+                # 确认成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
                 response.head.message = "confirm consumption done"
-
                 return response
             else:
                 return 1
@@ -813,20 +813,36 @@ def confirm_consumption(**kwargs):
             return 40316, "manager is not merchant manager"
 
         # TODO... 平台根据兑换比例计算，判断是已发行积分否已经超过最大可发行量
-        credit = sums
+        code, message = consumption_to_credit(merchant_identity, sums)
+        if code != 51000:
+            g_log.error("calculus money to credit failed, %s", message)
+            return 40317, "calculus money to credit failed"
+        else:
+            credit = int(message)
+
+        from flow_auxiliary import credit_exceed_upper
+        code, message = credit_exceed_upper(**{"merchant_identity": merchant_identity, "credit": credit})
+        if code == 61000:
+            if not bool(message):
+                g_log.debug("apply credit exceed upper bound")
+                return 40322, "apply credit exceed upper bound"
+            g_log.debug("apply credit allow")
+        else:
+            g_log.debug("apply not allowed")
+            return 40323, "check upper bound failed"
 
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40318, "get collection credit failed"
 
-        credit = collection.find_one_and_update({"_id": credit_identity, "exchanged": 0, "sums": sums,
+        result = collection.find_one_and_update({"_id": credit_identity, "exchanged": 0, "sums": sums,
                                                  "merchant_identity": merchant_identity},
                                                 {"$set": {"exchanged": 1, "manager_numbers": numbers, "credit": credit,
                                                           "exchange_time": datetime.now(), "credit_rest": credit}},
                                                 return_document=ReturnDocument.AFTER)
-        g_log.debug(credit)
-        if not credit or not credit["exchanged"]:
+        g_log.debug(result)
+        if not result or not result["exchanged"]:
             g_log.error("confirm consumption failed")
             return 40319, "confirm consumption failed"
 

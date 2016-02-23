@@ -2,9 +2,7 @@ syntax = "proto3";
 
 import "merchant.proto";
 
-//积分生成、消费、兑换、查询操作，可电话号码或者用户ID做KEY
-
-// 生成消费记录
+// 读取商家积分、账户余额
 message MerchantCreditFlowRetrieveRequest {
     string numbers = 1;     // 管理员手机号
     string identity = 2;    // 管理员ID
@@ -26,6 +24,54 @@ message MerchantSettlementResponse {
     int64 settlement = 1;   // 结算量，TODO... 换成钱
 };
 
+// 商家充值
+message MerchantRechargeRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 money = 4;               // 充值金额
+}
+
+message MerchantRechargeResponse {
+
+}
+
+// 商家提现
+message MerchantWithdrawalsRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 money = 4;               // 提现金额
+}
+
+message MerchantWithdrawalsResponse {
+
+}
+
+// 商家充值、提现纪录查询
+message MerchantBalanceRecordRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message MerchantBalanceRecordResponse {
+    repeated BalanceRecord balance_record = 1;
+}
+
+message BalanceRecord {
+    MerchantMaterial merchant = 1;
+    repeated RechargeRecordAggressive aggressive_record = 2;
+}
+
+message BalanceRecordAggressive {
+    string operator = 1;
+    uint64 money = 2;
+    string time = 3;
+    string identity = 4;    //ID，response使用
+    string direction = 5;   // recharge-充值， withdrawals-提现
+}
+
 message CreditFlow {
     MerchantMaterial merchant = 1;
     FlowMaterial material = 2;
@@ -33,11 +79,13 @@ message CreditFlow {
 
 message FlowMaterial {
     string identity = 1;    //response 使用
-    uint64 upper_bound = 2;  // 积分总量
-    uint64 may_issued = 3;  // 可发行积分量
-    uint64 issued = 4;      // 已发行积分量
-    uint64 interchange_in = 5;  // 兑换进的积分
-    uint64 interchange_out = 6; // 兑换出的积分
-    uint64 interchange_consumption = 7;    // 兑换积分消费量
-    int64 settlement = 8;   // 已提现的积分
+    uint64 upper_bound = 2;  // 积分总量，实时
+    uint64 may_issued = 3;  // 可发行积分量，实时
+    uint64 issued = 4;      // 已发行积分量，实时
+    uint64 interchange_in = 5;  // 兑换进的积分，累加量
+    uint64 interchange_out = 6; // 兑换出的积分，累加量
+    uint64 consumption = 7;     // 消费积分量，累加量
+    uint64 balance = 8;     // 账户余额，实时
+    //uint64 interchange_consumption = 7;    // 兑换积分消费量
+    //int64 settlement = 8;   // 已提现的积分
 }

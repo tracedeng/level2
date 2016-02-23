@@ -78,20 +78,32 @@ message MerchantRechargeResponse {
 
 }
 
+// 商家提现
+message MerchantWithdrawalsRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 money = 4;               // 提现金额
+}
+
+message MerchantWithdrawalsResponse {
+
+}
+
 // 商家充值纪录查询
-message MerchantRechargeRecordRequest {
+message MerchantBalanceRecordRequest {
     string numbers = 1;
     string identity = 2;
     string merchant_identity = 3;   // 商家ID
 }
 
-message MerchantRechargeRecordResponse {
-    repeated RechargeRecord recharge_record = 1;
+message MerchantBalanceRecordResponse {
+    repeated BalanceRecord balance_record = 1;
 }
 
 message BusinessParametersMaterial {
-    uint64 bond = 1;        // 保证金
-    uint64 balance = 2;     // 账户余额
+    uint64 bond = 1;                      // 保证金
+    //uint64 balance = 2;                   // 账户余额
     uint64 balance_ratio = 3;             // 账户余额换积分比率，积分量 = 账户余额 * 比率
     uint64 consumption_ratio = 4;         // 消费换积分比率，消费额 = 积分量 * 比率，TODO...待修改，最好用乘法
     string identity = 5;    //商家ID，response使用
@@ -109,14 +121,15 @@ message ParametersRecord {
     repeated ParametersRecordAggressive aggressive_record = 2;
 }
 
-message RechargeRecordAggressive {
+message BalanceRecordAggressive {
     string operator = 1;
     uint64 money = 2;
     string time = 3;
     string identity = 4;    //ID，response使用
+    string direction = 5;   // recharge-充值， withdrawals-提现
 }
 
-message RechargeRecord {
+message BalanceRecord {
     MerchantMaterial merchant = 1;
     repeated RechargeRecordAggressive aggressive_record = 2;
 }
