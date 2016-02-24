@@ -767,20 +767,59 @@ def parameters_record_retrieve_all(numbers):
 
 
 def consumption_to_credit(merchant_identity, money):
-    collection = get_mongo_collection("parameters")
-    if not collection:
-        g_log.error("get collection business_parameters failed")
-        return 51011, "get collection business_parameters failed"
-    business_parameters = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
-    if not business_parameters:
-        g_log.error("merchant %s parameters not exist", merchant_identity)
-        return 51012, "merchant parameters not exist"
-    credit = money / business_parameters["consumption_ratio"]
-    g_log.debug("consume money[%d], ratio[%d], credit[%d]", money, business_parameters["consumption_ratio"], credit)
+    """
+    计算消费金额换积分量
+    :param merchant_identity:
+    :param money:
+    :return:
+    """
+    try:
+        collection = get_mongo_collection("parameters")
+        if not collection:
+            g_log.error("get collection business_parameters failed")
+            return 51011, "get collection business_parameters failed"
+        business_parameters = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
+        if not business_parameters:
+            g_log.error("merchant %s parameters not exist", merchant_identity)
+            return 51012, "merchant parameters not exist"
+        credit = money / business_parameters["consumption_ratio"]
+        g_log.debug("consume money[%d], ratio[%d], credit[%d]", money, business_parameters["consumption_ratio"], credit)
 
-    return 51000, credit
+        return 51000, credit
+    except Exception as e:
+        g_log.error("%s", e)
+        return 51013, "exception"
 
 
+def credit_conversion(from_merchant, to_merchant, quantity):
+    """
+    积分换算
+    :param from_merchant: 换出商家
+    :param to_merchant: 换入商家
+    :param quantity: 换出积分量
+    :return: (51100, (from_balance_ratio, to_balance_ratio, from_quantity, to_quantity))/成功，(>51100, "errmsg")/失败
+    """
+    try:
+        collection = get_mongo_collection("parameters")
+        if not collection:
+            g_log.error("get collection business_parameters failed")
+            return 51111, "get collection business_parameters failed"
+        from_parameters = collection.find_one({"merchant_identity": from_merchant, "deleted": 0})
+        if not from_parameters:
+            g_log.error("merchant %s parameters not exist", from_merchant)
+            return 51112, "from merchant parameters not exist"
+
+        to_parameters = collection.find_one({"merchant_identity": to_merchant, "deleted": 0})
+        if not to_parameters:
+            g_log.error("merchant %s parameters not exist", to_merchant)
+            return 51113, "to merchant parameters not exist"
+
+        to_quantity = quantity * to_parameters["balance_ratio"] / from_parameters["balance_ratio"]
+        return 51100, to_quantity
+        # return 51100, (from_parameters["balance_ratio"], to_parameters["balance_ratio"], quantity, to_quantity)
+    except Exception as e:
+        g_log.error("%s", e)
+        return 51114, "exception"
 # # pragma 商家充值API
 # def merchant_recharge(**kwargs):
 #     """

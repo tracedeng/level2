@@ -15,7 +15,9 @@ from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_mer
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
     merchant_retrieve_with_merchant_identity_only
 from consumer import consumer_retrieve_with_numbers, consumer_material_copy_from_document
-from business import consumption_to_credit
+from business import consumption_to_credit, credit_conversion
+from flow_auxiliary import credit_exceed_upper, balance_overdraft
+from flow import merchant_credit_update, merchant_credit_update_batch
 
 
 class Credit():
@@ -50,7 +52,8 @@ class Credit():
                               303: self.confirm_consumption, 304: self.refuse_consumption,
                               305: self.credit_free, 306: self.consumer_credit_retrieve,
                               307: self.consume_credit, 308: self.consume_credit_retrieve,
-                              309: self.credit_interchange, 310: self.credit_interchange_retrieve}
+                              309: self.credit_interchange, 310: self.credit_interchange_retrieve,
+                              311: self.check_interchange_in}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -505,6 +508,7 @@ class Credit():
             numbers = body.numbers
             identity = body.identity
             credit_identity = body.credit_identity
+            from_merchant = body.from_merchant
             to_merchant = body.to_merchant
             credit = body.credit
             exec_interchange = body.exec_interchange
@@ -526,7 +530,7 @@ class Credit():
                 return 1
 
             kwargs = {"numbers": numbers, "credit_identity": credit_identity, "to_merchant": to_merchant,
-                      "credit": credit, "exec_interchange": exec_interchange}
+                      "from_merchant": from_merchant, "credit": credit, "exec_interchange": exec_interchange}
             g_log.debug("interchange credit: %s", kwargs)
             self.code, self.message = credit_interchange(**kwargs)
 
@@ -598,6 +602,50 @@ class Credit():
                     exchange_one = exchange.add()
                     last_merchant[0] = (value["from_merchant"], value["to_merchant"])
                     interchange_copy_from_document(exchange_one, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            return 0
+
+    def check_interchange_in(self):
+        """
+        积分兑记录查询
+        """
+        try:
+            body = self.request.allow_interchange_in_request
+            numbers = body.numbers
+            identity = body.identity
+            merchant = body.merchant
+
+            if not numbers:
+                # 根据包体中的identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 41101
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的操作员和商家管理员不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s is not manager %s", self.numbers, numbers)
+                self.code = 41102
+                self.message = "no privilege to exchange record"
+                return 1
+            
+            self.code, self.message = credit_exceed_upper(**{"merchant_identity": merchant, "allow_last": "yes"})
+            if 61000 == self.code:
+                # 创建成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "check exchange in done"
+
+                body = response.allow_interchange_in_response
+                body.allow = "yes" if bool(self.message) else "no"
 
                 return response
             else:
@@ -820,7 +868,6 @@ def confirm_consumption(**kwargs):
         else:
             credit = int(message)
 
-        from flow_auxiliary import credit_exceed_upper
         code, message = credit_exceed_upper(**{"merchant_identity": merchant_identity, "credit": credit})
         if code == 61000:
             if not bool(message):
@@ -847,7 +894,6 @@ def confirm_consumption(**kwargs):
             return 40319, "confirm consumption failed"
 
         # 更新已发行积分量(用户消费从商家获得的积分)
-        from flow import merchant_credit_update
         code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": merchant_identity,
                                                   "mode": "issued", "supplement": credit})
         if code != 60400:
@@ -1130,22 +1176,22 @@ def interchange_credit_create(**kwargs):
         numbers = kwargs.get("numbers", "")
         if not account_is_valid_consumer(numbers):
             g_log.warning("invalid customer account %s", numbers)
-            return 40921, "invalid phone number"
+            return 40931, "invalid phone number"
 
         merchant_identity = kwargs.get("merchant_identity")
         if not merchant_identity:
             g_log.error("lost merchant")
-            return 40922, "illegal argument"
+            return 40932, "illegal argument"
 
         credit = kwargs.get("credit")
         if not credit or credit < 0:
             g_log.error("credit %s illegal", credit)
-            return 40923, "illegal argument"
+            return 40933, "illegal argument"
 
         # 检查商家是否存在，TODO... user_is_merchant_manager包含该检查
         if not merchant_exist(merchant_identity):
             g_log.error("merchant %s not exit", merchant_identity)
-            return 40924, "illegal argument"
+            return 40934, "illegal argument"
 
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime(1970, 1, 1),
@@ -1155,15 +1201,15 @@ def interchange_credit_create(**kwargs):
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
-            return 40927, "get collection credit failed"
+            return 40937, "get collection credit failed"
         credit_identity = collection.insert_one(value).inserted_id
         credit_identity = str(credit_identity)
         g_log.debug("insert interchange %s", value)
 
-        return 40920, credit_identity
+        return 40930, credit_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
-        return 40928, "exception"
+        return 40938, "exception"
 
 
 def credit_interchange(**kwargs):
@@ -1189,6 +1235,11 @@ def credit_interchange(**kwargs):
             g_log.error("lost to merchant")
             return 40913, "illegal argument"
 
+        from_merchant = kwargs.get("from_merchant")
+        if not from_merchant:
+            g_log.error("lost from merchant")
+            return 40913, "illegal argument"
+
         credit = kwargs.get("credit")
         if not credit or credit < 0:
             g_log.error("credit %s illegal", credit)
@@ -1197,9 +1248,12 @@ def credit_interchange(**kwargs):
 
         exec_interchange = kwargs.get("exec_interchange", 0)
 
-        # TODO...检查to_merchant是否允许兑换
-        # TODO...计算to_credit
-        to_credit = from_credit / 2
+        code, message = credit_conversion(from_merchant, to_merchant, from_credit)
+        if code != 51100:
+            g_log.error("credit conversion failed, %s", message)
+            return 40922, "credit conversion failed"
+
+        to_credit = int(message)
         fee = to_credit / 100
         to_credit -= fee
 
@@ -1207,12 +1261,25 @@ def credit_interchange(**kwargs):
         if not exec_interchange:
             return 40900, (to_credit, fee)
 
+        # 检查to_merchant是否允许兑换，检查已发行小于发行积分上限
+        code, message = credit_exceed_upper(**{"merchant_identity": to_merchant, "credit": to_credit,
+                                               "allow_last": "yes"})
+        if code != 61000 or not bool(message):
+            g_log.error("to merchant issued exceed upper bound")
+            return 40923, "issued exceed upper bound"
+
+        # 检查from_merchant是否有足够余额，检查余额为正
+        code, message = balance_overdraft(from_merchant)
+        if code != 61100:
+            g_log.error("balance overdraft, %s", message)
+            return 40924, "balance overdraft"
+
         collection = get_mongo_collection("credit")
         if not collection:
             g_log.error("get collection credit failed")
             return 40915, "get collection credit failed"
 
-        # 更新积分总量
+        # 更新换出积分量
         result = collection.find_one_and_update({"numbers": numbers, "_id": ObjectId(credit_identity), "exchanged": 1,
                                                  "credit_rest": {"$gte": credit}},
                                                 {"$inc": {"credit_rest": -credit}},
@@ -1222,28 +1289,28 @@ def credit_interchange(**kwargs):
             return 40916, "interchange credit failed"
         from_merchant = result["merchant_identity"]
 
-        # 更新兑换出的积分量(积分互换)
-        from flow import merchant_credit_update
-        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": from_merchant,
-                                                  "mode": "interchange_out", "supplement": from_credit})
-        if code != 60400:
-            g_log.error("update interchange out credit failed")
-            return 40920, "update interchange out credit failed"
-
         # 创建兑换成的新积分
         code, credit_new = interchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant,
                                                         "credit": to_credit})
-        if code != 40920:
+        if code != 40930:
             g_log.error("create interchange credit failed")
             return 40917, "create interchange credit failed"
 
-        # 更新兑换进的积分量(积分互换)
-        from flow import merchant_credit_update
-        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": from_merchant,
-                                                  "mode": "interchange_in", "supplement": to_credit})
+        # 更新兑换入的商家flow参数(积分互换)
+        code, message = merchant_credit_update_batch(**{"numbers": numbers, "merchant_identity": to_merchant,
+                                                        "items": [("interchange_in", to_credit), ("issued", to_credit),
+                                                                  ("balance", to_credit)]})
         if code != 60400:
-            g_log.error("update interchange in credit failed")
-            return 40921, "update interchange in credit failed"
+            g_log.error("update from merchant flow failed, %s", message)
+            return 40920, "update from merchant flow failed"
+
+        # 更新兑换出的商家flow参数(积分互换)
+        code, message = merchant_credit_update_batch(**{"numbers": numbers, "merchant_identity": from_merchant,
+                                                        "items": [("interchange_out", from_credit),
+                                                                  ("issued", -from_credit), ("balance", -credit)]})
+        if code != 60400:
+            g_log.error("update to merchant flow failed, %s", message)
+            return 40921, "update to merchant flow failed"
 
         # TODO... fee保存入平台账号
 

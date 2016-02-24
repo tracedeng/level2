@@ -55,6 +55,7 @@ message Request {
     ConsumeCreditRetrieveRequest consume_credit_retrieve_request = 308;
     CreditInterchangeRequest credit_interchange_request = 309;
     CreditInterchangeRetrieveRequest credit_interchange_retrieve_request = 310;
+    AllowInterchangeInRequest allow_interchange_in_request = 311;
 
     // 商家经营参数，[401, 500]
     PlatformUpdateParametersRequest platform_update_parameters_request = 401;
@@ -143,6 +144,7 @@ message Response {
     ConsumeCreditRetrieveResponse consume_credit_retrieve_response = 308;
     CreditInterchangeResponse credit_interchange_response = 309;
     CreditInterchangeRetrieveResponse credit_interchange_retrieve_response = 310;
+    AllowInterchangeInResponse allow_interchange_in_response = 311;
 
     // 商家经营参数，[401, 500]
     PlatformUpdateParametersResponse platform_update_parameters_response = 401;

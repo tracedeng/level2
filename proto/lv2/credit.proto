@@ -164,6 +164,18 @@ message CreditInterchangeRetrieveResponse {
     repeated InterchangeRecord exchange_record = 1;
 }
 
+// 商家是否允许积分转入
+message AllowInterchangeInRequest {
+    string numbers = 1; // 用户手机号
+    string identity = 2;    // 用户ID;
+
+    string merchant = 3;   // 商家
+}
+
+message AllowInterchangeInResponse {
+    string allow = 1;   // yes-允许， no-不允许
+}
+
 //（用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量）
 message CreditMaterial {
     string type = 1;        // 积分类型，consumption、gift、interchange、refuse

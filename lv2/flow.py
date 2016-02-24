@@ -401,6 +401,78 @@ def merchant_credit_update(**kwargs):
         return 60417, "exception"
 
 
+def merchant_credit_update_batch(**kwargs):
+    """
+    商家积分变更
+    积分类型：可发行积分总量、已发行积分、积分互换IN & OUT、用户消费积分、账户余额变更
+    mode=["may_issued", "issued", "interchange_in", "interchange_out", "consumption", "balance"]
+    :param kwargs: {"numbers": 11868898224, "merchant_identity": "", "items": [("may_issued", 1000), ...]}
+    :return:
+    """
+    try:
+        # 检查请求用户numbers必须是平台管理员
+        numbers = kwargs.get("numbers", "")
+        if not account_is_valid_merchant(numbers):
+            g_log.warning("not manager %s", numbers)
+            return 60421, "no privilege"
+        # 必须是已认证商家，在补充可发行积分总量时已经做过验证，此处省略
+
+        merchant_identity = kwargs.get("merchant_identity", "")
+        merchant = user_is_merchant_manager(numbers, merchant_identity)
+        if not merchant:
+            g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
+            return 60422, "not manager"
+        merchant_founder = merchant["merchant_founder"]
+        g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
+
+        modes = ["may_issued", "issued", "interchange_in", "interchange_out", "consumption", "balance"]
+        items = kwargs.get("items", "")
+        inc = {}
+        value = {"merchant_identity": merchant_identity, "deleted": 0}
+        for item in items:
+            mode = item[0]
+            supplement = item[1]
+            if mode not in modes:
+                g_log.error("not supported mode %s", mode)
+                return 60423, "not supported mode"
+            # TODO... 积分检查
+            # supplement = kwargs.get("supplement", 0)
+            inc[mode] = supplement
+            value[mode] = supplement
+
+        # 存入数据库
+        collection = get_mongo_collection("flow")
+        if not collection:
+            g_log.error("get collection flow failed")
+            return 60424, "get collection flow failed"
+        flow = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0}, {"$inc": inc})
+
+        # 第一次更新，则插入一条
+        if not flow:
+            g_log.debug("insert new flow")
+            flow = collection.insert_one(value)
+        if not flow:
+            g_log.error("update merchant %s credit failed", merchant_identity)
+            return 60425, "update failed"
+        g_log.debug("update merchant %s credit succeed", merchant_identity)
+
+        # 更新记录入库
+        collection = get_mongo_collection("flow_record")
+        if not collection:
+            g_log.error("get collection flow record failed")
+            return 60426, "get collection flow record failed"
+        quantization = "&".join(["mode:" + mode + ", supplement:" + str(supplement) for (mode, supplement) in items])
+        result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
+                                        "operator": numbers, "quantization": quantization})
+        if not result:
+            g_log.error("insert flow record failed")
+
+        return 60400, "yes"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 60427, "exception"
+
+
 def merchant_credit_flow_retrieve(numbers, merchant_identity):
     """
     读取商家积分详情，没给出merchant_identity则读取全部
