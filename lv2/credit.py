@@ -634,7 +634,7 @@ class Credit():
                 self.code = 41102
                 self.message = "no privilege to exchange record"
                 return 1
-            
+
             self.code, self.message = credit_exceed_upper(**{"merchant_identity": merchant, "allow_last": "yes"})
             if 61000 == self.code:
                 # 创建成功
