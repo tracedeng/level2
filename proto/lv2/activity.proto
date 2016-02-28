@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "merchant.proto";
 
 // 管理员创建活动
 message ActivityCreateRequest {
@@ -14,7 +15,7 @@ message ActivityCreateResponse {
     string identity = 1;    // 活动ID
 };
 
-// 读取商家活动列表
+// 商家读取活动列表
 message ActivityRetrieveRequest {
     string numbers = 1;     // 管理员
     string identity = 2;
@@ -24,6 +25,7 @@ message ActivityRetrieveRequest {
 
 message ActivityRetrieveResponse {
     repeated ActivityMaterial materials = 1;
+    MerchantMaterial merchant = 2;     //商家资料
 }
 
 // 管理员修改商家活动
@@ -65,6 +67,7 @@ message ConsumerRetrieveActivityResponse {
     repeated ActivityMaterial materials = 1;
 }
 
+// 用户购买活动
 message BuyActivityRequest {
     string numbers = 1;     // 用户
     string identity = 2;
@@ -97,6 +100,9 @@ message ActivityMaterial {
     string numbers = 7;         // 创建人
     string identity = 8;        // 活动ID
 
-    string merchant_identity = 9;   // 商家ID
-    string name = 10;           // 商家名称
+    uint64 volume = 9;          // 已销售量
+
+    MerchantMaterial merchant = 10;     //商家资料
+    // string merchant_identity = 10;   // 商家ID
+    // string name = 11;           // 商家名称
 }

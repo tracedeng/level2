@@ -11,7 +11,8 @@ import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
 from account_valid import account_is_valid_merchant, account_is_valid_consumer
 from account_auxiliary import identity_to_numbers, verify_session_key
-from merchant import user_is_merchant_manager
+from merchant import user_is_merchant_manager, merchant_material_copy_from_document, \
+    merchant_retrieve_with_merchant_identity_only
 from google_bug import message_has_field
 from credit import consume_credit
 
@@ -148,9 +149,11 @@ class Activity():
                 response.head.code = 1
                 response.head.message = "retrieve activity done"
 
-                materials = response.activity_retrieve_response.materials
+                body = response.activity_retrieve_response
+                code, merchants = merchant_retrieve_with_merchant_identity_only(merchant_identity)
+                merchant_material_copy_from_document(body.merchant, merchants[0])
                 for value in self.message:
-                    material = materials.add()
+                    material = body.materials.add()
                     activity_material_copy_from_document(material, value)
 
                 return response
@@ -425,7 +428,7 @@ def activity_create(**kwargs):
 
         value = {"numbers": numbers, "title": title, "introduce": introduce, "introduce": introduce, "credit": credit,
                  "merchant_identity": merchant_identity, "poster": poster, "deleted": 0, "create_time": datetime.now(),
-                 "expire_time": expire_time}
+                 "expire_time": expire_time, "volume": 0}
 
         # 存入数据库
         collection = get_mongo_collection("activity")
@@ -733,7 +736,9 @@ def activity_material_copy_from_document(material, value):
     material.poster = value["poster"]
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
     material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.volume = value["volume"]
 
     if value.get("merchant", ""):
-        material.merchant_identity = str(value["merchant"]["_id"])
-        material.name = value["merchant"]["name"]
+        merchant_material_copy_from_document(material.merchant, value["merchant"])
+        # material.merchant_identity = str(value["merchant"]["_id"])
+        # material.name = value["merchant"]["name"]
