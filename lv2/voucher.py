@@ -83,7 +83,6 @@ class Voucher():
                     return 1
                 
             self.code, self.message = consumer_retrieve_voucher(numbers, merchant_identity)
-
             if 80100 == self.code:
                 # 更新成功
                 response = common_pb2.Response()
@@ -167,6 +166,8 @@ class Voucher():
             c_identity = body.c_identity
             merchant_identity = body.merchant_identity
             voucher_identity = body.voucher_identity
+            activity_identity = body.activity_identity
+            exec_confirm = body.exec_confirm
 
             if not numbers:
                 # 根据包体中的merchant_identity获取numbers
@@ -185,7 +186,8 @@ class Voucher():
                     return 1
 
             kwargs = {"manager": numbers, "numbers": c_numbers, "merchant_identity": merchant_identity,
-                      "voucher_identity": voucher_identity}
+                      "voucher_identity": voucher_identity, "activity_identity": activity_identity,
+                      "exec_confirm": exec_confirm}
             self.code, self.message = confirm_voucher(**kwargs)
 
             if 80300 == self.code:
@@ -195,6 +197,8 @@ class Voucher():
                 response.head.seq = self.head.seq
                 response.head.code = 1
                 response.head.message = "manager confirm voucher done"
+
+                response.confirm_voucher_response.state = self.message
 
                 return response
             else:
@@ -243,11 +247,14 @@ def consumer_retrieve_voucher(numbers, merchant_identity):
         if not collection:
             g_log.error("get collection voucher failed")
             return 80113, "get collection voucher failed"
-        voucher = collection.find({"numbers": numbers, "merchant_identity": merchant_identity, "used": 0})
+        # g_log.debug("%s", datetime.now())
+        voucher = collection.find({"numbers": numbers, "merchant_identity": merchant_identity,
+                                   "expire_time": {"$gte": datetime.now()}, "used": 0})
         if not voucher:
             g_log.error("consumer %s retrieve %s voucher failed", numbers, merchant_identity)
             return 80114, "consumer retrieve voucher failed"
 
+        g_log.debug("retrieve voucher success")
         return 80100, voucher
     except Exception as e:
         g_log.error("%s", e)
@@ -270,7 +277,8 @@ def consumer_retrieve_all_voucher(numbers):
         if not collection:
             g_log.error("get collection voucher failed")
             return 80117, "get collection voucher failed"
-        records = collection.find({"numbers": numbers, "used": 0}).sort("merchant_identity")
+        records = collection.find({"numbers": numbers, "expire_time": {"$gte": datetime.now()},
+                                   "used": 0}).sort("merchant_identity")
         if not records:
             g_log.error("retrieve voucher failed")
             return 80118, "retrieve voucher failed"
@@ -314,7 +322,7 @@ def confirm_voucher(**kwargs):
     """
     商家确认优惠券
     :param kwargs: {"numbers": 186889882240, "merchant_identity": "", "manager": "18688982240",
-                    "voucher_identity": "a1der234"}
+                    "voucher_identity": "a1der234", "activity_identity": "iof", "exec_confirm": 1}
     :return:
     """
     try:
@@ -332,10 +340,21 @@ def confirm_voucher(**kwargs):
             return 80312, "not manager"
 
         voucher_identity = kwargs.get("voucher_identity", "")
+        activity_identity = kwargs.get("activity_identity", "")
+        exec_confirm = kwargs.get("exec_confirm", "")
         collection = get_mongo_collection("voucher")
         if not collection:
             g_log.error("get collection voucher failed")
             return 80314, "get collection voucher failed"
+        if not exec_confirm:
+            voucher = collection.find_one({"_id": ObjectId(voucher_identity), "merchant_identity": merchant_identity,
+                                           "activity_identity": activity_identity, "numbers": numbers})
+            if not voucher:
+                g_log.error("voucher %s not exist", voucher_identity)
+                return 80300, "invalid"
+
+            return 80300, "used" if voucher["used"] == 1 else "valid"
+
         voucher = collection.find_one_and_update({"merchant_identity": merchant_identity, "numbers": numbers,
                                                   "_id": ObjectId(voucher_identity), "used": 0}, {"$set": {"used": 1}})
         if not voucher:
@@ -364,6 +383,8 @@ def voucher_copy_from_document(material, value):
     material.activity_title = value["activity_title"]
     material.create_time = value["create_time"].strftime("%Y-%m-%d %H:%M:%S")
     material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.merchant_identity = value["merchant_identity"]
+    material.numbers = value["numbers"]
     material.identity = str(value["_id"])
 
 

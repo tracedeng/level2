@@ -17,7 +17,7 @@ def gift_upper_bound(**kwargs):
 
         bound = kwargs.get("bound", 0)
         value = {"merchant_identity": merchant_identity, "upper_bound": bound, "may_issued": 0, "issued": 0,
-                 "interchange_in": 0, "interchange_out": 0, "interchange_consumption": 0, "settlement": 0,
+                 "interchange_in": 0, "interchange_out": 0, "consumption": 0, "balance": 0,
                  "deleted": 0}
 
         # 存入数据库
@@ -65,11 +65,11 @@ def credit_exceed_upper(**kwargs):
         upper = flow["upper_bound"]
 
         if allow_last == "yes":
-            if issued > upper:
+            if issued >= upper:
                 g_log.debug("issued[%d] > upper[%d], credit[%d]", issued, upper, credit)
                 return 61000, False
         else:
-            if issued + credit > upper:
+            if issued + credit >= upper:
                 g_log.debug("issued[%d] + credit[%d] > upper[%d]", issued, credit, upper)
                 return 61000, False
 
@@ -82,7 +82,7 @@ def credit_exceed_upper(**kwargs):
 def balance_overdraft(merchant_identity):
     """
     商家账户是否有余额
-    :param merchant_identity: {"merchant_identity": "", "credit": 1000, "allow_last": "yes"}
+    :param merchant_identity: "merchant_identity"
     :return: (61100, yes)/有，(>61100, "errmsg")/无
     """
     try:

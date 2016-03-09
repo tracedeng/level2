@@ -2,6 +2,7 @@
 __author__ = 'tracedeng'
 
 from datetime import datetime
+from date_auxiliary import after_weeks, after_years
 import common_pb2
 from bson.objectid import ObjectId
 from pymongo.collection import ReturnDocument
@@ -53,7 +54,7 @@ class Credit():
                               305: self.credit_free, 306: self.consumer_credit_retrieve,
                               307: self.consume_credit, 308: self.consume_credit_retrieve,
                               309: self.credit_interchange, 310: self.credit_interchange_retrieve,
-                              311: self.check_interchange_in}
+                              311: self.check_interchange_in, 312: self.allow_out_credit_retrieve}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -654,6 +655,83 @@ class Credit():
             g_log.error("%s", e)
             return 0
 
+    def allow_out_credit_retrieve(self):
+        """
+        用户查询拥有的所有允许导出的积分
+        """
+        try:
+            body = self.request.allow_out_credit_retrieve_request
+            numbers = body.numbers
+            identity = body.identity
+            merchant_identity = body.merchant_identity
+
+            if not numbers:
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 41201
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的用户和要创建的消费记录用户不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve credit %s", self.numbers, numbers)
+                self.code = 41202
+                self.message = "no privilege to retrieve credit"
+                return 1
+
+            # kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "sums": sums}
+            g_log.debug("retrieve credit: %s", numbers)
+            self.code, self.message = consumer_credit_retrieve(numbers, merchant_identity)
+
+            if 40600 == self.code:
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "retrieve credit done"
+
+                value = self.message
+                consumer_credit = response.allow_out_credit_retrieve_response.consumer_credit
+
+                # 用户资料
+                consumer_material_copy_from_document(consumer_credit.consumer, value[0])
+                # 遍历用户所有积分
+                last_merchant = ""
+                aggressive_credit = consumer_credit.aggressive_credit
+                for value_credit in value[1]:
+                    if last_merchant != value_credit["merchant_identity"]:
+                        # 检查商家积分允许被换出
+                        code, overdraft = balance_overdraft(value_credit["merchant_identity"])
+                        g_log.debug("%s,%s", value_credit["merchant_identity"], overdraft)
+                        if overdraft != "yes":
+                            # last_merchant = value_credit["merchant_identity"]
+                            continue
+
+                        # 商家资料
+                        code, merchants = merchant_retrieve_with_merchant_identity_only(value_credit["merchant_identity"])
+                        if code != 30200:
+                            g_log.error("retrieve merchant %s failed", value_credit["merchant_identity"])
+                            return 41205, "retrieve merchant failed"
+
+                        # 新用户的积分
+                        aggressive_credit_one = aggressive_credit.add()
+                        credit = aggressive_credit_one.credit
+
+                        merchant_material_copy_from_document(aggressive_credit_one.merchant, merchants[0])
+                        last_merchant = value_credit["merchant_identity"]
+
+                    # 用户添加一条积分记录
+                    credit_one = credit.add()
+                    credit_copy_from_document(credit_one, value_credit)
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s", e)
+            from print_exception import print_exception
+            print_exception()
+            return 0
+
     def dummy_command(self):
         # 无效的命令，不回包
         g_log.debug("unknow command %s", self.cmd)
@@ -707,7 +785,7 @@ def consumption_create(**kwargs):
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime.now(),
                  "sums": sums, "exchanged": 0, "credit": 0, "manager_numbers": "", "type": "c",
-                 "exchange_time": datetime(1970, 1, 1), "expire_time": datetime(1970, 1, 1), "credit_rest": 0}
+                 "exchange_time": datetime(1970, 1, 1), "expire_time": after_weeks(1), "credit_rest": 0}
 
         collection = get_mongo_collection("credit")
         if not collection:
@@ -867,6 +945,9 @@ def confirm_consumption(**kwargs):
             return 40317, "calculus money to credit failed"
         else:
             credit = int(message)
+            if credit == 0:
+                # 至少有一个积分
+                credit = 1
 
         code, message = credit_exceed_upper(**{"merchant_identity": merchant_identity, "credit": credit})
         if code == 61000:
@@ -886,7 +967,8 @@ def confirm_consumption(**kwargs):
         result = collection.find_one_and_update({"_id": credit_identity, "exchanged": 0, "sums": sums,
                                                  "merchant_identity": merchant_identity},
                                                 {"$set": {"exchanged": 1, "manager_numbers": numbers, "credit": credit,
-                                                          "exchange_time": datetime.now(), "credit_rest": credit}},
+                                                          "exchange_time": datetime.now(), "credit_rest": credit,
+                                                          "expire_time": after_years(1)}},
                                                 return_document=ReturnDocument.AFTER)
         g_log.debug(result)
         if not result or not result["exchanged"]:

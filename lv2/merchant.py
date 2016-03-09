@@ -15,7 +15,8 @@ from account_valid import account_is_valid_merchant, numbers_is_valid, yes_no_2_
     email_is_valid, account_is_platform
 from account_auxiliary import verify_session_key, identity_to_numbers
 from google_bug import message_has_field
-from flow_auxiliary import gift_upper_bound
+from flow_auxiliary import gift_upper_bound, credit_exceed_upper
+from business_auxiliary import consumption_ratio_update_when_register
 
 
 class Merchant():
@@ -48,7 +49,8 @@ class Merchant():
             command_handle = {201: self.merchant_create, 202: self.merchant_retrieve, 203: self.merchant_batch_retrieve,
                               204: self.merchant_update, 205: self.merchant_update_verified, 206: self.merchant_delete,
                               207: self.merchant_create_manager, 208: self.merchant_delegate_manager,
-                              209: self.merchant_delete_manager, 210: self.retrieve_merchant}
+                              209: self.merchant_delete_manager, 210: self.retrieve_merchant,
+                              211: self.retrieve_exchange_in_merchant}
             result = command_handle.get(self.cmd, self.dummy_command)()
             if result == 0:
                 # 错误或者异常，不回包
@@ -74,6 +76,7 @@ class Merchant():
             numbers = body.numbers
             material = body.material
             identity = body.identity
+            ratio = body.ratio
 
             if not numbers:
                 if not material.numbers:
@@ -97,7 +100,7 @@ class Merchant():
                       "introduce": material.introduce, "logo": material.logo, "email": material.email,
                       "country": material.country, "location": material.location, "qrcode": material.qrcode,
                       "latitude": material.latitude, "longitude": material.longitude, "verified": material.verified,
-                      "contact_numbers": material.contact_numbers, "contract": material.contract}
+                      "contact_numbers": material.contact_numbers, "contract": material.contract, "ratio": ratio}
             g_log.debug("create merchant: %s", kwargs)
             self.code, self.message = merchant_create(**kwargs)
 
@@ -576,6 +579,55 @@ class Merchant():
             g_log.error("%s %s", e.__class__, e)
             return 0
 
+    def retrieve_exchange_in_merchant(self):
+        """
+        获取允许积分导入merchant资料
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
+        try:
+            body = self.request.retrieve_exchange_in_merchant_request
+            numbers = body.numbers
+            identity = body.identity
+
+            if not numbers:
+                # 根据包体中的merchant_identity获取numbers
+                code, numbers = identity_to_numbers(identity)
+                if code != 10500:
+                    self.code = 31101
+                    self.message = "missing argument"
+                    return 1
+
+            # 发起请求的商家和要获取的商家不同，认为没有权限，TODO...更精细控制
+            if self.numbers != numbers:
+                g_log.warning("%s no privilege to retrieve merchant %s", self.numbers, numbers)
+                self.code = 31102
+                self.message = "no privilege to retrieve merchant"
+                return 1
+            self.code, self.message = retrieve_exchange_in_merchant()
+
+            if 31100 == self.code:
+                # 获取成功
+                response = common_pb2.Response()
+                response.head.cmd = self.head.cmd
+                response.head.seq = self.head.seq
+                response.head.code = 1
+                response.head.message = "retrieve merchant list done"
+
+                materials = response.retrieve_exchange_in_merchant_response.materials
+                for value in self.message:
+                    material = materials.add()
+                    code, message = credit_exceed_upper(**{"merchant_identity": str(value["_id"]), "allow_last": "yes"})
+                    if bool(message):
+                        # 判断允许积分导入
+                        merchant_material_copy_from_document(material, value)
+
+                return response
+            else:
+                return 1
+        except Exception as e:
+            g_log.error("%s %s", e.__class__, e)
+            return 0
+
     def dummy_command(self):
         # 无效的命令，不回包
         g_log.debug("unknow command %s", self.cmd)
@@ -654,16 +706,25 @@ def merchant_create(**kwargs):
             g_log.warning("longitude illegal, %s", longitude)
             longitude = 0
 
+        from Geohash import encode
+        geo5 = encode(latitude, longitude, 5)
+        geo6 = encode(latitude, longitude, 6)
+        geo7 = encode(latitude, longitude, 7)
+        geo8 = encode(latitude, longitude, 8)
+        geo9 = encode(latitude, longitude, 9)
+
         # TODO... qrcode、国家、地区、合同编号检查
         country = kwargs.get("country", "")
         location = kwargs.get("location", "")
         qrcode = kwargs.get("qrcode", "")
         contract = kwargs.get("contract", "")
+        ratio = kwargs.get("ratio", "")
 
         value = {"name": name, "name_en": name_en, "verified": verified, "logo": logo, "email": email,
                  "introduce": introduce, "latitude": latitude, "qrcode": qrcode, "contract": contract,
-                 "longitude": longitude, "country": country, "location": location, 
-                 "contact_numbers": contact_numbers, "deleted": 0, "numbers": numbers, "create_time": datetime.now()}
+                 "longitude": longitude, "country": country, "location": location, "geo5": geo5, "geo6": geo6,
+                 "geo7": geo7, "geo8": geo8, "geo9": geo9, "contact_numbers": contact_numbers, "numbers": numbers,
+                 "create_time": datetime.now(), "deleted": 0}
         
         # 创建商家资料，商家和资料关联，TODO... 事务
         collection = get_mongo_collection("merchant")
@@ -698,6 +759,14 @@ def merchant_create(**kwargs):
         if code != 60100:
             g_log.error("create merchant failed, set upper bound failed")
             return 30118, "set upper bound failed"
+
+        code, message = consumption_ratio_update_when_register(**{"merchant_identity": merchant_identity,
+                                                                  "numbers": numbers, "consumption_ratio": int(ratio)})
+
+        if code != 50400:
+            g_log.error("create merchant failed, set consumption ratio failed")
+            return 30119, "set consumption ratio failed"
+
         return 30100, merchant_identity
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
@@ -1452,6 +1521,25 @@ def retrieve_merchant(verified="both"):
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 31012, "exception"
+
+
+def retrieve_exchange_in_merchant():
+    """
+    获取注册的商家列表
+    :return: (31100, "yes")/成功，(>31110, "errmsg")/失败
+    """
+    try:
+        collection = get_mongo_collection("merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 31111, "get collection merchant failed"
+
+        # 过滤认证的商家
+        merchants = collection.find({"deleted": 0, "verified": yes_no_2_char("yes")})
+        return 31100, merchants
+    except Exception as e:
+        g_log.error("%s %s", e.__class__, e)
+        return 31112, "exception"
 
 
 def generate_merchant_identity(numbers):

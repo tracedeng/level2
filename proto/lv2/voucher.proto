@@ -35,10 +35,13 @@ message ConfirmVoucherRequest {
     string c_numbers = 4;           // 用户账号
     string c_identity = 5;          // 用户ID
     string merchant_identity = 6;   // 商家ID
+    string activity_identity = 7;   // 活动ID
+
+    uint32 exec_confirm = 8;        // 是否确认使用，1-确认使用，0-检查优惠券是否有效
 }
 
 message ConfirmVoucherResponse {
-
+    string state = 1;               // "invalid"-无效，"used"-已经使用，"valid"-可使用，"yes"-使用成功
 }
 
 message MerchantVoucher {
@@ -52,6 +55,8 @@ message VoucherMaterial {
     string expire_time = 3;     // 过期时间
     uint32 used = 4;            // 已使用
     string activity_title = 5;  // 活动标题
+    string merchant_identity = 6;
+    string numbers = 7;
 
-    string identity = 6;    // 优惠券ID
+    string identity = 8;    // 优惠券ID
 }

@@ -15,6 +15,7 @@ from merchant import user_is_merchant_manager, merchant_material_copy_from_docum
     merchant_retrieve_with_merchant_identity_only
 from google_bug import message_has_field
 from credit import consume_credit
+from flow import merchant_credit_update
 
 
 class Activity():
@@ -639,7 +640,7 @@ def consumer_retrieve_activity_with_numbers(numbers):
         if not collection:
             g_log.error("get collection activity failed")
             return 70613, "get collection activity failed"
-        activity = collection.find({"deleted": 0}).sort("create_time")
+        activity = collection.find({"deleted": 0, "expire_time": {"$gte": datetime.now()}}).sort("create_time")
         if not activity:
             g_log.debug("activity %s not exist", numbers)
             return 70614, "activity not exist"
@@ -698,12 +699,22 @@ def buy_activity(**kwargs):
             return 70813, "activity not exist"
 
         # 扣除用户积分
+        flow_credit = 0
         for credit in spend_credit:
             value = {"numbers": numbers, "merchant_identity": merchant_identity,
                      "credit_identity": credit["identity"],
                      "credit": credit["quantity"]}
             g_log.debug("buy activity using credit: %s", value)
             consume_credit(**value)
+            flow_credit += credit["quantity"]
+        g_log.debug("consume total credit: %d", flow_credit)
+
+        # 更新商家flow参数，用户消费减少已发行量
+        code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": merchant_identity,
+                                                  "mode": "issued", "supplement": -flow_credit})
+        if code != 60400:
+            g_log.error("update issued credit failed")
+            return 70817, "update issued credit failed"
 
         # 存入优惠券数据库
         collection = get_mongo_collection("voucher")

@@ -8,10 +8,11 @@ import common_pb2
 import package
 import log
 g_log = log.WrapperLog('stream', name=__name__, level=log.DEBUG).log  # 启动日志功能
-from account_valid import account_is_valid_merchant, account_is_platform
+from account_valid import account_is_valid_merchant, account_is_platform, account_is_valid_consumer
 from account_auxiliary import verify_session_key, identity_to_numbers
 from merchant import user_is_merchant_manager, merchant_is_verified, merchant_retrieve_with_merchant_identity_only, \
     merchant_material_copy_from_document
+from flow_auxiliary import credit_exceed_upper
 
 
 class Flow():
@@ -42,7 +43,7 @@ class Flow():
                 g_log.debug("verify session key failed, %s, %s", code, message)
                 return package.error_response(self.cmd, self.seq, 60001, "invalid session key")
 
-            command_handle = {501: self.merchant_credit_flow_retrieve, 502: self.merchant_settlement,
+            command_handle = {501: self.merchant_credit_flow_retrieve, 502: self.merchant_allow_exchange_in,
                               503: self.merchant_recharge, 504: self.merchant_withdrawals,
                               505: self.balance_record_retrieve}
 
@@ -117,13 +118,15 @@ class Flow():
             g_log.error("%s", e)
             return 0
 
-    # deprecated
-    def merchant_settlement(self):
+    def merchant_allow_exchange_in(self):
+        """
+        商家允许积分转入
+        :return: 0/不回包给前端，pb/正确返回，1/错误，并回错误包
+        """
         try:
-            body = self.request.merchant_settlement_request
+            body = self.request.merchant_allow_exchange_in_request
             numbers = body.numbers
             merchant_identity = body.merchant_identity
-            exec_settlement = body.exec_settlement
             identity = body.identity
 
             if not numbers:
@@ -134,9 +137,9 @@ class Flow():
                     self.message = "missing argument"
                     return 1
 
-            kwargs = {"numbers": numbers, "merchant_identity": merchant_identity, "exec_settlement": exec_settlement}
-            g_log.debug("merchant recharge: %s", kwargs)
-            self.code, self.message = merchant_settlement(**kwargs)
+            kwargs = {"numbers": numbers, "merchant_identity": merchant_identity}
+            # g_log.debug("merchant exchange in: %s", kwargs)
+            self.code, self.message = merchant_allow_exchange_in(**kwargs)
 
             if 60200 == self.code:
                 # 更新成功
@@ -144,9 +147,9 @@ class Flow():
                 response.head.cmd = self.head.cmd
                 response.head.seq = self.head.seq
                 response.head.code = 1
-                response.head.message = "merchant settlement done"
+                response.head.message = "merchant allow exchange in done"
 
-                response.merchant_settlement_response.settlement = self.message
+                response.merchant_allow_exchange_in_response.allow = self.message
                 return response
             else:
                 return 1
@@ -210,7 +213,7 @@ class Flow():
                 # 根据包体中的identity获取numbers
                 code, numbers = identity_to_numbers(identity)
                 if code != 10500:
-                    self.code = 50801
+                    self.code = 60501
                     self.message = "missing argument"
                     return 1
 
@@ -220,7 +223,7 @@ class Flow():
                 g_log.debug("%s retrieve all merchant recharge record", numbers)
             self.code, self.message = balance_record_retrieve(numbers, merchant_identity)
 
-            if 50800 == self.code:
+            if 60500 == self.code:
                 # 更新成功
                 response = common_pb2.Response()
                 response.head.cmd = self.head.cmd
@@ -343,20 +346,21 @@ def merchant_credit_update(**kwargs):
     :return:
     """
     try:
-        # 检查请求用户numbers必须是平台管理员
+        # 检查请求用户numbers必须是平台管理员或者商家管理员
         numbers = kwargs.get("numbers", "")
-        if not account_is_valid_merchant(numbers):
-            g_log.warning("not manager %s", numbers)
+        if not account_is_platform(numbers) and not account_is_valid_merchant(numbers):
+            g_log.warning("not manager and not platform, %s", numbers)
             return 60411, "no privilege"
-        # 必须是已认证商家，在补充可发行积分总量时已经做过验证，此处省略
 
+        # 必须是已认证商家，在补充可发行积分总量时已经做过验证，此处省略
         merchant_identity = kwargs.get("merchant_identity", "")
-        merchant = user_is_merchant_manager(numbers, merchant_identity)
-        if not merchant:
-            g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 60412, "not manager"
-        merchant_founder = merchant["merchant_founder"]
-        g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
+        if not account_is_platform(numbers):
+            merchant = user_is_merchant_manager(numbers, merchant_identity)
+            if not merchant:
+                g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
+                return 60412, "not manager"
+            merchant_founder = merchant["merchant_founder"]
+            g_log.debug("merchant %s founder %s", merchant_identity, merchant_founder)
 
         mode = kwargs.get("mode", "")
         modes = ["may_issued", "issued", "interchange_in", "interchange_out", "consumption", "balance"]
@@ -373,16 +377,17 @@ def merchant_credit_update(**kwargs):
             g_log.error("get collection flow failed")
             return 60414, "get collection flow failed"
         flow = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
-                                              {"$inc": {mode: supplement}})
+                                              {"$inc": {mode: supplement}}, return_document=ReturnDocument.BEFORE)
 
         # 第一次更新，则插入一条
         if not flow:
             g_log.debug("insert new flow")
             flow = collection.insert_one(value)
-        if not flow:
-            g_log.error("update merchant %s %s credit failed", merchant_identity, mode)
-            return 60415, "update failed"
+            if not flow:
+                g_log.error("update merchant %s %s credit failed", merchant_identity, mode)
+                return 60415, "update failed"
         g_log.debug("update merchant %s credit succeed", mode)
+        # last = flow[mode]    # 更新前的值
 
         # 更新记录入库
         collection = get_mongo_collection("flow_record")
@@ -395,6 +400,7 @@ def merchant_credit_update(**kwargs):
         if not result:
             g_log.error("insert flow record failed")
 
+        # return 60400, last
         return 60400, "yes"
     except Exception as e:
         g_log.error("%s", e)
@@ -532,10 +538,9 @@ def merchant_credit_flow_retrieve_all(numbers):
         return 60118, "exception"
 
 
-# deprecated
-def merchant_settlement(**kwargs):
+def merchant_allow_exchange_in(**kwargs):
     """
-    计算商家可结算的积分
+    商家是否允许积分转入
     :param numbers: 平台账号或管理员账号
     :param merchant_identity: 商家ID
     :return:
@@ -546,50 +551,16 @@ def merchant_settlement(**kwargs):
         merchant_identity = kwargs.get("merchant_identity")
 
         # 检查管理员和商家关系
-        merchant = user_is_merchant_manager(numbers, merchant_identity)
-        if not merchant:
-            g_log.error("%s is not merchant %s manager", numbers, merchant_identity)
-            return 60212, "not manager"
+        if not account_is_valid_consumer(numbers):
+            g_log.error("invalid account, %s", numbers)
+            return 60211, "invalid account"
 
-        collection = get_mongo_collection("flow")
-        if not collection:
-            g_log.error("get collection flow failed")
-            return 60213, "get collection flow failed"
-        record = collection.find_one({"merchant_identity": merchant_identity, "deleted": 0})
-        if not record:
-            g_log.error("retrieve flow failed")
-            return 60214, "retrieve failed"
-        settlement = record["interchange_in"] - record["interchange_out"] - record["settlement"]
+        code, message = credit_exceed_upper(**{"merchant_identity": merchant_identity, "allow_last": "yes"})
 
-        exec_settlement = kwargs.get("exec_settlement", 0)
-        if not exec_settlement:
-            # TODO... 换成钱
-            return 60200, settlement
-
-        # TODO... 积分结算
-        flow = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
-                                              {"$set": {"settlement": settlement}})
-        if not flow:
-            g_log.error("merchant exec settlement %s failed", merchant_identity)
-            return 60215, "settlement failed"
-        g_log.debug("settlement done")
-
-        # 更新记录入库
-        collection = get_mongo_collection("flow_record")
-        if not collection:
-            g_log.error("get collection flow record failed")
-            return 60216, "get collection flow record failed"
-        quantization = "in:%d, out:%d, last_settlement:%d, settlement:%d" % \
-                       (record["interchange_in"], record["interchange_out"], record["settlement"], settlement)
-        result = collection.insert_one({"merchant_identity": merchant_identity, "time": datetime.now(),
-                                        "operator": numbers, "quantization": quantization})
-        if not result:
-            g_log.error("insert flow record failed")
-
-        return 60200, settlement
+        return 60200, "yes" if bool(message) else "no"
     except Exception as e:
         g_log.error("%s", e)
-        return 60217, "exception"
+        return 60212, "exception"
 
 
 # pragma 商家充值API
@@ -618,26 +589,29 @@ def merchant_recharge(**kwargs):
         # 认证用户才可以充值
         if not merchant_is_verified(merchant_identity):
             g_log.error("merchant %s not verified", merchant_identity)
-            return 60318, "not verified"
+            return 60313, "not verified"
 
-        # TODO...充值金额检查
+        # 充值金额换成积分值 （充值金额 * 金额积分比例系数）
         money = kwargs.get("money", 0)
+        collection = get_mongo_collection("parameters")
+        if not collection:
+            g_log.error("get collection parameters failed")
+            return 60318, "get collection parameters failed"
+
+        business_parameters = collection.find_one({"merchant_identity": merchant_identity})
+        if not business_parameters:
+            g_log.error("get merchant %s parameters failed", merchant_identity)
+            return 60319, "get merchant parameters failed"
+        balance = money * business_parameters["balance_ratio"]
 
         # 存入数据库
         code, message = merchant_credit_update(**{"numbers": numbers, "merchant_identity": merchant_identity,
-                                                  "mode": "recharge", "supplement": money})
-        # collection = get_mongo_collection("flow")
-        # if not collection:
-        #     g_log.error("get collection parameters failed")
-        #     return 60313, "get collection parameters failed"
-        #
-        # business_parameters = collection.find_one_and_update({"merchant_identity": merchant_identity, "deleted": 0},
-        #                                                      {"$inc": {"balance": money}},
-        #                                                      return_document=ReturnDocument.AFTER)
-        # if not business_parameters:
-        #     g_log.error("update merchant %s parameters failed", merchant_identity)
-        #     return 60314, "update failed"
-        # g_log.debug("recharge done, money: %s", business_parameters["balance"])
+                                                  "mode": "recharge", "supplement": balance})
+        if code != 60400:
+            g_log.error("merchant recharge failed, %s", message)
+            return 60314, "recharge failed"
+        last = int(message)
+        g_log.debug("last balance: %d", last)
 
         # 更新记录入库
         collection = get_mongo_collection("balance_record")
@@ -681,6 +655,7 @@ def balance_record_retrieve(numbers, merchant_identity):
         records = collection.find({"merchant_identity": merchant_identity})
         if not records:
             g_log.error("retrieve balance record failed")
+            return 60514, "retrieve balance record failed"
 
         return 60500, records
     except Exception as e:
@@ -735,6 +710,7 @@ def balance_record_copy_from_document(material, value):
     material.money = value["money"]
     material.identity = str(value["_id"])
     material.direction = value["direction"]
+    # material.balance = value["balance"]
 
 
 # 测试时mongo_connection的配置文件路径写全

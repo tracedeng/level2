@@ -6,7 +6,8 @@ syntax = "proto3";
 message MerchantCreateRequest {
     string numbers = 1;
     string identity = 2;        //商家创建者ID
-	MerchantMaterial material = 3;
+    MerchantMaterial material = 3;
+    uint64 ratio = 4;       // 消费换积分比例
 };
 
 message MerchantCreateResponse {
@@ -119,6 +120,16 @@ message RetrieveMerchantResponse {
     repeated MerchantMaterial materials = 1;
 }
 
+// 获取允许积分导入的商家
+message RetrieveExchangeInMerchantRequest {
+    string numbers = 1;
+    string identity = 2;
+}
+
+message RetrieveExchangeInMerchantResponse {
+    repeated MerchantMaterial materials = 1;
+}
+
 // 商家资料
 message MerchantMaterial {
     string name = 1;      //商家名称，认证后不可修改，must
@@ -132,7 +143,7 @@ message MerchantMaterial {
     string logo =23;        //商家logo
     string email = 24;
     string introduce = 25;   //商家介绍
-	float longitude = 26;    //经度
+    float longitude = 26;    //经度
     float latitude = 27;     //纬度
     string country = 28;
     string location = 29;    //地区，省市

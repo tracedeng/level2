@@ -87,6 +87,18 @@ message ConsumerCreditRetrieveResponse {
     ConsumerCredit consumer_credit = 1;
 }
 
+
+// 用户查询拥有的允许转出的积分
+message AllowOutCreditRetrieveRequest {
+    string numbers = 1;     // 用户手机号
+    string identity = 2;    // 用户ID
+    string merchant_identity = 3;   // 如果没有则查询用户拥有的所有商家允许导出的积分
+}
+
+message AllowOutCreditRetrieveResponse {
+    ConsumerCredit consumer_credit = 1;
+}
+
 // TODO...商家赠送积分查询
 message CreditFreeRetrieveRequest {
 
