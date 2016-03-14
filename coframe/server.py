@@ -17,15 +17,15 @@ class Server():
     # IP = "0.0.0.0"
     IP = "127.0.0.1"
     PORT = 9526
-    MMODULE = "calculus.lv2.master"
+    MMODULE = "master"
     MCLASS = "Master"
     MTIMEOUT = 2000    # 单位毫秒
-    BMODULE = "calculus.lv2.branchbase"
+    BMODULE = "branchbase"
     BCLASS = "BranchBase"
     BTIMEOUT = 500    # 单位毫秒
     BADDRESS = "127.0.0.1:9527"
 
-    def __init__(self, conf_path="loop.conf"):
+    def __init__(self, conf_path="./coframe/loop.conf"):
         """
         解析配置，创建监听和旁路套结字
         配置文件格式

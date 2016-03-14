@@ -11,7 +11,7 @@ from singleton import singleton
 
 @singleton
 class MongoConnection():
-    CONFPATH = "loop.conf"   # 配置文件路径
+    CONFPATH = "./coframe/loop.conf"   # 配置文件路径
 
     def __init__(self):
         """
