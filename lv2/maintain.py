@@ -258,7 +258,7 @@ def version_report(numbers, version):
         return 90115, "exception"
 
 
-def boot_report(numbers, version):
+def boot_report(version):
     """
     启动上报
     :param numbers:
@@ -277,9 +277,8 @@ def boot_report(numbers, version):
             return 90213, "get collection boot failed"
 
         boot_time = datetime.now()
-        value = {"numbers": numbers, "version": version, "boot_time": boot_time, "total": 1}
         boot = collection.find_one_and_update({"boot_time": boot_time, "version": version}, {"$inc": {"total": 1}},
-                                              {"$set": value})
+                                              upsert=True, return_document=ReturnDocument.AFTER)
         if not boot:
             g_log.error("boot report failed")
             return 50714, "boot report failed"

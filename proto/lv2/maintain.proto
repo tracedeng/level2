@@ -24,7 +24,8 @@ message BootReportResponse {
 // become active上报，需要用户信息，所以登录后上报
 message ActiveReportRequest {
     string numbers = 1;
-    string mode = 2;    // app身份，merchant or consumer
+    string identity = 2;
+    string mode = 3;    // app身份，merchant or consumer
 }
 
 message ActiveReportResponse {
