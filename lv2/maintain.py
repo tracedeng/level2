@@ -247,7 +247,7 @@ def version_report(numbers, version):
             g_log.error("get collection version failed")
             return 90113, "get collection version failed"
 
-        value = {"numbers": numbers, "version": version, "feedback_time": datetime.now()}
+        value = {"numbers": numbers, "version": version, "feedback_time": datetime.now().strftime("%Y-%m-%d %H:%M")}
         version_identity = collection.insert_one(value).inserted_id
         version_identity = str(version_identity)
         g_log.debug("insert version %s", version_identity)
@@ -276,7 +276,7 @@ def boot_report(version):
             g_log.error("get collection boot failed")
             return 90213, "get collection boot failed"
 
-        boot_time = datetime.now()
+        boot_time = datetime.now().strftime("%Y-%m-%d %H:%M")
         boot = collection.find_one_and_update({"boot_time": boot_time, "version": version}, {"$inc": {"total": 1}},
                                               upsert=True, return_document=ReturnDocument.AFTER)
         if not boot:
@@ -307,7 +307,7 @@ def active_report(numbers, mode):
             g_log.error("get collection active failed")
             return 90313, "get collection active failed"
 
-        value = {"numbers": numbers, "mode": mode, "active_time": datetime.now()}
+        value = {"numbers": numbers, "mode": mode, "active_time": datetime.now().strftime("%Y-%m-%d %H:%M")}
         active_identity = collection.insert_one(value).inserted_id
         active_identity = str(active_identity)
         g_log.debug("insert active report %s", active_identity)
