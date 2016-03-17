@@ -17,6 +17,7 @@ from account_auxiliary import verify_session_key, identity_to_numbers
 from google_bug import message_has_field
 from flow_auxiliary import gift_upper_bound, credit_exceed_upper
 from business_auxiliary import consumption_ratio_update_when_register
+from Geohash import encode
 
 
 class Merchant():
@@ -706,7 +707,6 @@ def merchant_create(**kwargs):
             g_log.warning("longitude illegal, %s", longitude)
             longitude = 0
 
-        from Geohash import encode
         geo5 = encode(latitude, longitude, 5)
         geo6 = encode(latitude, longitude, 6)
         geo7 = encode(latitude, longitude, 7)
@@ -1003,6 +1003,13 @@ def merchant_update_with_numbers(numbers, merchant_identity, **kwargs):
             #     g_log.warning("longitude illegal, %s", longitude)
             #     longitude = 0
             value["longitude"] = longitude
+
+        if latitude and longitude:
+            value["geo5"] = encode(latitude, longitude, 5)
+            value["geo6"] = encode(latitude, longitude, 6)
+            value["geo7"] = encode(latitude, longitude, 7)
+            value["geo8"] = encode(latitude, longitude, 8)
+            value["geo9"] = encode(latitude, longitude, 9)
 
         # 数据库
         collection = get_mongo_collection("merchant")
