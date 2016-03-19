@@ -825,8 +825,9 @@ def merchant_credit_retrieve_with_numbers(numbers):
                 return 40213, "get collection credit failed"
             merchant_identity = str(merchant["_id"])
             g_log.debug(merchant_identity)
-            credit = collection.find({"merchant_identity": merchant_identity},
-                                     {"merchant_identity": False}).sort("numbers")
+            credit = collection.find({"merchant_identity": merchant_identity, "expire_time": {"$gte": datetime.now()},
+                                      "type": {"$ne": "r"}}, {"merchant_identity": False}).sort("numbers")
+
             g_log.debug("merchant has %s credit", credit.count())
             merchant_credit.append((merchant, credit))
         return 40200, merchant_credit
@@ -893,11 +894,12 @@ def merchant_credit_retrieve_with_merchant_identity(numbers, merchant_identity, 
             g_log.error("get collection credit failed")
             return 40221, "get collection credit failed"
         if consumer_numbers:
-            credit = collection.find({"merchant_identity": merchant_identity, "numbers": consumer_numbers},
+            credit = collection.find({"merchant_identity": merchant_identity, "numbers": consumer_numbers,
+                                      "type": {"$ne": "r"}, "expire_time": {"$gte": datetime.now()}},
                                      {"merchant_identity": False}).sort("exchange_time")
         else:
-            credit = collection.find({"merchant_identity": merchant_identity}, {"merchant_identity": False}).\
-                sort("numbers")
+            credit = collection.find({"merchant_identity": merchant_identity, "expire_time": {"$gte": datetime.now()},
+                                      "type": {"$ne": "r"}}, {"merchant_identity": False}).sort("numbers")
         g_log.debug("merchant has %s credit", credit.count())
 
         return 40200, [(merchant_material[0], credit)]
@@ -1122,7 +1124,8 @@ def consumer_credit_retrieve(numbers, merchant_identity):
         if not collection:
             g_log.error("get collection credit failed")
             return 40603, "get collection credit failed"
-        credit = collection.find({"numbers": numbers}).sort("merchant_identity")
+        credit = collection.find({"numbers": numbers, "type": {"$ne": "r"},
+                                  "expire_time": {"$gte": datetime.now()}}).sort("merchant_identity")
         g_log.debug("consumer has %s credit", credit.count())
 
         return 40600, (consumer, credit)
@@ -1142,7 +1145,8 @@ def consumer_credit_retrieve_one(numbers, merchant_identity):
         if not collection:
             g_log.error("get collection credit failed")
             return 40611, "get collection credit failed"
-        credit = collection.find({"numbers": numbers, "merchant_identity": merchant_identity})
+        credit = collection.find({"numbers": numbers, "merchant_identity": merchant_identity, "type": {"$ne": "r"},
+                                  "expire_time": {"$gte": datetime.now()}})
         g_log.debug("consumer has %s credit", credit.count())
 
         return 40600, (consumer, credit)
