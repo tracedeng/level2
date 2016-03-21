@@ -147,7 +147,7 @@ class Credit():
                 g_log.debug("retrieve manager %s all merchant credits", numbers)
                 self.code, self.message = merchant_credit_retrieve_with_numbers(numbers)
             else:
-                if not consumer_numbers:
+                if consumer_numbers:
                     g_log.debug("retrieve manage %s merchant %s of %s credit", numbers, merchant_identity,
                                 consumer_numbers)
                     self.code, self.message = merchant_credit_retrieve_with_merchant_identity(
