@@ -87,6 +87,8 @@ class Server():
         # 创建接入使用的socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
         sock.bind(self.master[0:2])
         sock.setblocking(0)
         self.master_sock = sock  # 接收接入层请求socket
