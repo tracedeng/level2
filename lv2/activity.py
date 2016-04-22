@@ -473,7 +473,7 @@ def activity_retrieve_with_numbers(numbers, merchant_identity):
             g_log.error("get collection activity failed")
             return 70213, "get collection activity failed"
         activity = collection.find({"merchant_identity": merchant_identity, "expire_time": {"$gte": datetime.now()},
-                                    "deleted": 0}).sort("expire_time")
+                                    "deleted": 0}).sort("create_time", -1)
         if not activity:
             g_log.debug("activity %s not exist", numbers)
             return 70214, "activity not exist"
@@ -641,7 +641,7 @@ def consumer_retrieve_activity_with_numbers(numbers):
         if not collection:
             g_log.error("get collection activity failed")
             return 70613, "get collection activity failed"
-        activity = collection.find({"deleted": 0, "expire_time": {"$gte": datetime.now()}}).sort("create_time")
+        activity = collection.find({"deleted": 0, "expire_time": {"$gte": datetime.now()}}).sort("create_time", -1)
         if not activity:
             g_log.debug("activity %s not exist", numbers)
             return 70614, "activity not exist"
