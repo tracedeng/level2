@@ -1619,6 +1619,19 @@ def merchant_is_verified(merchant_identity):
         return 0
 
 
+def merchant_material_copy_from_document_base(material, value):
+    """
+    mongo中的单条商家记录赋值给MerchantMaterial
+    :param material: MerchantMaterial
+    :param value: 单个商家资料document
+    :return:
+    """
+    material.name = value["name"]
+    material.identity = str(value["_id"])
+
+    material.logo = value["logo"]
+
+
 def merchant_material_copy_from_document(material, value):
     """
     mongo中的单条商家记录赋值给MerchantMaterial

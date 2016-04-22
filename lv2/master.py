@@ -114,6 +114,7 @@ class Master():
                 return 0
             else:
                 message = package.serial_pb(response)
+                g_log.debug("%d", len(message))
                 return message
         finally:
             g_log.debug("%s: end service logic ...", gevent.getcurrent())

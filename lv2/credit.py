@@ -14,7 +14,7 @@ from account_auxiliary import identity_to_numbers, verify_session_key
 from mongo_connection import get_mongo_collection
 from merchant import merchant_exist, merchant_retrieve_with_numbers, user_is_merchant_manager, \
     merchant_retrieve_with_merchant_identity, merchant_material_copy_from_document, \
-    merchant_retrieve_with_merchant_identity_only
+    merchant_retrieve_with_merchant_identity_only, merchant_material_copy_from_document_base
 from consumer import consumer_retrieve_with_numbers, consumer_material_copy_from_document
 from business import consumption_to_credit, credit_conversion
 from flow_auxiliary import credit_exceed_upper, balance_overdraft
@@ -190,7 +190,8 @@ class Credit():
 
                         # 用户添加一条积分记录
                         credit_one = credit.add()
-                        credit_copy_from_document(credit_one, value_credit)
+                        credit_copy_from_document_base(credit_one, value_credit)
+                        # credit_copy_from_document(credit_one, value_credit)
                         # g_log.debug(credit_one)
                 return response
             else:
@@ -389,12 +390,14 @@ class Credit():
                         if code != 30200:
                             g_log.error("retrieve merchant %s failed", value_credit["merchant_identity"])
                             return 40605, "retrieve merchant failed"
-                        merchant_material_copy_from_document(aggressive_credit_one.merchant, merchants[0])
+                        merchant_material_copy_from_document_base(aggressive_credit_one.merchant, merchants[0])
+                        # merchant_material_copy_from_document(aggressive_credit_one.merchant, merchants[0])
                         last_merchant = value_credit["merchant_identity"]
 
                     # 用户添加一条积分记录
                     credit_one = credit.add()
-                    credit_copy_from_document(credit_one, value_credit)
+                    credit_copy_from_document_base(credit_one, value_credit)
+                    # credit_copy_from_document(credit_one, value_credit)
                 return response
             else:
                 return 1
@@ -1450,6 +1453,31 @@ def credit_interchange_retrieve(**kwargs):
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)
         return 41013, "exception"
+
+
+def credit_copy_from_document_base(material, value):
+    """
+    mongo中的单条积分记录赋值给CreditMaterial
+    :param material: CreditMaterial
+    :param value: 单个积分document
+    :return:
+    """
+    g_log.debug(value)
+    material.type = value["type"]
+    material.sums = value["sums"]
+
+    # material.consumption_time = value["consumption_time"].strftime("%Y-%m-%d %H:%M:%S")
+
+    material.exchanged = value["exchanged"]
+    material.credit = value["credit"]
+    # material.manager_numbers = value["manager_numbers"]
+    # material.exchange_time = value["exchange_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.expire_time = value["expire_time"].strftime("%Y-%m-%d %H:%M:%S")
+
+    material.credit_rest = value["credit_rest"]
+
+    material.identity = str(value["_id"])
+    # material.numbers = value["numbers"]
 
 
 def credit_copy_from_document(material, value):
