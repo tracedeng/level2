@@ -1466,7 +1466,7 @@ def credit_copy_from_document_base(material, value):
     material.type = value["type"]
     material.sums = value["sums"]
 
-    # material.consumption_time = value["consumption_time"].strftime("%Y-%m-%d %H:%M:%S")
+    material.consumption_time = value["consumption_time"].strftime("%Y-%m-%d %H:%M:%S")
 
     material.exchanged = value["exchanged"]
     material.credit = value["credit"]
