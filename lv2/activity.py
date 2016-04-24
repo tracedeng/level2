@@ -278,6 +278,7 @@ class Activity():
             body = self.request.consumer_retrieve_activity_request
             numbers = body.numbers
             identity = body.identity
+            mark = body.mark
 
             if not numbers:
                 # 根据包体中的identity获取numbers
@@ -294,7 +295,7 @@ class Activity():
                 self.message = "no privilege to retrieve activity"
                 return 1
 
-            self.code, self.message = consumer_retrieve_activity_with_numbers(numbers)
+            self.code, self.message = consumer_retrieve_activity_with_numbers(numbers, mark)
 
             if 70600 == self.code:
                 # 获取成功
@@ -625,7 +626,7 @@ def activity_delete_with_numbers(numbers, merchant_identity, activity_identity):
 
 
 # pragma 用户读取活动资料API
-def consumer_retrieve_activity_with_numbers(numbers):
+def consumer_retrieve_activity_with_numbers(numbers, mark):
     """
     读取活动资料
     :param numbers: 用户电话号码
@@ -641,7 +642,13 @@ def consumer_retrieve_activity_with_numbers(numbers):
         if not collection:
             g_log.error("get collection activity failed")
             return 70613, "get collection activity failed"
-        activity = collection.find({"deleted": 0, "expire_time": {"$gte": datetime.now()}}).sort("create_time", -1)
+	try:
+		last_time = datetime.strptime(mark, '%Y-%m-%d %H:%M:%S')
+        	g_log.warning("mark %s, last time %s", mark, last_time)
+	except:
+		last_time = datetime.now()
+        	g_log.warning("2 mark %s, last time %s", mark, last_time)
+        activity = collection.find({"deleted": 0, "create_time": {"$lt": last_time}, "expire_time": {"$gte": datetime.now()}}, limit=10).sort("create_time", -1)
         if not activity:
             g_log.debug("activity %s not exist", numbers)
             return 70614, "activity not exist"
