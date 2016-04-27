@@ -700,8 +700,8 @@ def buy_activity(**kwargs):
         if not collection:
             g_log.error("get collection activity failed")
             return 70812, "get collection activity failed"
-        activity = collection.find_one({"merchant_identity": merchant_identity, "_id": ObjectId(activity_identity),
-                                        "credit": total_quantity, "deleted": 0})
+        activity = collection.find_one_and_update({"merchant_identity": merchant_identity, "_id": ObjectId(activity_identity),
+                                        "credit": total_quantity, "deleted": 0}, {"$inc": {"volume": 1}})
         if not activity:
             g_log.error("activity %s not exist", activity_identity)
             return 70813, "activity not exist"
