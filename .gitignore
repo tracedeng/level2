@@ -60,3 +60,4 @@ test/mongo/
 *_pb2*
 lv2/qrcode.png
 dump.rdb
+test/backup/
