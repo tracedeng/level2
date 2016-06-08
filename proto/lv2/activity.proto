@@ -61,6 +61,8 @@ message ConsumerRetrieveActivityRequest {
 
     uint32 latitude = 3;    // TODO...用户位置信息
     uint32 longitude = 4;
+
+    string mark = 5;
 }
 
 message ConsumerRetrieveActivityResponse {
