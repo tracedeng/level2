@@ -39,7 +39,7 @@ class WrapperLog(object):
         """
 
         args = list(set(args))  # 去重
-        # args = ["file"]
+        args = ["file"]
         self.level = kwargs.get('level', logging.WARNING)
 
         name = kwargs.get('name', 'unknow')
