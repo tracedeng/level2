@@ -76,6 +76,9 @@ message Request {
     MerchantRechargeRequest merchant_recharge_request = 503;
     MerchantWithdrawalsRequest merchant_withdrawals_request = 504;
     MerchantBalanceRecordRequest merchant_balance_record_request = 505;
+    MerchantBalanceRequest merchant_balance_request = 506;
+    RechargeTradeNoRequest merchant_recharge_trade_no_request = 507;
+    AlipayAsyncNotifyRequest alipay_async_notify_request = 508;
 
     // 七牛云存储token，[601, 700]
     UploadTokenRequest upload_token_request = 601;
@@ -167,6 +170,9 @@ message Response {
     MerchantRechargeResponse merchant_recharge_response = 503;
     MerchantWithdrawalsResponse merchant_withdrawals_response = 504;
     MerchantBalanceRecordResponse merchant_balance_record_response = 505;
+    MerchantBalanceResponse merchant_balance_response = 506;
+    RechargeTradeNoResponse merchant_recharge_trade_no_response = 507;
+    AlipayAsyncNotifyResponse alipay_async_notify_response = 508;
 
     // 七牛云存储token，[601, 700]
     UploadTokenResponse upload_token_response = 601;

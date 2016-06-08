@@ -1277,6 +1277,15 @@ def interchange_credit_create(**kwargs):
             g_log.error("credit %s illegal", credit)
             return 40933, "illegal argument"
 
+        # 过期时间不变
+        expire_time = kwargs.get("expire_time")
+        if not expire_time:
+            g_log.warning("lost expire time")
+            expire_time = datetime(1970, 1, 1)
+        # else:
+        #     expire_time = datetime.strptime(expire_time, "%Y-%m-%d %H:%M:%S").date()
+        g_log.debug("expire_time %s", expire_time)
+
         # 检查商家是否存在，TODO... user_is_merchant_manager包含该检查
         if not merchant_exist(merchant_identity):
             g_log.error("merchant %s not exit", merchant_identity)
@@ -1285,7 +1294,7 @@ def interchange_credit_create(**kwargs):
         # 用户ID，商户ID，消费金额，消费时间，是否兑换成积分，兑换成多少积分，兑换操作管理员，兑换时间，积分剩余量
         value = {"numbers": numbers, "merchant_identity": merchant_identity, "consumption_time": datetime(1970, 1, 1),
                  "sums": 0, "exchanged": 1, "credit": credit, "manager_numbers": "", "type": "i",
-                 "exchange_time": datetime.now(), "expire_time": datetime(1970, 1, 1), "credit_rest": credit}
+                 "exchange_time": datetime.now(), "expire_time": expire_time, "credit_rest": credit}
 
         collection = get_mongo_collection("credit")
         if not collection:
@@ -1343,7 +1352,7 @@ def credit_interchange(**kwargs):
             return 40922, "credit conversion failed"
 
         to_credit = int(message)
-        fee = to_credit / 100
+        fee = to_credit * 5 / 100   # 5%手续费
         to_credit -= fee
 
         # 只计算to_credit
@@ -1380,13 +1389,13 @@ def credit_interchange(**kwargs):
 
         # 创建兑换成的新积分
         code, credit_new = interchange_credit_create(**{"numbers": numbers, "merchant_identity": to_merchant,
-                                                        "credit": to_credit})
+                                                        "credit": to_credit, "expire_time": result["expire_time"]})
         if code != 40930:
             g_log.error("create interchange credit failed")
             return 40917, "create interchange credit failed"
 
         # 更新兑换入的商家flow参数(积分互换)
-        code, message = merchant_credit_update_batch(**{"numbers": numbers, "merchant_identity": to_merchant,
+        code, message = merchant_credit_update_batch(**{"numbers": "10000", "merchant_identity": to_merchant,
                                                         "items": [("interchange_in", to_credit), ("issued", to_credit),
                                                                   ("balance", to_credit)]})
         if code != 60400:
@@ -1394,14 +1403,12 @@ def credit_interchange(**kwargs):
             return 40920, "update from merchant flow failed"
 
         # 更新兑换出的商家flow参数(积分互换)
-        code, message = merchant_credit_update_batch(**{"numbers": numbers, "merchant_identity": from_merchant,
+        code, message = merchant_credit_update_batch(**{"numbers": "10000", "merchant_identity": from_merchant,
                                                         "items": [("interchange_out", from_credit),
                                                                   ("issued", -from_credit), ("balance", -credit)]})
         if code != 60400:
             g_log.error("update to merchant flow failed, %s", message)
             return 40921, "update to merchant flow failed"
-
-        # TODO... fee保存入平台账号
 
         # 保存积分兑换记录
         collection = get_mongo_collection("interchange_record")
@@ -1414,6 +1421,17 @@ def credit_interchange(**kwargs):
         interchange_record_identity = collection.insert_one(value).inserted_id
         interchange_record_identity = str(interchange_record_identity)
         g_log.debug("insert credit record %s", interchange_record_identity)
+
+        # fee保存入平台账号
+        collection = get_mongo_collection("fee")
+        if not collection:
+            g_log.error("get collection fee failed")
+            return 40922, "get collection fee failed"
+        value = {"interchange_record": interchange_record_identity, "interchange_time": datetime.now(),
+                 "merchant": from_merchant, "fee": fee}
+        fee_identity = collection.insert_one(value).inserted_id
+        fee_identity = str(fee_identity)
+        g_log.debug("insert fee %s", fee_identity)
 
         # TODO... 考虑返回(兑换后的原积分， 兑换后的新积分)
         return 40900, (to_credit, fee)

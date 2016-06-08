@@ -235,7 +235,8 @@ def upload_token_retrieve(**kwargs):
             return upload_token_retrieve_debug(kind, numbers, merchant_identity)
         else:
             # online
-            return upload_token_retrieve_online(kind, numbers, merchant_identity)
+            # return upload_token_retrieve_online(kind, numbers, merchant_identity)
+            return upload_token_retrieve_debug(kind, numbers, merchant_identity)
 
     except Exception as e:
         g_log.error("%s %s", e.__class__, e)

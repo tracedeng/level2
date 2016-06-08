@@ -1078,6 +1078,32 @@ def merchant_update(merchant_identity, numbers=None, identity=None, **kwargs):
         return 30421, "exception"
 
 
+def merchant_update_alipay(merchant_identity, alipay_email, alipay_id):
+    """
+    商家充值后更新商家支付宝信息
+    :param merchant_identity: 商家ID
+    :param alipay_email: 支付宝账号
+    :param alipay_id: 支付宝ID
+    :return:
+    """
+    try:
+        # 数据库
+        collection = get_mongo_collection("merchant")
+        if not collection:
+            g_log.error("get collection merchant failed")
+            return 30430, "get collection merchant failed"
+        value = {"alipay_email": alipay_email, "alipay_id": alipay_id}
+        g_log.debug("update merchant %s: %s", merchant_identity, value)
+        merchant = collection.find_one_and_update({"_id": ObjectId(merchant_identity), "deleted": 0}, {"$set": value})
+        if not merchant:
+            g_log.warning("update merchant %s failed", merchant_identity)
+            return 30431, "update failed"
+        return 30400, "yes"
+    except Exception as e:
+        g_log.error("%s", e)
+        return 30432, "exception"
+
+
 # pragma 更新商家资料API
 def merchant_update_verified_with_numbers(numbers, merchant_identity, verified):
     """

@@ -23,16 +23,51 @@ message MerchantAllowExchangeInResponse {
     string allow = 1;   // yes or no
 };
 
-// 商家充值
-message MerchantRechargeRequest {
+// 商家充值，后台生成订单号
+message RechargeTradeNoRequest {
     string numbers = 1;
     string identity = 2;
     string merchant_identity = 3;   // 商家ID
     uint64 money = 4;               // 充值金额
 }
 
+message RechargeTradeNoResponse{
+    string trade_no = 1;         // 订单号
+}
+
+// 商家充值
+message MerchantRechargeRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+    uint64 money = 4;               // 充值金额
+    string trade_no = 5;         // 订单号
+}
+
 message MerchantRechargeResponse {
 
+}
+
+message AlipayAsyncNotifyRequest {
+    string trade_status = 1;
+    string sign_type = 2;
+    string sign = 3;
+    string notify_type = 4;
+    string notify_id = 5;
+    string buyer_id = 6;
+    string buyer_email = 7;
+    string out_trade_no = 8;
+    string trade_no = 9;
+    string seller_email = 10;
+    string seller_id = 11;
+    uint64 total_fee = 12;
+    string notify_time = 13;
+    string gmt_create = 14;
+    string gmt_payment = 15;
+}
+
+message AlipayAsyncNotifyResponse {
+    string message = 1;
 }
 
 // 商家提现
@@ -76,6 +111,16 @@ message CreditFlow {
     FlowMaterial material = 2;
 }
 
+message MerchantBalanceRequest {
+    string numbers = 1;
+    string identity = 2;
+    string merchant_identity = 3;   // 商家ID
+}
+
+message MerchantBalanceResponse {
+    float balance = 1;     // 帐户余额
+}
+
 message FlowMaterial {
     string identity = 1;    //response 使用
     uint64 upper_bound = 2;  // 积分总量，实时
@@ -84,7 +129,7 @@ message FlowMaterial {
     uint64 interchange_in = 5;  // 兑换进的积分，累加量
     uint64 interchange_out = 6; // 兑换出的积分，累加量
     uint64 consumption = 7;     // 消费积分量，累加量
-    uint64 balance = 8;     // 账户余额，实时
+    int64 balance = 8;     // 账户余额，实时
     //uint64 interchange_consumption = 7;    // 兑换积分消费量
     //int64 settlement = 8;   // 已提现的积分
 }

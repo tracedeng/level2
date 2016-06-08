@@ -407,7 +407,7 @@ def platform_update_parameters(**kwargs):
         # 第一次更新，则插入一条
         if not business_parameters:
             g_log.debug("insert new parameters")
-            value["balance"] = 0
+            # value["balance"] = 0
             value["consumption_ratio"] = 0
             business_parameters = collection.insert_one(value)
 
@@ -429,7 +429,7 @@ def platform_update_parameters(**kwargs):
             return 50116, "insert parameters record failed"
 
         # 更新商家积分总量
-        code, message = upper_bound_update(**{"numbers": 1000000, "merchant_identity": merchant_identity, "bond": bond,
+        code, message = upper_bound_update(**{"numbers": 10000, "merchant_identity": merchant_identity, "bond": bond,
                                               "ratio": balance_ratio})
         if code != 60300:
             g_log.error("platform update parameters failed, set upper bound failed")
@@ -550,7 +550,7 @@ def consumption_ratio_update(**kwargs):
         if not business_parameters:
             g_log.debug("insert new parameters")
             value["bond"] = 0
-            value["balance"] = 0
+            # value["balance"] = 0
             value["balance_ratio"] = 0
             business_parameters = collection.insert_one(value)
         if not business_parameters:
